@@ -4,7 +4,7 @@ export type UseCaseHandler<I, O> = (input: I) => Promise<O>;
 
 export interface UseCaseDescriptorData<Input, Output> {
     name: string;
-    execute: UseCaseHandler<Input, Output>;
+    handler: UseCaseHandler<Input, Output>;
 }
 
 export function defineUseCase<I, O>(descriptor: UseCaseDescriptorData<I, O>) {

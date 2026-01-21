@@ -1,30 +1,31 @@
-import { getContext, type HttpApplicationContext } from "@core/context";
-import { defineController } from "@factories/controller";
-import { defineUseCase } from "@factories/usecase";
+import { defineRoute, getRequestContext } from "@factories/route";
 import { z } from "zod/v4-mini";
 import { fork, isPrimary } from "node:cluster";
 
-const createInvoiceUseCase = defineUseCase({
-    name: "CreateInvoiceUseCase",
-    execute: async () => {
-        const ctx = getContext<HttpApplicationContext<{ email: string }>>();
-        if (!ctx) return "No context";
-
-        console.log(ctx.requestId);
-
-        return ctx.user?.email ?? "No email";
-    },
-});
-
-const invoiceController = defineController({
-    name: "InvoiceController",
+const createInvoiceRoute = defineRoute({
     route: {
         path: "/invoices",
         method: "POST",
-        request: z.never(),
+        request: {
+            pathParameters: z.strictObject({
+                id: z.string(),
+            }),
+            headers: z.object({
+                Authorization: z.string(),
+            }),
+            body: z.strictObject({
+                i: z.string(),
+            }),
+        },
+    },
+    async handler(input) {
+        console.log(getRequestContext());
+
+        return input.headers.Authorization;
     },
 });
 
+// testing for concurrent cases
 if (isPrimary)
     for (let i = 0; i < 8; i++) {
         const worker = fork();
@@ -33,6 +34,13 @@ if (isPrimary)
         }, 300);
     }
 else {
-    // testing for concurrent cases
-    invoiceController.data.apiHandler({}, {}).then(console.log);
+    createInvoiceRoute.data
+        .apiHandler(
+            {
+                body: '{ "i": "ERROR" }',
+                headers: { Authorization: "aaaa" },
+            } as any,
+            {} as any,
+        )
+        .then(console.log);
 }

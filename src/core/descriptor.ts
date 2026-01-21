@@ -2,6 +2,8 @@ export enum DescriptorKind {
     aggregate = "aggregate",
     usecase = "usecase",
     controller = "controller",
+    route = "route",
+    guard = "guard",
     service = "service",
     handler = "handler",
 }

@@ -2,10 +2,6 @@
     "compilerOptions": {
         "module": "esnext",
         "target": "esnext",
-        "typeRoots": [
-            "./src/types",
-            "./node_modules/@types"
-        ],
         "sourceMap": true,
         "declaration": true,
         "declarationMap": true,
