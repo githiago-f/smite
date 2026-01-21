@@ -1,34 +1,42 @@
-import {
-    defineDescriptor,
-    DescriptorKind,
-    type Descriptor,
-} from "@core/descriptor";
-import { type UseCaseDescriptorData } from "./usecase";
-import { withContext } from "@core/context";
+import { defineDescriptor, DescriptorKind } from "@core/descriptor";
+import { withContext, type HttpApplicationContext } from "@core/context";
 import { randomUUID } from "node:crypto";
+import type { ZodMiniType } from "zod/v4-mini";
+
+export interface HttpRoute<I, O> {
+    path: string;
+    method: "POST" | "GET" | "PUT" | "PATCH" | "*";
+    request: ZodMiniType<I>;
+}
 
 export interface ControllerDescriptorData<I, O> {
     name: string;
-    route: { path: string; method: "POST" | "GET" | "PUT" | "PATCH" };
     auth?: "user";
-    useCase: Descriptor<DescriptorKind.usecase, UseCaseDescriptorData<I, O>>;
+    route: HttpRoute<I, O>;
 }
 
-const extractUser = (_: any) => ({
-    email: String(Math.floor(Math.random() * 1000)) + "@email.com",
-    name: "T",
-});
+function makeApiHandler<I, O>(descriptor: ControllerDescriptorData<I, O>) {
+    return (event: any, ctx: any) => {
+        return withContext<HttpApplicationContext<{ email: string }>, any>(
+            {
+                requestId: randomUUID(),
+                user: {
+                    email:
+                        String(Math.floor(Math.random() * 1000)) + "@email.com",
+                },
+            },
+            async () => {
+                // TODO implement this and consume a transformed interface
+            },
+        );
+    };
+}
 
 export function defineController<I, O>(
     descriptor: ControllerDescriptorData<I, O>,
 ) {
-    const apiHandler = (event: any, ctx: any) =>
-        withContext({ requestId: randomUUID(), user: extractUser(event) }, () =>
-            descriptor.useCase.data.execute(event),
-        );
-
     return defineDescriptor(DescriptorKind.controller, descriptor.name, {
         ...descriptor,
-        apiHandler,
+        apiHandler: makeApiHandler(descriptor),
     });
 }
