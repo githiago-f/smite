@@ -1,44 +1,11 @@
-import {
-    defineDescriptor,
-    DescriptorKind,
-    type Descriptor,
-} from "@core/descriptor";
-import { AggregateValidationError } from "./errors/aggregate-validation-error";
-import type { ZodMiniType } from "zod/v4-mini";
-
-export type Aggregate<State, Events> = {
-    state: State;
-    commit(): Aggregate<State, Events>;
-    fold<R>(fn: (a: State) => R): R;
-    putEvent<K extends keyof Events>(event: {
-        kind: K;
-        data: Events[K];
-    }): Aggregate<State, Events>;
-};
-
-export interface AggregateDescriptorInput<State, Events> {
-    name: string;
-    state: ZodMiniType<State>;
-    events: {
-        [K in keyof Events]: ZodMiniType<Events[K]>;
-    };
-    effectAppliers: {
-        [K in keyof Events]: (s: State, e: Events[K]) => State;
-    };
-}
-
-export type EventU<EventT> = {
-    [K in keyof EventT]: { kind: K; data: EventT[K] };
-}[keyof EventT];
-
-export type AggregateFactory<S, E> = (d: S, e?: EventU<E>[]) => Aggregate<S, E>;
-
-export type AggregateDescriptor<State, Events> = Descriptor<
-    DescriptorKind.aggregate,
-    AggregateDescriptorInput<State, Events> & {
-        factory: AggregateFactory<State, Events>;
-    }
->;
+import { defineDescriptor, DescriptorKind } from "@core/descriptor";
+import { AggregateValidationError } from "../errors/aggregate-validation-error";
+import type {
+    AggregateDescriptor,
+    AggregateDescriptorInput,
+    AggregateFactory,
+    EventU,
+} from "./type";
 
 function applyAll<State, Events>(
     descriptor: AggregateDescriptorInput<State, Events>,
@@ -51,7 +18,6 @@ function applyAll<State, Events>(
         const parser = descriptor.events[event.kind];
         if (applier !== undefined) {
             const parsedEvent = parser.safeParse(event.data);
-
             if (!parsedEvent.success) {
                 throw new AggregateValidationError(parsedEvent.error, event);
             }
@@ -59,10 +25,10 @@ function applyAll<State, Events>(
             const parsedState = descriptor.state.safeParse(
                 applier(newState, parsedEvent.data),
             );
-
             if (!parsedState.success) {
                 throw new AggregateValidationError(parsedState.error, event);
             }
+
             newState = parsedState.data;
         }
     }

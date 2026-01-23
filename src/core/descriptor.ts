@@ -6,6 +6,7 @@ export enum DescriptorKind {
     guard = "guard",
     service = "service",
     handler = "handler",
+    module = "module",
 }
 
 export interface Descriptor<TKind extends DescriptorKind, TData> {
