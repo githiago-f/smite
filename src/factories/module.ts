@@ -5,7 +5,7 @@ import {
 } from "@core/descriptor";
 import type { GuardDescriptor } from "./guard";
 import type { Handler } from "aws-lambda";
-import { isApiGatewayEvent } from "../helpers/api-gateway-checkers";
+import { isApiGatewayEvent } from "@core/helpers/api-gateway-checkers";
 import type { ControllerDescriptor } from "./controller";
 import type { RouteDescriptor } from "./route/type";
 import type { HandlerDescriptor } from "./handler";

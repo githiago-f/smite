@@ -4,8 +4,11 @@ import type {
     AggregateDescriptor,
     AggregateDescriptorInput,
     AggregateFactory,
+    EffectApplierU,
+    EventParserU,
     EventU,
 } from "./type";
+import type z from "zod/v4-mini";
 
 function applyAll<State, Events>(
     descriptor: AggregateDescriptorInput<State, Events>,
@@ -16,52 +19,58 @@ function applyAll<State, Events>(
     for (const event of events) {
         const applier = descriptor.effectAppliers[event.kind];
         const parser = descriptor.events[event.kind];
-        if (applier !== undefined) {
-            const parsedEvent = parser.safeParse(event.data);
-            if (!parsedEvent.success) {
-                throw new AggregateValidationError(parsedEvent.error, event);
-            }
+        if (applier === undefined) continue;
 
-            const parsedState = descriptor.state.safeParse(
-                applier(newState, parsedEvent.data),
-            );
-            if (!parsedState.success) {
-                throw new AggregateValidationError(parsedState.error, event);
-            }
+        const parsedEvent = parseEvent<Events>(parser, event);
 
-            newState = parsedState.data;
-        }
+        const parsedState = parseState<State, Events>(
+            descriptor,
+            applier,
+            newState,
+            parsedEvent,
+            event,
+        );
+
+        newState = parsedState;
     }
 
     return newState;
 }
 
-function commitAction<S, E>(data: S, factory: AggregateFactory<S, E>) {
-    return () => factory(data, []);
-}
-
-function putEventAction<S, E>(
-    descriptor: AggregateDescriptorInput<S, E>,
-    data: S,
-    events: EventU<E>[],
-    factory: AggregateFactory<S, E>,
-) {
-    return <K extends keyof E>(event: { data: E[K]; kind: K }) => {
-        const merged = events.concat([event]);
-        const newState = applyAll(descriptor, data, [event]);
-        return factory(newState, merged);
-    };
-}
-
-function foldAction<S>(initialData: S) {
-    return <R>(fn: (s: S) => R) => fn(initialData);
-}
-
-function makeAggregateFactory<State, Events>(
+function parseState<State, Events>(
     descriptor: AggregateDescriptorInput<State, Events>,
+    applier: EffectApplierU<Events, State>,
+    newState: State,
+    parsedEvent: z.infer<EventParserU<Events>>,
+    event: EventU<Events>,
 ) {
-    type AF = AggregateFactory<State, Events>;
-    const aggregateFactory: AF = (initialData, events = []) => {
+    const parsedState = descriptor.state.safeParse(
+        applier(newState, parsedEvent),
+    );
+    if (!parsedState.success) {
+        throw new AggregateValidationError(parsedState.error, event);
+    }
+    return parsedState.data;
+}
+
+function parseEvent<Events>(
+    parser: EventParserU<Events>,
+    event: EventU<Events>,
+) {
+    const parsedEvent = parser.safeParse(event.data);
+    if (!parsedEvent.success) {
+        throw new AggregateValidationError(parsedEvent.error, event);
+    }
+    return parsedEvent.data;
+}
+
+export function defineAggregate<State, Events>(
+    descriptor: AggregateDescriptorInput<State, Events>,
+): AggregateDescriptor<State, Events> {
+    const aggregateFactory: AggregateFactory<State, Events> = (
+        initialData,
+        events = [],
+    ) => {
         const safeState = descriptor.state.safeParse(initialData);
         if (!safeState.success) {
             throw new AggregateValidationError(safeState.error, undefined);
@@ -69,25 +78,18 @@ function makeAggregateFactory<State, Events>(
 
         return {
             state: safeState.data,
-            fold: foldAction(safeState.data),
-            putEvent: putEventAction(
-                descriptor,
-                safeState.data,
-                events,
-                aggregateFactory,
-            ),
-            commit: commitAction(safeState.data, aggregateFactory),
+            fold: (fn) => fn(safeState.data),
+            putEvent: (event) => {
+                const merged = events.concat([event]);
+                const newState = applyAll(descriptor, safeState.data, [event]);
+                return aggregateFactory(newState, merged);
+            },
+            commit: () => aggregateFactory(safeState.data, []),
         };
     };
 
-    return aggregateFactory;
-}
-
-export function defineAggregate<State, Events>(
-    descriptor: AggregateDescriptorInput<State, Events>,
-): AggregateDescriptor<State, Events> {
     return defineDescriptor(DescriptorKind.aggregate, descriptor.name, {
         ...descriptor,
-        factory: makeAggregateFactory(descriptor),
+        factory: aggregateFactory,
     });
 }

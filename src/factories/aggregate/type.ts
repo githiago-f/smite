@@ -26,6 +26,14 @@ export type EventU<EventT> = {
     [K in keyof EventT]: { kind: K; data: EventT[K] };
 }[keyof EventT];
 
+export type EffectApplierU<Events, State> = {
+    [K in keyof Events]: (s: State, e: Events[K]) => State;
+}[keyof Events];
+
+export type EventParserU<Events> = {
+    [K in keyof Events]: ZodMiniType<Events[K]>;
+}[keyof Events];
+
 export type AggregateFactory<S, E> = (d: S, e?: EventU<E>[]) => Aggregate<S, E>;
 
 export type AggregateDescriptor<State, Events> = Descriptor<
