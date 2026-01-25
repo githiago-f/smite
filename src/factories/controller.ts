@@ -4,7 +4,7 @@ import {
     type Descriptor,
 } from "@core/descriptor";
 import type { APIGatewayProxyEvent, Handler } from "aws-lambda";
-import { createRouteMatcher } from "../helpers/router";
+import { createRouteMatcher } from "../core/helpers/router";
 import type { RouteDescriptor } from "./route/type";
 import { NotFoundError } from "./errors/not-found";
 
@@ -20,7 +20,7 @@ export type ControllerDescriptor = Descriptor<
 >;
 
 export interface ControllerBuilder {
-    use<T>(route: Descriptor<DescriptorKind.route, T>): ControllerBuilder;
+    with<T>(route: Descriptor<DescriptorKind.route, T>): ControllerBuilder;
     build(): ControllerDescriptor;
 }
 
@@ -56,7 +56,7 @@ export function controllerBuilder(name: string): ControllerBuilder {
         apiHandler: async () => {},
     };
     return {
-        use(route) {
+        with(route) {
             descriptor.routes.push(route as RouteDescriptor);
             return this;
         },

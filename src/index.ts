@@ -24,7 +24,7 @@ const createInvoiceRoute = defineRoute({
 });
 
 const controller = controllerBuilder("ExampleController")
-    .use(createInvoiceRoute)
+    .with(createInvoiceRoute)
     .build();
 
 const authGuard = defineGuard({
