@@ -29,13 +29,14 @@ const controller = controllerBuilder("ExampleController")
 
 const authGuard = defineGuard({
     name: "AuthGuard",
-    async handler() {
+    async handler(event, context) {
         try {
             getRequestContext();
         } catch (e) {
             console.error("Error accessing request context in guard:", e);
         }
         console.log("AuthGuard: Checking authorization...");
+        return { context, event };
     },
 });
 
