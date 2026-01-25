@@ -1,5 +1,9 @@
 import type { Descriptor, DescriptorKind } from "@core/descriptor";
-import type { APIGatewayProxyEvent, Handler } from "aws-lambda";
+import type {
+    APIGatewayProxyEvent,
+    APIGatewayProxyEventV2,
+    Handler,
+} from "aws-lambda";
 import type { z } from "zod/v4-mini";
 
 export type RequestType = Partial<
@@ -19,13 +23,14 @@ export interface RouteDescriptorData<I extends RequestType, O = any> {
     path: string;
     request: I;
     method: HttpMethod;
-    mapContext?: Handler<APIGatewayProxyEvent>;
     handler: (safeInput: SafeInput<I>) => Promise<O>;
 }
 
 export type RouteDescriptor<I extends RequestType = any, O = any> = Descriptor<
     DescriptorKind.route,
-    RouteDescriptorData<I, O> & { apiHandler: Handler<APIGatewayProxyEvent> }
+    RouteDescriptorData<I, O> & {
+        apiHandler: Handler<APIGatewayProxyEvent | APIGatewayProxyEventV2>;
+    }
 >;
 
 export type InputData<I> = {

@@ -39,21 +39,28 @@ export interface ModuleBuilder {
 
 function makeHandler(descriptor: ModuleDescriptorData) {
     return async (...args: Parameters<Handler>) => {
-        if (isApiGatewayEvent(args[0])) {
-            if (descriptor.guards.length !== 0) {
-                // apply guards
-                for (const guard of descriptor.guards) {
-                    await guard.data.handler(...args);
-                }
-            }
+        let event = args[0],
+            context = args[1],
+            callback = args[2];
+        for (const guard of descriptor.guards) {
+            ({ event, context } = await guard.data.handler(event, context));
+        }
 
+        if (isApiGatewayEvent(event)) {
             if (descriptor.controller) {
-                // further handling (controllers/routes) would go here
-                return descriptor.controller.data.apiHandler(...args);
+                return descriptor.controller.data.apiHandler(
+                    event,
+                    context,
+                    callback,
+                );
             }
 
             if (descriptor.route) {
-                return descriptor.route.data.apiHandler(...args);
+                return descriptor.route.data.apiHandler(
+                    event,
+                    context,
+                    callback,
+                );
             }
         }
 

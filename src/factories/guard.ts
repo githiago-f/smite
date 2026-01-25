@@ -3,11 +3,16 @@ import {
     DescriptorKind,
     type Descriptor,
 } from "@core/descriptor";
-import type { APIGatewayProxyEvent, Handler } from "aws-lambda";
+import type { Context } from "aws-lambda";
+
+export interface GuardResult {
+    event: any;
+    context: Context;
+}
 
 export interface GuardDescriptorData {
     name: string;
-    handler: Handler<APIGatewayProxyEvent>;
+    handler: (event: any, context: Context) => Promise<GuardResult>;
 }
 
 export type GuardDescriptor = Descriptor<

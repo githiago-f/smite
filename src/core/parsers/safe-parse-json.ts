@@ -4,7 +4,7 @@ export class JsonParsingError extends Error {
     }
 }
 
-export function safeParseJson(input: string | null): unknown {
+export function safeParseJson(input: string | null | undefined): unknown {
     if (typeof input === "string") {
         try {
             return JSON.parse(input);
