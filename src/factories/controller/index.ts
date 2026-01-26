@@ -1,10 +1,12 @@
 import { defineDescriptor, DescriptorKind } from "@core/descriptor";
 import { extractHttpInfo } from "@core/helpers/api-gateway";
-import type { HandlerParams } from "@core/helpers/handler-type";
+import type { APIHandlerParams } from "@core/helpers/handler-type";
 import { createRouteMatcher } from "@core/helpers/router";
 import { NotFoundError } from "@factories/errors/not-found";
 import type { RouteDescriptor } from "@factories/route/type";
 import type { ControllerDescriptorData, ControllerBuilder } from "./type";
+
+export type { ControllerDescriptor } from "./type";
 
 function makeHandler(descriptor: ControllerDescriptorData) {
     const matchers = descriptor.routes.map((route) => {
@@ -12,15 +14,16 @@ function makeHandler(descriptor: ControllerDescriptorData) {
         return { route, matcher };
     });
 
-    return async (...args: HandlerParams) => {
+    return async (...args: APIHandlerParams) => {
         const { path, httpMethod } = extractHttpInfo(args[0]);
 
         for (const { route, matcher } of matchers) {
             const match = matcher(path);
-            const matchMethod = route.data.method === "*"
-                || route.data.method.toUpperCase() === httpMethod.toUpperCase();
+            const matchMethod =
+                route.data.method === "*" ||
+                route.data.method.toUpperCase() === httpMethod.toUpperCase();
             if (matchMethod || match.matched) {
-                return route.data.apiHandler(...args);
+                return route.data.eventHandler(...args);
             }
         }
 

@@ -11,7 +11,7 @@ export interface ControllerDescriptorData {
 export type ControllerDescriptor = Descriptor<
     DescriptorKind.controller,
     ControllerDescriptorData & {
-        apiHandler: Handler<APIGatewayUnion>;
+        eventHandler: Handler<APIGatewayUnion>;
     }
 >;
 

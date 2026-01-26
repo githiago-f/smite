@@ -1,6 +1,8 @@
 import { defineDescriptor, DescriptorKind } from "@core/descriptor";
 import type { GuardDescriptorData } from "./type";
 
+export type { GuardDescriptor } from "./type";
+
 /**
  * Describes a guard that can be used to protect routes or resources.
  * Guards are executed before the main handler and can modify the event,

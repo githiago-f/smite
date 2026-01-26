@@ -29,7 +29,7 @@ export interface RouteDescriptorData<I extends RequestType, O = any> {
 export type RouteDescriptor<I extends RequestType = any, O = any> = Descriptor<
     DescriptorKind.route,
     RouteDescriptorData<I, O> & {
-        apiHandler: Handler<APIGatewayProxyEvent | APIGatewayProxyEventV2>;
+        eventHandler: Handler<APIGatewayProxyEvent | APIGatewayProxyEventV2>;
     }
 >;
 
