@@ -7,7 +7,7 @@ import { moduleBuilder } from "@factories/module";
 
 const createInvoiceRoute = defineRoute({
     path: "/invoices",
-    method: "POST",
+    method: "post",
     request: {
         headers: z.object({
             Authorization: z.string(),
@@ -36,7 +36,7 @@ const authGuard = defineGuard({
             console.error("Error accessing request context in guard:", e);
         }
         console.log("AuthGuard: Checking authorization...");
-        return { context, event };
+        return { awsContext: context, event };
     },
 });
 
@@ -67,6 +67,6 @@ else {
             path: "/invoices",
         },
         { awsRequestId: "example-request-id" } as any,
-        () => {},
+        () => { },
     );
 }

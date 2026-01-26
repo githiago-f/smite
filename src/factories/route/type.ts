@@ -22,7 +22,7 @@ type SafeInput<I extends RequestType> = { [K in keyof I]: z.infer<I[K]> };
 export interface RouteDescriptorData<I extends RequestType, O = any> {
     path: string;
     request: I;
-    method: HttpMethod;
+    method: HttpMethod | Lowercase<HttpMethod>;
     handler: (safeInput: SafeInput<I>) => Promise<O>;
 }
 

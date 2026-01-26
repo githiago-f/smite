@@ -3,12 +3,12 @@ import {
     type Descriptor,
     DescriptorKind,
 } from "@core/descriptor";
-import type { GuardDescriptor } from "./guard";
 import type { Handler } from "aws-lambda";
-import { isApiGatewayEvent } from "@core/helpers/api-gateway-checkers";
-import type { ControllerDescriptor } from "./controller";
+import { isApiGatewayEvent } from "@core/helpers/api-gateway";
 import type { RouteDescriptor } from "./route/type";
 import type { HandlerDescriptor } from "./handler";
+import type { ControllerDescriptor } from "./controller/type";
+import type { GuardDescriptor } from "./guard/type";
 
 export type NonModuleDescriptorKind = Exclude<DescriptorKind, "module">;
 type DefaultDescriptor = Descriptor<NonModuleDescriptorKind, unknown>;
@@ -16,21 +16,21 @@ type DefaultDescriptor = Descriptor<NonModuleDescriptorKind, unknown>;
 export interface ModuleDescriptorData {
     name: string;
     eventHandler: Handler;
-    handler: HandlerDescriptor;
+    handler?: HandlerDescriptor;
     guards: GuardDescriptor[];
-    controller: ControllerDescriptor;
-    route: RouteDescriptor;
+    controller?: ControllerDescriptor;
+    route?: RouteDescriptor;
     components: DefaultDescriptor[];
 }
 
 export interface ModuleBuilder {
     with<
         T extends
-            | DefaultDescriptor
-            | GuardDescriptor
-            | ControllerDescriptor
-            | RouteDescriptor
-            | HandlerDescriptor,
+        | DefaultDescriptor
+        | GuardDescriptor
+        | ControllerDescriptor
+        | RouteDescriptor
+        | HandlerDescriptor,
     >(
         component: T,
     ): ModuleBuilder;
@@ -39,32 +39,32 @@ export interface ModuleBuilder {
 
 function makeHandler(descriptor: ModuleDescriptorData) {
     return async (...args: Parameters<Handler>) => {
-        let event = args[0],
-            context = args[1],
-            callback = args[2];
+        let event = args[0], ctx = args[1], cb = args[2];
         for (const guard of descriptor.guards) {
-            ({ event, context } = await guard.data.handler(event, context));
+            ({ event, awsContext: ctx } = await guard.data.handler(event, ctx));
         }
 
         if (isApiGatewayEvent(event)) {
             if (descriptor.controller) {
                 return descriptor.controller.data.apiHandler(
                     event,
-                    context,
-                    callback,
+                    ctx,
+                    cb,
                 );
             }
 
             if (descriptor.route) {
                 return descriptor.route.data.apiHandler(
                     event,
-                    context,
-                    callback,
+                    ctx,
+                    cb,
                 );
             }
         }
 
-        return descriptor.handler.data.handler(...args);
+        return descriptor.handler?.data.handler(...args) ?? (() => {
+            throw new Error('Handler not defined for event', args[0]);
+        });
     };
 }
 
@@ -87,12 +87,11 @@ export function moduleBuilder(name: string): ModuleBuilder {
     const descriptor: ModuleDescriptorData = {
         name,
         guards: [],
-        controller: undefined as unknown as ControllerDescriptor,
-        handler: undefined as unknown as HandlerDescriptor,
-        route: undefined as unknown as RouteDescriptor,
         components: [],
-        eventHandler: async () => {},
+        eventHandler: async () => { },
     };
+
+    let hasHandlerDefined = false;
 
     return {
         with(component) {
@@ -103,13 +102,19 @@ export function moduleBuilder(name: string): ModuleBuilder {
                     descriptor.guards.push(component as GuardDescriptor);
                     break;
                 case DescriptorKind.controller:
-                    descriptor.controller = component as ControllerDescriptor;
+                    if (hasHandlerDefined) { throw new Error('Module already has a main handler'); }
+                    descriptor.controller ??= component as ControllerDescriptor;
+                    hasHandlerDefined = true;
                     break;
                 case DescriptorKind.route:
-                    descriptor.route = component as RouteDescriptor;
+                    if (hasHandlerDefined) { throw new Error('Module already has a main handler'); }
+                    descriptor.route ??= component as RouteDescriptor;
+                    hasHandlerDefined = true;
                     break;
                 case DescriptorKind.handler:
-                    descriptor.handler = component as HandlerDescriptor;
+                    if (hasHandlerDefined) { throw new Error('Module already has a main handler'); }
+                    descriptor.handler ??= component as HandlerDescriptor;
+                    hasHandlerDefined = true;
                     break;
                 default:
                     descriptor.components.push(component);

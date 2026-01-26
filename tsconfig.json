@@ -11,6 +11,7 @@
         "strict": true,
         "isolatedModules": true,
         "resolveJsonModule": true,
+        "moduleResolution": "bundler",
         "esModuleInterop": true,
         "noUncheckedSideEffectImports": true,
         "moduleDetection": "force",

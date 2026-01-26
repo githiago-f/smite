@@ -1,4 +1,14 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyEventV2 } from "aws-lambda";
+import type { APIGatewayUnion } from "./handler-type";
+
+export function extractHttpInfo(event: APIGatewayUnion) {
+    return isApiGatewayV1(event)
+        ? { path: event.path, httpMethod: event.httpMethod }
+        : {
+            path: event.rawPath,
+            httpMethod: event.requestContext.http.method,
+        };
+}
 
 export function isApiGatewayV1(event: unknown): event is APIGatewayProxyEvent {
     return (
@@ -10,9 +20,7 @@ export function isApiGatewayV1(event: unknown): event is APIGatewayProxyEvent {
     );
 }
 
-export function isApiGatewayV2(
-    event: unknown,
-): event is APIGatewayProxyEventV2 {
+export function isApiGatewayV2(event: unknown): event is APIGatewayProxyEventV2 {
     return (
         typeof event === "object" &&
         event !== null &&
@@ -21,8 +29,6 @@ export function isApiGatewayV2(
     );
 }
 
-export function isApiGatewayEvent(
-    event: unknown,
-): event is APIGatewayProxyEvent | APIGatewayProxyEventV2 {
+export function isApiGatewayEvent(event: unknown): event is APIGatewayUnion {
     return isApiGatewayV1(event) || isApiGatewayV2(event);
 }
