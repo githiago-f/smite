@@ -6,6 +6,7 @@ await esbuild.build({
     bundle: true,
     minify: true,
     platform: "node",
+    tsconfig: "tsconfig.json",
     target: ["node24"],
     external: ["zod*"],
     define: {},

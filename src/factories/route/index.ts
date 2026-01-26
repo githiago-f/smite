@@ -77,10 +77,9 @@ export function defineRoute<I extends RequestType>(
     descriptor: RouteDescriptorData<I>,
 ): RouteDescriptor<I> {
     const key = `${descriptor.method} ${descriptor.path}`;
-    const descriptorWithHandler = {
-        ...descriptor,
-        apiHandler: makeHandler(descriptor),
-    };
 
-    return defineDescriptor(DescriptorKind.route, key, descriptorWithHandler);
+    return defineDescriptor(DescriptorKind.route, key, {
+        ...descriptor,
+        eventHandler: makeHandler(descriptor),
+    });
 }

@@ -1,6 +1,6 @@
-import { defineRoute, getRequestContext } from "@factories/route";
 import { z } from "zod/v4-mini";
 import { fork, isPrimary } from "node:cluster";
+import { defineRoute, getRequestContext } from "@factories/route";
 import { controllerBuilder } from "@factories/controller";
 import { defineGuard } from "@factories/guard";
 import { moduleBuilder } from "@factories/module";
@@ -60,13 +60,13 @@ else {
                 Authorization: "Bearer " + Math.random(),
             },
             body: '{"id": "invoice-123"}',
-            httpMethod: "POST",
+            httpMethod: "post",
             requestContext: {
                 resourcePath: "arn:/invoices",
             },
             path: "/invoices",
         },
         { awsRequestId: "example-request-id" } as any,
-        () => { },
+        () => {},
     );
 }

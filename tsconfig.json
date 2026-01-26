@@ -20,9 +20,6 @@
             "@core/*": [
                 "./src/core/*"
             ],
-            "@mixins/*": [
-                "./src/mixins/*"
-            ],
             "@factories/*": [
                 "./src/factories/*"
             ]
