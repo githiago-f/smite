@@ -1,18 +1,14 @@
 import { defineDescriptor, DescriptorKind } from "@core/descriptor";
 import type { Handler } from "aws-lambda";
-import type { GuardDescriptor } from "../guard";
 import type {
-    ApplicationLevelService,
     ModuleBuilder,
-    ModuleDescriptorData,
-} from "./types";
+    ModuleRegistryData,
+    NonModuleDescriptorKind,
+} from "./type";
 
-function makeHandler(descriptor: ModuleDescriptorData) {
-    return async (...args: Parameters<Handler>) => {
-        let event = args[0],
-            ctx = args[1],
-            cb = args[2];
-        for (const guard of descriptor.guards) {
+function makeHandler(descriptor: ModuleRegistryData) {
+    return async (...[event, ctx, cb]: Parameters<Handler>) => {
+        for (const guard of descriptor.byKind.guard) {
             ({ event, awsContext: ctx } = await guard.data.handler(event, ctx));
         }
 
@@ -21,13 +17,18 @@ function makeHandler(descriptor: ModuleDescriptorData) {
         };
 
         const descriptorKind = descriptor.handlerType ?? DescriptorKind.handler;
-        const descriptorData = descriptor[descriptorKind]?.data;
+        const descriptorData = descriptor.byKind[descriptorKind].at(0)?.data;
 
         const handler = descriptorData?.eventHandler ?? defaultHandler;
 
         return handler(event, ctx, cb);
     };
 }
+
+const isAppLevelService = (kind: NonModuleDescriptorKind) =>
+    kind === DescriptorKind.controller ||
+    kind === DescriptorKind.route ||
+    kind === DescriptorKind.handler;
 
 /**
  * Builds a module descriptor with the given name.
@@ -45,35 +46,25 @@ function makeHandler(descriptor: ModuleDescriptorData) {
  * ```
  */
 export function moduleBuilder(name: string): ModuleBuilder {
-    let descriptor: ModuleDescriptorData = {
+    let descriptor: ModuleRegistryData = {
         name,
-        guards: [],
-        components: [],
+        byKind: {
+            aggregate: [],
+            controller: [],
+            route: [],
+            handler: [],
+            guard: [],
+            service: [],
+            usecase: [],
+        },
     };
-
-    let hasHandlerDefined = false;
 
     return {
         with(component) {
-            const kind = component.__kind;
+            descriptor.byKind[component.__kind].push(component as any);
 
-            switch (kind) {
-                case DescriptorKind.guard:
-                    descriptor.guards.push(component as GuardDescriptor);
-                    break;
-                case DescriptorKind.route:
-                case DescriptorKind.handler:
-                case DescriptorKind.controller:
-                    descriptor =
-                        setApplicationLevelServices<ApplicationLevelService>(
-                            hasHandlerDefined,
-                            descriptor,
-                            component as ApplicationLevelService,
-                        );
-                    hasHandlerDefined = true;
-                    break;
-                default:
-                    descriptor.components.push(component);
+            if (isAppLevelService(component.__kind)) {
+                descriptor.handlerType = component.__kind;
             }
 
             return this;
@@ -84,19 +75,5 @@ export function moduleBuilder(name: string): ModuleBuilder {
                 eventHandler: makeHandler(descriptor),
             });
         },
-    };
-}
-function setApplicationLevelServices<C extends ApplicationLevelService>(
-    hasHandlerDefined: boolean,
-    descriptor: ModuleDescriptorData,
-    component: C,
-) {
-    if (hasHandlerDefined) {
-        throw new Error("Module already has a main handler");
-    }
-    return {
-        ...descriptor,
-        handlerType: component.__kind,
-        [component.__kind]: component,
     };
 }

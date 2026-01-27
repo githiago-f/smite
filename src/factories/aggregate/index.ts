@@ -8,7 +8,7 @@ import type {
     EventParserU,
     EventU,
 } from "./type";
-import type z from "zod/v4-mini";
+import type z from "zod/v4";
 
 function applyAll<State, Events>(
     descriptor: AggregateDescriptorInput<State, Events>,

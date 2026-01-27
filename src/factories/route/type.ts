@@ -4,10 +4,10 @@ import type {
     APIGatewayProxyEventV2,
     Handler,
 } from "aws-lambda";
-import type { z } from "zod/v4-mini";
+import type { z } from "zod/v4";
 
 export type RequestType = Partial<
-    Record<keyof APIGatewayProxyEvent, z.ZodMiniType>
+    Record<keyof APIGatewayProxyEvent, z.ZodType>
 >;
 
 export interface RequestContext {
@@ -21,8 +21,11 @@ type SafeInput<I extends RequestType> = { [K in keyof I]: z.infer<I[K]> };
 
 export interface RouteDescriptorData<I extends RequestType, O = any> {
     path: string;
-    request: I;
     method: HttpMethod | Lowercase<HttpMethod>;
+    description?: string;
+    summary?: string;
+    tags?: string[];
+    request: I;
     handler: (safeInput: SafeInput<I>) => Promise<O>;
 }
 

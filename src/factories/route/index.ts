@@ -1,5 +1,5 @@
 import { defineDescriptor, DescriptorKind } from "@core/descriptor";
-import type z from "zod/v4-mini";
+import type z from "zod/v4";
 import type {
     APIGatewayProxyEvent,
     APIGatewayProxyEventV2,
@@ -42,17 +42,15 @@ function makeContextHandler<I extends RequestType, O>(
                     ? safeParseJson(event.body)
                     : event[key as keyof typeof event];
 
-            data[key] = parseFieldData(
-                request[key] as z.ZodMiniType,
-                fieldData,
-            );
+            const parser = request[key] as z.ZodType;
+            data[key] = parseFieldData(parser, fieldData);
         }
 
         return descriptor.handler(data);
     };
 }
 
-function parseFieldData<T>(parser: z.ZodMiniType, fieldData: unknown): T {
+function parseFieldData<T>(parser: z.ZodType, fieldData: unknown): T {
     const safelyParsed = parser.safeParse(fieldData);
     if (!safelyParsed?.success) {
         throw safelyParsed?.error ?? new Error("Parser not defined");

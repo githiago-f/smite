@@ -20,12 +20,12 @@ const normalize = (p: string): readonly string[] =>
 
 const compile = (pattern: string): readonly Segment[] =>
     normalize(pattern).map((seg) => {
-        if (!seg.startsWith(":")) {
+        if (!seg.startsWith("{")) {
             return { kind: "static", value: seg };
         }
 
-        const optional = seg.endsWith("?");
-        const name = seg.slice(1, optional ? -1 : undefined);
+        const optional = seg.endsWith("?}");
+        const name = seg.slice(1, optional ? -2 : -1);
 
         return { kind: "param", name, optional };
     });

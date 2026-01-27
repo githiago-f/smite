@@ -1,5 +1,4 @@
-import { z } from "zod/v4-mini";
-import { fork, isPrimary } from "node:cluster";
+import { z } from "zod/v4";
 import { defineRoute, getRequestContext } from "@factories/route";
 import { controllerBuilder } from "@factories/controller";
 import { defineGuard } from "@factories/guard";
@@ -8,13 +7,26 @@ import { moduleBuilder } from "@factories/module";
 const createInvoiceRoute = defineRoute({
     path: "/invoices",
     method: "post",
+    description: "Endpoint to create a new invoice",
     request: {
         headers: z.object({
             Authorization: z.string(),
         }),
-        body: z.strictObject({
-            id: z.string(),
-        }),
+        body: z
+            .strictObject({
+                id: z.string().meta({
+                    id: "invoice-id",
+                    title: "InvoiceID",
+                    description: "Unique identifier for the invoice",
+                    format: "uuid",
+                }),
+            })
+            .meta({
+                format: "application/json",
+                id: "create-invoice-request",
+                title: "CreateInvoiceRequest",
+                description: "Request to create an invoice",
+            }),
     },
     async handler(input) {
         console.log(getRequestContext());
@@ -40,33 +52,4 @@ const authGuard = defineGuard({
     },
 });
 
-const exampleModule = moduleBuilder("ExampleModule")
-    .with(authGuard)
-    .with(controller)
-    .build();
-
-// testing for concurrent cases
-if (isPrimary)
-    for (let i = 0; i < 8; i++) {
-        const worker = fork();
-        setTimeout(() => {
-            worker.kill();
-        }, 300);
-    }
-else {
-    exampleModule.data.eventHandler(
-        {
-            headers: {
-                Authorization: "Bearer " + Math.random(),
-            },
-            body: '{"id": "invoice-123"}',
-            httpMethod: "post",
-            requestContext: {
-                resourcePath: "arn:/invoices",
-            },
-            path: "/invoices",
-        },
-        { awsRequestId: "example-request-id" } as any,
-        () => {},
-    );
-}
+moduleBuilder("ExampleModule").with(authGuard).with(controller).build();

@@ -15,10 +15,15 @@ export interface Descriptor<TKind extends DescriptorKind, TData> {
     data: TData;
 }
 
+declare const ALLOW_GLOBAL_REGISTRY: boolean;
+declare const globalRegistry: Map<string, Descriptor<DescriptorKind, any>>;
+
 export function defineDescriptor<TKind extends DescriptorKind, TData>(
     kind: TKind,
     key: string,
     data: TData,
 ): Descriptor<TKind, TData> {
-    return { __kind: kind, __key: key, data: data };
+    const descriptor = { __kind: kind, __key: key, data };
+    ALLOW_GLOBAL_REGISTRY && globalRegistry?.set(key, descriptor);
+    return descriptor;
 }

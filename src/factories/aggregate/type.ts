@@ -1,5 +1,5 @@
 import type { Descriptor, DescriptorKind } from "@core/descriptor";
-import type { ZodMiniType } from "zod/v4-mini";
+import type { ZodType } from "zod/v4";
 
 export type Aggregate<State, Events> = {
     state: State;
@@ -13,9 +13,9 @@ export type Aggregate<State, Events> = {
 
 export interface AggregateDescriptorInput<State, Events> {
     name: string;
-    state: ZodMiniType<State>;
+    state: ZodType<State>;
     events: {
-        [K in keyof Events]: ZodMiniType<Events[K]>;
+        [K in keyof Events]: ZodType<Events[K]>;
     };
     effectAppliers: {
         [K in keyof Events]: (s: State, e: Events[K]) => State;
@@ -31,7 +31,7 @@ export type EffectApplierU<Events, State> = {
 }[keyof Events];
 
 export type EventParserU<Events> = {
-    [K in keyof Events]: ZodMiniType<Events[K]>;
+    [K in keyof Events]: ZodType<Events[K]>;
 }[keyof Events];
 
 export type AggregateFactory<S, E> = (d: S, e?: EventU<E>[]) => Aggregate<S, E>;

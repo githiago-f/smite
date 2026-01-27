@@ -48,7 +48,7 @@ export function controllerBuilder(name: string): ControllerBuilder {
             return defineDescriptor(
                 DescriptorKind.controller,
                 descriptor.name,
-                { ...descriptor, apiHandler: makeHandler(descriptor) },
+                { ...descriptor, eventHandler: makeHandler(descriptor) },
             );
         },
     };

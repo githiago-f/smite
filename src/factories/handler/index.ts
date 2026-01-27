@@ -1,7 +1,7 @@
 import { defineDescriptor, DescriptorKind } from "@core/descriptor";
-import type { HandlerDescriptor, HandlerDescriptorData } from "./types";
+import type { HandlerDescriptor, HandlerDescriptorData } from "./type";
 
-export type { HandlerDescriptor } from "./types";
+export type { HandlerDescriptor } from "./type";
 
 export function defineHandler(
     name: string,
