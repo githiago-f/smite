@@ -34,14 +34,16 @@ for (const file of files) {
 const descriptors = Array.from(globalRegistry.values());
 
 function buildRequestBody(descriptor) {
-    if (descriptor.data.request?.["body"])
+    if (descriptor.data.request?.["body"]) {
+        const schema = descriptor.data.request?.['body'];
         return {
             content: {
-                "application/json": {
-                    schema: descriptor.data.request?.["body"],
+                [schema?.meta()?.mime ?? 'application/json']: {
+                    schema,
                 },
             },
         };
+    }
 }
 
 const paths = descriptors.reduce((acc, descriptor) => {
@@ -73,6 +75,15 @@ const document = createDocument({
             variables: { port: { default: "3000" } },
         },
     ],
+    components: {
+        securitySchemes: {
+            bearerAuth: {
+                type: 'http',
+                scheme: 'bearer',
+                bearerFormat: 'JWT'
+            }
+        }
+    },
     paths,
 });
 

@@ -15,7 +15,7 @@ import type {
 import { context, defaultContextMapper, withContext } from "./context";
 import { BadContextError } from "@factories/errors/bad-context-error";
 
-export type { RouteDescriptor } from "./type";
+export type { RouteDescriptor, RequestContext, HttpMethod } from "./type";
 
 function makeHandler<I extends RequestType, O>(
     descriptor: RouteDescriptorData<I, O>,
