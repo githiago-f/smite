@@ -35,12 +35,11 @@ const descriptors = Array.from(globalRegistry.values());
 
 function buildRequestBody(descriptor) {
     if (descriptor.data.request?.["body"]) {
-        const schema = descriptor.data.request?.['body'];
+        const schema = descriptor.data.request?.["body"];
+        const mimeType = schema?.meta()?.mime ?? "application/json";
         return {
             content: {
-                [schema?.meta()?.mime ?? 'application/json']: {
-                    schema,
-                },
+                [mimeType]: { schema },
             },
         };
     }
@@ -78,11 +77,11 @@ const document = createDocument({
     components: {
         securitySchemes: {
             bearerAuth: {
-                type: 'http',
-                scheme: 'bearer',
-                bearerFormat: 'JWT'
-            }
-        }
+                type: "http",
+                scheme: "bearer",
+                bearerFormat: "JWT",
+            },
+        },
     },
     paths,
 });
