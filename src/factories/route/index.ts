@@ -12,7 +12,7 @@ import { context, withContext } from "./context";
 import { BadContextError } from "@factories/errors/bad-context-error";
 import type { APIGatewayUnion } from "@core/helpers/handler-type";
 
-export type { RouteDescriptor } from "./type";
+export type { RouteDescriptor, RequestContext, HttpMethod } from "./type";
 
 function makeHandler<I extends RequestType, O>(
     descriptor: RouteDescriptorData<I, O>,
