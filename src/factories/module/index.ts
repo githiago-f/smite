@@ -6,15 +6,15 @@ import type {
     NonModuleDescriptorKind,
 } from "./type";
 
+function defaultHandler(...args: Parameters<Handler>) {
+    throw new Error("Handler not defined for event", args[0]);
+}
+
 function makeHandler(descriptor: ModuleRegistryData) {
     return async (...[event, ctx, cb]: Parameters<Handler>) => {
         for (const guard of descriptor.byKind.guard) {
             ({ event, awsContext: ctx } = await guard.data.handler(event, ctx));
         }
-
-        const defaultHandler = (...args: Parameters<Handler>) => {
-            throw new Error("Handler not defined for event", args[0]);
-        };
 
         const descriptorKind = descriptor.handlerType ?? DescriptorKind.handler;
         const descriptorData = descriptor.byKind[descriptorKind].at(0)?.data;

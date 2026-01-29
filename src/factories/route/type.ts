@@ -1,14 +1,9 @@
 import type { Descriptor, DescriptorKind } from "@core/descriptor";
-import type {
-    APIGatewayProxyEvent,
-    APIGatewayProxyEventV2,
-    Handler,
-} from "aws-lambda";
+import type { APIGatewayUnion } from "@core/helpers/handler-type";
+import type { Handler } from "aws-lambda";
 import type { z } from "zod/v4";
 
-export type RequestType = Partial<
-    Record<keyof APIGatewayProxyEvent, z.ZodType>
->;
+export type RequestType = Partial<Record<keyof APIGatewayUnion, z.ZodType>>;
 
 export interface RequestContext {
     requestId: string;
@@ -32,7 +27,7 @@ export interface RouteDescriptorData<I extends RequestType, O = any> {
 export type RouteDescriptor<I extends RequestType = any, O = any> = Descriptor<
     DescriptorKind.route,
     RouteDescriptorData<I, O> & {
-        eventHandler: Handler<APIGatewayProxyEvent | APIGatewayProxyEventV2>;
+        eventHandler: Handler<APIGatewayUnion>;
     }
 >;
 
