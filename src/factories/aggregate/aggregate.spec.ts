@@ -1,5 +1,6 @@
-import { defineAggregate } from "@factories/aggregate";
-import { AggregateValidationError } from "@factories/errors/aggregate-validation-error";
+import { describe, it, expect } from 'vitest';
+import { defineAggregate } from "./index";
+import { AggregateValidationError } from "../errors/aggregate-validation-error";
 import { z } from "zod/v4";
 
 const invoiceAggregateState = z.strictObject({
