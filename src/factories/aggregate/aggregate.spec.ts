@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { defineAggregate } from "./index";
+import { defineAggregate } from ".";
 import { AggregateValidationError } from "../errors/aggregate-validation-error";
 import { z } from "zod/v4";
 
@@ -79,6 +79,9 @@ describe("#defineAggregate", () => {
         expect(() =>
             invoice.putEvent({ kind: "InvoiceCreated", invalid: "A" } as any),
         ).toThrow(AggregateValidationError);
+
+        const withInvalidEvent = invoice.putEvent({ kind: 'INVALID', data: {} } as any);
+        expect(withInvalidEvent.state).toStrictEqual(invoice.state);
     });
 
     it("should not accept bad states", () => {
@@ -97,5 +100,12 @@ describe("#defineAggregate", () => {
                 data: { invalid: 1 },
             }),
         ).toThrow(AggregateValidationError);
+    });
+
+    it('.commit', () => {
+        const aggregate = defineAggregate(specification).data.factory({ id: 'value', status: 'draft' });
+        const withEvent = aggregate.putEvent({ kind: 'InvoiceCreated', data: {} });
+        expect(withEvent.uncommited()).toHaveLength(1);
+        expect(withEvent.commit().uncommited()).toHaveLength(0);
     });
 });

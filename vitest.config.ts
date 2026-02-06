@@ -21,11 +21,11 @@ export default defineConfig({
         ALLOW_GLOBAL_REGISTRY: 'false',
     },
     test: {
+        bail: 5,
         exclude: configDefaults.exclude.concat(['.out/**', '**.js']),
         coverage: {
-            reporter: ['text', 'lcov'],
-            include: ['./src/**/*.{ts}'],
-            exclude: ['**/*.spec.{ts}']
+            enabled: true,
+            reporter: ['lcov', 'text', 'json'],
         }
     }
-})
+});

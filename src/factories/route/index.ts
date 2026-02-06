@@ -19,6 +19,9 @@ function makeHandler<I extends RequestType, O>(
 ): Handler<APIGatewayUnion, O> {
     return async (event, ctx) =>
         withContext({ rawToken: "", requestId: "" }, () => {
+            if (!descriptor.request)
+                return descriptor.handler(event as any);
+
             const request = descriptor.request;
             const keys = Object.keys(request) as (keyof I)[];
 
@@ -74,6 +77,8 @@ export function defineRoute<I extends RequestType>(
 
     return defineDescriptor(DescriptorKind.route, key, {
         ...descriptor,
+        path: descriptor.path ?? '/',
+        method: descriptor.method ?? '*',
         eventHandler: makeHandler(descriptor),
     });
 }

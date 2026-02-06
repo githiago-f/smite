@@ -16,6 +16,6 @@ export type ControllerDescriptor = Descriptor<
 >;
 
 export interface ControllerBuilder {
-    with<T>(route: Descriptor<DescriptorKind.route, T>): ControllerBuilder;
+    with(route: RouteDescriptor): ControllerBuilder;
     build(): ControllerDescriptor;
 }

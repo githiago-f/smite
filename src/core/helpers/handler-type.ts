@@ -4,7 +4,7 @@ import type {
     Handler,
 } from "aws-lambda";
 
-export type APIGatewayUnion = APIGatewayProxyEvent | APIGatewayProxyEventV2;
+export type APIGatewayUnion = (APIGatewayProxyEvent | APIGatewayProxyEventV2);
 
 export type APIHandlerParams = Parameters<Handler<APIGatewayUnion>>;
 

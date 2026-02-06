@@ -2,12 +2,14 @@ import type { APIGatewayProxyEvent, APIGatewayProxyEventV2 } from "aws-lambda";
 import type { APIGatewayUnion } from "./handler-type";
 
 export function extractHttpInfo(event: APIGatewayUnion) {
-    return isApiGatewayV1(event)
-        ? { path: event.path, httpMethod: event.httpMethod }
-        : {
+    if (isApiGatewayV1(event))
+        return { path: event.path, httpMethod: event.httpMethod }
+    if (isApiGatewayV2(event))
+        return {
             path: event.rawPath,
             httpMethod: event.requestContext.http.method,
         };
+    throw new Error('Invalid http event');
 }
 
 export function isApiGatewayV1(event: unknown): event is APIGatewayProxyEvent {

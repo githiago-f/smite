@@ -4,6 +4,7 @@ import type { ZodType } from "zod/v4";
 export type Aggregate<State, Events> = {
     state: State;
     commit(): Aggregate<State, Events>;
+    uncommited(): readonly EventU<Events>[];
     fold<R>(fn: (a: State) => R): R;
     putEvent<K extends keyof Events>(event: {
         kind: K;

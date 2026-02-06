@@ -15,12 +15,18 @@ export type HttpMethod = "POST" | "GET" | "PUT" | "PATCH" | "*";
 type SafeInput<I extends RequestType> = { [K in keyof I]: z.infer<I[K]> };
 
 export interface RouteDescriptorData<I extends RequestType, O = any> {
-    path: string;
-    method: HttpMethod | Lowercase<HttpMethod>;
+    /**
+     * @default '/'
+     **/
+    path?: string;
+    /**
+     * @default '*'
+     */
+    method?: HttpMethod | Lowercase<HttpMethod>;
     description?: string;
     summary?: string;
     tags?: string[];
-    request: I;
+    request?: I;
     handler: (safeInput: SafeInput<I>) => Promise<O>;
 }
 

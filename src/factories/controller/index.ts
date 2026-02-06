@@ -3,14 +3,13 @@ import { extractHttpInfo } from "@core/helpers/api-gateway";
 import type { APIHandlerParams } from "@core/helpers/handler-type";
 import { createRouteMatcher } from "@core/helpers/router";
 import { NotFoundError } from "@factories/errors/not-found";
-import type { RouteDescriptor } from "@factories/route/type";
 import type { ControllerDescriptorData, ControllerBuilder } from "./type";
 
 export type { ControllerDescriptor } from "./type";
 
 function makeHandler(descriptor: ControllerDescriptorData) {
     const matchers = descriptor.routes.map((route) => {
-        const matcher = createRouteMatcher(route.data.path);
+        const matcher = createRouteMatcher(route.data.path!);
         return { route, matcher };
     });
 
@@ -19,10 +18,9 @@ function makeHandler(descriptor: ControllerDescriptorData) {
 
         for (const { route, matcher } of matchers) {
             const match = matcher(path);
-            const matchMethod =
-                route.data.method === "*" ||
-                route.data.method.toUpperCase() === httpMethod.toUpperCase();
-            if (matchMethod || match.matched) {
+            const method = route.data.method!;
+            const matchMethod = method === "*" || method.toUpperCase() === httpMethod.toUpperCase();
+            if (matchMethod && match.matched) {
                 return route.data.eventHandler(...args);
             }
         }
@@ -41,7 +39,7 @@ export function controllerBuilder(name: string): ControllerBuilder {
     };
     return {
         with(route) {
-            descriptor.routes.push(route as RouteDescriptor);
+            descriptor.routes.push(route);
             return this;
         },
         build() {

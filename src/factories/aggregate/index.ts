@@ -53,10 +53,7 @@ function parseState<State, Events>(
     return parsedState.data;
 }
 
-function parseEvent<Events>(
-    parser: EventParserU<Events>,
-    event: EventU<Events>,
-) {
+function parseEvent<Events>(parser: EventParserU<Events>, event: EventU<Events>) {
     const parsedEvent = parser.safeParse(event.data);
     if (!parsedEvent.success) {
         throw new AggregateValidationError(parsedEvent.error, event);
@@ -79,6 +76,7 @@ export function defineAggregate<State, Events>(
         return {
             state: safeState.data,
             fold: (fn) => fn(safeState.data),
+            uncommited: () => events,
             putEvent: (event) => {
                 const merged = events.concat([event]);
                 const newState = applyAll(descriptor, safeState.data, [event]);
