@@ -7,7 +7,7 @@ import { createDocument } from "zod-openapi";
 globalThis.globalRegistry = new Map();
 
 await esbuild.build({
-    entryPoints: ["src/index.ts"],
+    entryPoints: [],
     outdir: ".dist",
     entryNames: "[name]",
     outExtension: { ".js": ".cjs" },
