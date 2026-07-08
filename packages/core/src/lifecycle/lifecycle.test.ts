@@ -28,4 +28,20 @@ describe("lifecycle", () => {
     expect(composition.entries).toEqual([guard.descriptor]);
     expect(merged.entries).toEqual([guard.descriptor, filter.descriptor]);
   });
+
+  it("captures runtime implementation references without executing them", () => {
+    const validateInput = ({ body }: { readonly body: unknown }) => body;
+    const validator = lifecycle.guard("user-input-validator", validateInput, {
+      source: "http.body",
+    });
+
+    expect(validator.descriptor).toMatchObject({
+      kind: "lifecycle.entry",
+      entryKind: "guard",
+      name: "user-input-validator",
+      implementation: validateInput,
+      options: { source: "http.body" },
+    });
+    expect(Object.isFrozen(validator.descriptor.options)).toBe(true);
+  });
 });

@@ -5,9 +5,9 @@ order: 10
 ---
 
 Lifecycle composition describes execution policy without describing transport behavior.
-Guards, filters, providers, interceptors and pipes are all reusable builders. They are not classes and they are not runtime instances.
+Guards, filters, providers, interceptors and pipes are all reusable builders. They are not classes and builders never execute runtime logic.
 
-The lifecycle namespace creates small semantic descriptors. Those descriptors can be composed into policies and merged into transport descriptors during compilation.
+The lifecycle namespace creates small semantic descriptors. Those descriptors can be composed into policies and merged into transport descriptors during compilation. A descriptor may also reference a runtime implementation, such as a validator that calls a schema parser or a filter that localizes captured errors.
 
 ## Why lifecycle is transport-agnostic
 
@@ -16,6 +16,12 @@ Lifecycle policy answers what execution concerns apply to a handler. It does not
 This keeps the public API reusable across transports and gives compiler plugins one normalized lifecycle model to consume.
 
 @example Lifecycle adapters
+
+## Runtime implementations
+
+Lifecycle implementations are explicit function references carried by the descriptor. They are consumed by generated runtime artifacts, not executed by the builder layer.
+
+@example Lifecycle implementations
 
 ## Reusable policies
 

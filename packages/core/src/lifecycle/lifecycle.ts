@@ -3,6 +3,7 @@ import type {
   DescriptorBuilder,
   LifecycleCompositionDescriptor,
   LifecycleEntry,
+  LifecycleEntryImplementation,
   LifecycleEntryKind,
   LifecycleEntryOptions,
   LifecycleSource,
@@ -22,6 +23,13 @@ import {
  */
 export type LifecycleEntryBuilder<Kind extends LifecycleEntryKind> =
   DescriptorBuilder<LifecycleEntry<Kind>>;
+
+export type LifecycleEntryDefinition =
+  | readonly [options?: LifecycleEntryOptions]
+  | readonly [
+      implementation: LifecycleEntryImplementation,
+      options?: LifecycleEntryOptions,
+    ];
 
 /**
  * Immutable builder for composing reusable execution policies.
@@ -73,8 +81,8 @@ const createBuilder = (
 /**
  * Namespace for lifecycle component builders and lifecycle compositions.
  *
- * Lifecycle builders describe execution policy only. They do not define
- * transport behavior and they do not execute runtime logic.
+ * Lifecycle builders describe execution policy and may reference runtime
+ * behavior. They do not execute runtime logic.
  *
  * @group Lifecycle
  * @intent Public namespace for creating lifecycle component builders and reusable policy compositions.
@@ -83,14 +91,14 @@ const createBuilder = (
  */
 export const lifecycle = freeze({
   create: (): LifecycleBuilder => createBuilder(emptyLifecycleDescriptor()),
-  guard: (name: string, options?: LifecycleEntryOptions) =>
-    createLifecycleEntryBuilder("guard", name, options),
-  filter: (name: string, options?: LifecycleEntryOptions) =>
-    createLifecycleEntryBuilder("filter", name, options),
-  interceptor: (name: string, options?: LifecycleEntryOptions) =>
-    createLifecycleEntryBuilder("interceptor", name, options),
-  pipe: (name: string, options?: LifecycleEntryOptions) =>
-    createLifecycleEntryBuilder("pipe", name, options),
-  provider: (name: string, options?: LifecycleEntryOptions) =>
-    createLifecycleEntryBuilder("provider", name, options),
+  guard: (name: string, ...definition: LifecycleEntryDefinition) =>
+    createLifecycleEntryBuilder("guard", name, ...definition),
+  filter: (name: string, ...definition: LifecycleEntryDefinition) =>
+    createLifecycleEntryBuilder("filter", name, ...definition),
+  interceptor: (name: string, ...definition: LifecycleEntryDefinition) =>
+    createLifecycleEntryBuilder("interceptor", name, ...definition),
+  pipe: (name: string, ...definition: LifecycleEntryDefinition) =>
+    createLifecycleEntryBuilder("pipe", name, ...definition),
+  provider: (name: string, ...definition: LifecycleEntryDefinition) =>
+    createLifecycleEntryBuilder("provider", name, ...definition),
 });

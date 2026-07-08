@@ -4,6 +4,7 @@ export { mergeLifecycleDescriptors } from "./lifecycle/merge.js";
 
 export type {
   LifecycleBuilder,
+  LifecycleEntryDefinition,
   LifecycleEntryBuilder,
 } from "./lifecycle/lifecycle.js";
 export type {
@@ -19,6 +20,7 @@ export type {
   HttpRouteDescriptor,
   LifecycleCompositionDescriptor,
   LifecycleEntry,
+  LifecycleEntryImplementation,
   LifecycleEntryKind,
   LifecycleEntryOptions,
   LifecycleSource,

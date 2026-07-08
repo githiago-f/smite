@@ -38,6 +38,44 @@ describe("examples", () => {
     ]);
   });
 
+  it("captures lifecycle implementations for generated runtimes", () => {
+    // #section - Lifecycle implementations
+    const UserInput = {
+      parse: (input: unknown) => input as { readonly name: string },
+    };
+
+    const ValidateUserInput = lifecycle.guard(
+      "user-input-validator",
+      ({ body }: { readonly body: unknown }) => UserInput.parse(body),
+      { source: "http.body" },
+    );
+
+    const LocalizedErrors = lifecycle.filter(
+      "localized-errors",
+      (error: Error, { locale }: { readonly locale: string }) => ({
+        message: `${locale}:${error.message}`,
+      }),
+      { dictionary: "errors" },
+    );
+
+    const requestPolicy = lifecycle
+      .create()
+      .guards(ValidateUserInput)
+      .filters(LocalizedErrors);
+    // #endsection
+
+    expect(requestPolicy.descriptor.entries).toEqual([
+      ValidateUserInput.descriptor,
+      LocalizedErrors.descriptor,
+    ]);
+    expect(
+      requestPolicy.descriptor.entries.map((entry) => entry.implementation),
+    ).toEqual([
+      ValidateUserInput.descriptor.implementation,
+      LocalizedErrors.descriptor.implementation,
+    ]);
+  });
+
   it("applies lifecycle composition to an HTTP controller", () => {
     // #section - HTTP controller with lifecycle
     const JwtGuard = lifecycle.guard("jwt");

@@ -45,9 +45,17 @@ export type LifecycleEntryKind =
  * Deterministic lifecycle configuration attached to a lifecycle builder.
  *
  * @group Lifecycle
- * @intent Stores compile-time options without embedding implementation objects.
+ * @intent Stores compile-time options beside explicit runtime implementation references.
  */
 export type LifecycleEntryOptions = Readonly<Record<string, unknown>>;
+
+/**
+ * Runtime behavior referenced by a lifecycle builder.
+ *
+ * @group Lifecycle
+ * @intent Lets generated runtimes execute lifecycle behavior without requiring builders to run it.
+ */
+export type LifecycleEntryImplementation = CallableFunction;
 
 /**
  * Semantic descriptor for a reusable lifecycle component builder.
@@ -61,6 +69,7 @@ export interface LifecycleEntry<
 > extends Descriptor<"lifecycle.entry"> {
   readonly entryKind: Kind;
   readonly name: string;
+  readonly implementation?: LifecycleEntryImplementation;
   readonly options?: LifecycleEntryOptions;
 }
 
