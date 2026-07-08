@@ -1,11 +1,8 @@
-export { emitExpressModule } from "./emit.js";
 export { createNodeHttpServer } from "./node.js";
 export { createExpressRuntime } from "./runtime.js";
 export type {
   ExpressControllerSource,
   ExpressControllerDescriptor,
-  ExpressDependencyKey,
-  ExpressDependencyValue,
   ExpressNextFunction,
   ExpressRequestLike,
   ExpressResponseLike,
@@ -14,8 +11,6 @@ export type {
   ExpressLifecycleEntryKind,
   ExpressRouteDescriptor,
   ExpressRuntimeOptions,
-  ExpressRuntimeModule,
-  ExpressRuntimeModuleOptions,
   NodeHttpRequest,
   NodeHttpResponse,
   NodeHttpServer,

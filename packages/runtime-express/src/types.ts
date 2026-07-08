@@ -12,10 +12,6 @@ import type {
   LifecycleEntryKind,
 } from "@smitejs/core";
 
-export type ExpressDependencyKey = string;
-
-export type ExpressDependencyValue = CallableFunction;
-
 export type ExpressNextFunction = (error?: unknown) => void;
 
 export interface ExpressRequestLike {
@@ -78,16 +74,6 @@ export interface NodeHttpServer {
   listen(port: number, callback?: () => void): void;
   listen(port: number, host: string, callback?: () => void): void;
   close(callback?: () => void): void;
-}
-
-export interface ExpressRuntimeModule {
-  readonly source: string;
-  readonly dependencies: readonly ExpressDependencyKey[];
-}
-
-export interface ExpressRuntimeModuleOptions {
-  readonly appIdentifier?: string;
-  readonly handlerIdentifier?: string;
 }
 
 export type ExpressLifecycleEntryKind = LifecycleEntryKind;

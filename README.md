@@ -75,7 +75,7 @@ During compilation the framework collects semantic information, validates it, bu
 The generated output becomes the production application.
 
 The framework itself should contribute as little runtime code as possible.
-The first runtime emitter prototype in this repository is `@smitejs/runtime-express`, which targets Express and consumes the core HTTP execution pipeline.
+The first Express runtime adapter prototype in this repository is `@smitejs/runtime-express`, which targets Express and consumes the core HTTP execution pipeline.
 
 ## Monorepo
 

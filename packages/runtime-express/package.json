@@ -1,7 +1,7 @@
 {
   "name": "@smitejs/runtime-express",
   "version": "0.1.0",
-  "description": "Express runtime adapter and emitter for Smite descriptors.",
+  "description": "Express runtime adapter for Smite descriptors.",
   "license": "MIT",
   "type": "module",
   "exports": {
