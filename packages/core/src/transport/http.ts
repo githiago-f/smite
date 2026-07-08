@@ -12,13 +12,26 @@ import type {
   LifecycleSource,
 } from "../types.js";
 
-/** Immutable builder for an HTTP route descriptor. */
+/**
+ * Immutable builder for an HTTP route descriptor.
+ *
+ * @group HTTP
+ * @intent Captures a method, path, handler reference and route-specific lifecycle policy.
+ * @example Route-specific lifecycle
+ */
 export interface HttpRouteBuilder {
   readonly descriptor: HttpRouteDescriptor;
   readonly use: (...sources: readonly LifecycleSource[]) => HttpRouteBuilder;
 }
 
-/** Immutable builder for an HTTP controller descriptor. */
+/**
+ * Immutable builder for an HTTP controller descriptor.
+ *
+ * @group HTTP
+ * @intent Groups HTTP routes under a path while preserving reusable lifecycle policy.
+ * @example HTTP controller with lifecycle
+ * @example Immutable builder derivation
+ */
 export interface HttpControllerBuilder {
   readonly descriptor: HttpControllerDescriptor;
   readonly use: (
@@ -90,6 +103,11 @@ const createControllerBuilder = (
  *
  * HTTP builders describe controllers and routes as semantic metadata. They do
  * not register servers, open ports or construct runtime pipelines.
+ *
+ * @group HTTP
+ * @intent Public namespace for declaring HTTP controllers and routes as compile-time descriptors.
+ * @example HTTP controller with lifecycle
+ * @example Route-specific lifecycle
  */
 export const http = freeze({
   controller: (): HttpControllerBuilder =>

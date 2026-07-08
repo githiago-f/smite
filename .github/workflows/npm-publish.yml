@@ -1,0 +1,55 @@
+name: npm Publish
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: SemVer version to publish, with or without v prefix.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Verify SemVer tag
+        run: yarn release:verify
+        env:
+          RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}
+
+      - name: Check
+        run: yarn run check
+
+      - name: Build packages
+        run: yarn build
+
+      - name: Test
+        run: yarn test
+
+      - name: Build docs
+        run: yarn docs:build
+
+      - name: Publish packages
+        run: yarn release:publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}

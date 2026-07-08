@@ -17,6 +17,10 @@ export const emptyLifecycleDescriptor = (): LifecycleCompositionDescriptor =>
  *
  * Compilers use this to flatten policies from controller, route and reusable
  * lifecycle declarations before generating runtime pipelines.
+ *
+ * @group Lifecycle
+ * @intent Defines the compile-time merge boundary between reusable policies and transport descriptors.
+ * @example Descriptor merging
  */
 export const mergeLifecycleDescriptors = (
   ...sources: readonly LifecycleSource[]

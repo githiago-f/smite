@@ -9,6 +9,8 @@
     "check": "biome check .",
     "docs:build": "node scripts/build-docs.mjs",
     "format": "biome format --write .",
+    "release:publish": "node scripts/publish-packages.mjs",
+    "release:verify": "node scripts/verify-release-tag.mjs",
     "test": "vitest run"
   },
   "keywords": [],
@@ -18,6 +20,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "jsdoc": "^4.0.5",
+    "semver": "^7.8.5",
     "typescript": "^5.5.4",
     "vitest": "^2.1.1"
   }

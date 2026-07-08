@@ -13,11 +13,23 @@ import {
   mergeLifecycleDescriptors,
 } from "./merge.js";
 
-/** Builder returned by lifecycle component factories such as `lifecycle.guard`. */
+/**
+ * Builder returned by lifecycle component factories such as `lifecycle.guard`.
+ *
+ * @group Lifecycle
+ * @intent Represents one reusable lifecycle concern that can be merged into policies.
+ * @example Lifecycle adapters
+ */
 export type LifecycleEntryBuilder<Kind extends LifecycleEntryKind> =
   DescriptorBuilder<LifecycleEntry<Kind>>;
 
-/** Immutable builder for composing reusable execution policies. */
+/**
+ * Immutable builder for composing reusable execution policies.
+ *
+ * @group Lifecycle
+ * @intent Collects guards, filters, providers, interceptors and pipes without binding them to a transport.
+ * @example Reusable lifecycle composition
+ */
 export interface LifecycleBuilder
   extends DescriptorBuilder<LifecycleCompositionDescriptor> {
   readonly descriptor: LifecycleCompositionDescriptor;
@@ -63,6 +75,11 @@ const createBuilder = (
  *
  * Lifecycle builders describe execution policy only. They do not define
  * transport behavior and they do not execute runtime logic.
+ *
+ * @group Lifecycle
+ * @intent Public namespace for creating lifecycle component builders and reusable policy compositions.
+ * @example Lifecycle adapters
+ * @example Reusable lifecycle composition
  */
 export const lifecycle = freeze({
   create: (): LifecycleBuilder => createBuilder(emptyLifecycleDescriptor()),

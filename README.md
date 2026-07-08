@@ -135,6 +135,10 @@ The main project documentation is published at:
 The published documentation is generated from JSDoc comments and tested snippets
 that live in the codebase.
 
+JSDoc entries and concept pages reference examples with `@example`. Each example
+must match a snippet declared inside a test file between `#section` and
+`#endsection`, so documentation examples are always executed by the test suite.
+
 Contributor documentation remains intentionally layered.
 
 | Document | Purpose |
@@ -148,6 +152,21 @@ Contributor documentation remains intentionally layered.
 | `.agents/skills/` | Specialized implementation knowledge |
 
 Each document builds upon the previous one to avoid duplicated information.
+
+## npm Releases
+
+Publishable packages are released to npm from Git tags.
+
+Release tags must use SemVer with a `v` prefix:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+GitHub Actions validates that every publishable workspace version matches the
+tag before publishing. The npm workflow requires an `NPM_TOKEN` repository secret
+with publish access.
 
 ## Project Status
 
