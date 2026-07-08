@@ -2,6 +2,12 @@ import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import process from "node:process";
+import {
+  collectFiles,
+  collectTestSnippets,
+  normalizeExampleName,
+  slugify,
+} from "./snippets.mjs";
 
 const require = createRequire(import.meta.url);
 const jsdocPackage = require("jsdoc/package.json");
@@ -61,21 +67,12 @@ const buildPackageDocs = async (packageInfo) => {
   const apiFiles = sourceFiles.filter(
     (filePath) => !filePath.endsWith(".test.ts"),
   );
-  const testFiles = sourceFiles.filter((filePath) =>
-    filePath.endsWith(".test.ts"),
-  );
-  const snippets = [];
   const api = [];
-
-  for (const filePath of testFiles) {
-    const source = await readFile(filePath, "utf8");
-    snippets.push(...extractSnippets(source, relativeToRoot(filePath)));
-  }
-
-  const snippetIndex = buildSnippetIndex(
-    snippets,
-    packageInfo.packageJson.name,
-  );
+  const { snippetIndex, snippets } = await collectTestSnippets({
+    packageName: packageInfo.packageJson.name,
+    rootDir,
+    srcDir: packageInfo.srcDir,
+  });
 
   for (const filePath of apiFiles) {
     const source = await readFile(filePath, "utf8");
@@ -102,34 +99,6 @@ const buildPackageDocs = async (packageInfo) => {
     snippets,
     slug: slugify(packageInfo.packageJson.name),
   };
-};
-
-const collectFiles = async (directory, predicate) => {
-  const entries = await readdir(directory, { withFileTypes: true }).catch(
-    (error) => {
-      if (error.code === "ENOENT") {
-        return [];
-      }
-
-      throw error;
-    },
-  );
-  const files = [];
-
-  for (const entry of entries) {
-    const entryPath = path.join(directory, entry.name);
-
-    if (entry.isDirectory()) {
-      files.push(...(await collectFiles(entryPath, predicate)));
-      continue;
-    }
-
-    if (entry.isFile() && predicate(entryPath)) {
-      files.push(entryPath);
-    }
-  }
-
-  return files.sort();
 };
 
 const extractApiDocs = (source, filePath, snippetIndex, packageName) => {
@@ -195,75 +164,6 @@ const parseJsdocBlock = (block) => {
     description: description.join("\n").trim(),
     tags,
   };
-};
-
-const extractSnippets = (source, filePath) => {
-  const snippets = [];
-  const lines = source.split("\n");
-  let current = undefined;
-
-  lines.forEach((line, index) => {
-    const section = line.match(/^\s*\/\/\s*#section\s*-\s*(.+)\s*$/u);
-
-    if (section) {
-      if (current) {
-        throw new Error(
-          `Nested documentation snippet in ${filePath}:${index + 1}`,
-        );
-      }
-
-      current = {
-        code: [],
-        filePath,
-        startLine: index + 1,
-        title: section[1].trim(),
-      };
-      return;
-    }
-
-    if (/^\s*\/\/\s*#endsection\s*$/u.test(line)) {
-      if (current) {
-        snippets.push({
-          ...current,
-          code: dedent(current.code.join("\n")).trim(),
-          slug: slugify(current.title),
-        });
-      }
-
-      current = undefined;
-      return;
-    }
-
-    if (current) {
-      current.code.push(line);
-    }
-  });
-
-  if (current) {
-    throw new Error(
-      `Unclosed documentation snippet in ${filePath}:${current.startLine}`,
-    );
-  }
-
-  return snippets;
-};
-
-const buildSnippetIndex = (snippets, packageName) => {
-  const index = new Map();
-
-  for (const snippet of snippets) {
-    const key = normalizeExampleName(snippet.title);
-
-    if (index.has(key)) {
-      throw new Error(
-        `Duplicate tested snippet "${snippet.title}" in ${packageName}.`,
-      );
-    }
-
-    index.set(key, snippet);
-  }
-
-  return index;
 };
 
 const resolveExamples = (tags, snippetIndex, packageName, context) =>
@@ -957,18 +857,6 @@ const groupBy = (values, key) => {
 const firstTagText = (tags, name) =>
   tags.find((tag) => tag.tag === name)?.text.trim();
 
-const normalizeExampleName = (value) => value.trim().toLowerCase();
-
-const dedent = (value) => {
-  const lines = value.replace(/\s+$/u, "").split("\n");
-  const indentation = lines
-    .filter((line) => line.trim().length > 0)
-    .map((line) => line.match(/^\s*/u)?.[0].length ?? 0);
-  const size = indentation.length === 0 ? 0 : Math.min(...indentation);
-
-  return lines.map((line) => line.slice(size)).join("\n");
-};
-
 const renderInlineMarkdown = (value) =>
   escapeHtml(value)
     .replace(/`([^`]+)`/gu, "<code>$1</code>")
@@ -983,12 +871,5 @@ const escapeHtml = (value) =>
     .replaceAll('"', "&quot;");
 
 const relativeToRoot = (filePath) => path.relative(rootDir, filePath);
-
-const slugify = (value) =>
-  value
-    .replace(/^@/u, "")
-    .replaceAll("/", "-")
-    .replace(/[^a-zA-Z0-9-]+/gu, "-")
-    .toLowerCase();
 
 await main();

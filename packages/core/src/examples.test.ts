@@ -1,19 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { http, lifecycle, mergeLifecycleDescriptors } from "./index.js";
 
-const JwtGuard = lifecycle.guard("jwt");
-const HttpErrorsFilter = lifecycle.filter("http-errors");
-const LoggerProvider = lifecycle.provider("logger");
-const ValidationPipe = lifecycle.pipe("validation");
-const AuditInterceptor = lifecycle.interceptor("audit");
-
-const listUsers = () => undefined;
-const createUser = () => undefined;
-const getUser = ({ id }: { readonly id: string }) => id;
-
 describe("examples", () => {
   it("builds a reusable lifecycle composition", () => {
     // #section - Reusable lifecycle composition
+    const JwtGuard = lifecycle.guard("jwt");
+    const HttpErrorsFilter = lifecycle.filter("http-errors");
+    const LoggerProvider = lifecycle.provider("logger");
+
     const authenticated = lifecycle
       .create()
       .guards(JwtGuard)
@@ -45,9 +39,12 @@ describe("examples", () => {
   });
 
   it("applies lifecycle composition to an HTTP controller", () => {
-    const authenticated = lifecycle.create().guards(JwtGuard);
-
     // #section - HTTP controller with lifecycle
+    const JwtGuard = lifecycle.guard("jwt");
+    const authenticated = lifecycle.create().guards(JwtGuard);
+    const listUsers = () => undefined;
+    const createUser = () => undefined;
+
     const UsersController = http
       .controller()
       .use(authenticated.descriptor)
@@ -68,9 +65,10 @@ describe("examples", () => {
   });
 
   it("applies lifecycle composition to a single HTTP route", () => {
-    const validation = ValidationPipe;
-
     // #section - Route-specific lifecycle
+    const validation = lifecycle.pipe("validation");
+    const getUser = ({ id }: { readonly id: string }) => id;
+
     const GetUserRoute = http.route.get("/:id", getUser).use(validation);
     // #endsection
 
@@ -85,13 +83,17 @@ describe("examples", () => {
   });
 
   it("merges lifecycle descriptors at compile-time boundaries", () => {
+    // #section - Descriptor merging
+    const JwtGuard = lifecycle.guard("jwt");
+    const ValidationPipe = lifecycle.pipe("validation");
+    const AuditInterceptor = lifecycle.interceptor("audit");
+
     const controllerPolicy = lifecycle.create().guards(JwtGuard).descriptor;
     const routePolicy = lifecycle
       .create()
       .pipes(ValidationPipe)
       .interceptors(AuditInterceptor).descriptor;
 
-    // #section - Descriptor merging
     const mergedPolicy = mergeLifecycleDescriptors(
       controllerPolicy,
       routePolicy,
@@ -107,6 +109,8 @@ describe("examples", () => {
 
   it("keeps builders immutable while deriving specialized descriptors", () => {
     // #section - Immutable builder derivation
+    const JwtGuard = lifecycle.guard("jwt");
+
     const api = http.controller().use(JwtGuard);
     const UsersController = api.path("/users");
     const BillingController = api.path("/billing");

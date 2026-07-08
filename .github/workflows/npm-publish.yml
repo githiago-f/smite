@@ -48,6 +48,9 @@ jobs:
       - name: Build docs
         run: yarn docs:build
 
+      - name: Prepare package documentation
+        run: yarn release:prepare
+
       - name: Publish packages
         run: yarn release:publish
         env:

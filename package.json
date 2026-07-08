@@ -9,6 +9,7 @@
     "check": "biome check .",
     "docs:build": "node scripts/build-docs.mjs",
     "format": "biome format --write .",
+    "release:prepare": "node scripts/inject-jsdoc-examples.mjs",
     "release:publish": "node scripts/publish-packages.mjs",
     "release:verify": "node scripts/verify-release-tag.mjs",
     "test": "vitest run"
