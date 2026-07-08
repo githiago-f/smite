@@ -2,12 +2,23 @@
   "name": "smitejs",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "private": true,
+  "workspaces": ["packages/*"],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "yarn workspaces run build",
+    "check": "biome check .",
+    "docs:build": "node scripts/build-docs.mjs",
+    "format": "biome format --write .",
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "jsdoc": "^4.0.5",
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.1"
+  }
 }

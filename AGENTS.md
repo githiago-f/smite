@@ -17,11 +17,11 @@ Documentation is intentionally layered.
 Read documents in this order:
 
 1. `README.md`
-2. `docs/architecture.md`
-3. `docs/harness.md`
-4. `docs/plugin-system.md`
-5. `docs/extensibility.md`
-6. `skills/*/SKILL.md`
+2. `.docs/architecture.md`
+3. `.docs/harness.md`
+4. `.docs/plugin-system.md`
+5. `.docs/extensibility.md`
+6. `.agents/skills/*/SKILL.md`
 
 Each document assumes the previous one has already been read.
 
@@ -35,8 +35,8 @@ Do not duplicate concepts already defined by the documentation.
 .
 ├── README.md
 ├── AGENTS.md
-├── docs/
-├── skills/
+├── .docs/
+├── .agents/skills/
 ├── packages/
 │   ├── compiler/
 │   ├── core/
@@ -65,7 +65,7 @@ Explains what the framework is, why it exists and how to get started.
 
 ---
 
-## docs/architecture.md
+## .docs/architecture.md
 
 Defines the architecture of the framework.
 
@@ -73,7 +73,7 @@ This is the canonical source for architectural decisions.
 
 ---
 
-## docs/harness.md
+## .docs/harness.md
 
 Defines engineering heuristics.
 
@@ -81,7 +81,7 @@ Use these guidelines when making implementation decisions.
 
 ---
 
-## docs/plugin-system.md
+## .docs/plugin-system.md
 
 Defines the execution model.
 
@@ -99,7 +99,7 @@ It explains which components exist during each phase and their responsibilities.
 
 ---
 
-## docs/extensibility.md
+## .docs/extensibility.md
 
 Defines every supported extension point.
 

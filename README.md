@@ -85,19 +85,14 @@ The repository is organized into independent packages with clear responsibilitie
 │   ├── builders/
 │   ├── registry/
 │   └── graph/
-│
 ├── plugins/
 │   ├── aws/
 │   ├── openapi/
 │   ├── cloudformation/
 │   └── ...
-│
 ├── runtime/
-│
-├── docs/
-│
+├── .docs/
 ├── skills/
-│
 └── examples/
 ```
 
@@ -139,10 +134,10 @@ Documentation is intentionally layered.
 |----------|---------|
 | `README.md` | Project overview and quick start |
 | `AGENTS.md` | Entry point for AI agents and contributors |
-| `docs/architecture.md` | Core architectural principles |
-| `docs/harness.md` | Engineering heuristics |
-| `docs/plugin-system.md` | Plugin architecture |
-| `skills/` | Specialized implementation knowledge |
+| `.docs/architecture.md` | Core architectural principles |
+| `.docs/harness.md` | Engineering heuristics |
+| `.docs/plugin-system.md` | Plugin architecture |
+| `.agents/skills/` | Specialized implementation knowledge |
 
 Each document builds upon the previous one to avoid duplicated information.
 
