@@ -128,11 +128,19 @@ without requiring those definitions to be written manually.
 
 ## Documentation
 
-Documentation is intentionally layered.
+The main project documentation is published at:
+
+**https://githiago-f.github.io/smite/smitejs-core/**
+
+The published documentation is generated from JSDoc comments and tested snippets
+that live in the codebase.
+
+Contributor documentation remains intentionally layered.
 
 | Document | Purpose |
 |----------|---------|
-| `README.md` | Project overview and quick start |
+| Published docs | Main API documentation and tested usage examples |
+| `README.md` | Project overview |
 | `AGENTS.md` | Entry point for AI agents and contributors |
 | `.docs/architecture.md` | Core architectural principles |
 | `.docs/harness.md` | Engineering heuristics |
