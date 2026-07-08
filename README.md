@@ -5,6 +5,7 @@
 Smite is a compile-time-first TypeScript framework built around a semantic compiler.
 
 Applications describe intent through a functional DSL. During compilation, Smite generates runtime code, infrastructure, documentation and other production artifacts while minimizing runtime overhead.
+Runtime emitters turn descriptors into platform-native source, such as an Express app module, before the final bundle is produced.
 
 ## Why?
 
@@ -29,7 +30,7 @@ This framework solves that problem by allowing developers to describe their appl
 - **Semantic Graph** — every artifact is generated from a single source of truth.
 - **Zero-Cost Runtime** — abstractions should disappear after compilation.
 - **Provider Agnostic** — business logic should remain independent from cloud providers.
-- **Plugin Driven** — capabilities are implemented as compiler or runtime plugins.
+- **Plugin Driven** — capabilities are implemented as compiler plugins, runtime emitters or runtime plugins.
 
 ## How It Works
 
@@ -58,6 +59,10 @@ Compiler Plugins
 
 ↓
 
+Runtime Emitters
+
+↓
+
 Generated Artifacts
 
 ↓
@@ -65,11 +70,12 @@ Generated Artifacts
 Production Runtime
 ```
 
-During compilation the framework collects semantic information, validates it, builds a semantic graph and executes compiler plugins.
+During compilation the framework collects semantic information, validates it, builds a semantic graph and executes compiler plugins and runtime emitters.
 
 The generated output becomes the production application.
 
 The framework itself should contribute as little runtime code as possible.
+The first runtime emitter prototype in this repository is `@smitejs/runtime-express`.
 
 ## Monorepo
 

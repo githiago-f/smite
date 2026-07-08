@@ -5,6 +5,7 @@ Welcome.
 This repository contains a compile-time-first TypeScript framework built as a Yarn Workspace monorepo.
 
 The framework is a semantic compiler. Applications describe intent through a functional DSL while the compiler generates runtime code, infrastructure, documentation and other artifacts.
+Runtime emitters are compile-time plugins that generate platform-native runtime source, such as Express modules, and are not shipped as framework abstractions.
 
 This document is the entry point for contributors and AI agents.
 
@@ -127,6 +128,7 @@ Supported extension types include:
 
 - Builders
 - Compiler Plugins
+- Runtime Emitters
 - Runtime Plugins
 - CLI Generators
 - CLI Commands
@@ -190,5 +192,6 @@ Extensions provide capabilities.
 Applications describe intent.
 
 The compiler generates artifacts.
+Runtime emitters generate runtime source before the final bundle exists.
 
 Runtime executes only what cannot be eliminated.

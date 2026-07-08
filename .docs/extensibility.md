@@ -26,7 +26,7 @@ Extensions provide capabilities.
 
 # Extension Types
 
-The framework currently defines five extension types.
+The framework currently defines six extension types.
 
 ```
 Builder
@@ -34,6 +34,10 @@ Builder
         ▼
 
 Compiler Plugin
+        │
+        ▼
+
+Runtime Emitter
         │
         ▼
 
@@ -106,6 +110,19 @@ Compiler plugins execute only during compilation.
 They are removed from the final application.
 
 Compiler plugins should normally be installed as development dependencies.
+
+## Runtime Emitters
+
+Runtime emitters generate platform-native runtime source from merged descriptors.
+
+They should:
+
+- translate descriptors into executable source;
+- preserve tree-shaking opportunities;
+- keep platform-specific logic out of the core;
+- disappear after compilation.
+
+Runtime emitters should not inspect source files or construct the semantic graph.
 
 ---
 

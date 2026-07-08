@@ -2,6 +2,8 @@ import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import process from "node:process";
+import catppuccinMocha from "@shikijs/themes/catppuccin-mocha";
+import { codeToHtml } from "shiki";
 import {
   collectFiles,
   collectTestSnippets,
@@ -190,7 +192,7 @@ const collectConceptDocs = async (conceptDir, snippetIndex, packageName) => {
     const source = await readFile(filePath, "utf8");
     const parsed = parseConceptDoc(source, relativeToRoot(filePath));
     const examples = [];
-    const html = renderConceptMarkdown(
+    const html = await renderConceptMarkdown(
       parsed.body,
       snippetIndex,
       packageName,
@@ -242,7 +244,7 @@ const parseConceptDoc = (source, filePath) => {
   };
 };
 
-const renderConceptMarkdown = (
+const renderConceptMarkdown = async (
   source,
   snippetIndex,
   packageName,
@@ -293,7 +295,7 @@ const renderConceptMarkdown = (
       }
 
       examples.push(snippet);
-      blocks.push(renderSnippet(snippet));
+      blocks.push(await renderSnippet(snippet));
       continue;
     }
 
@@ -342,7 +344,7 @@ const writePackageDocs = async (docs) => {
   );
   await writeFile(
     path.join(packageOutDir, "reference.html"),
-    renderReferencePage(docs),
+    await renderReferencePage(docs),
   );
 
   const conceptsOutDir = path.join(packageOutDir, "concepts");
@@ -425,6 +427,7 @@ const renderPackageOverview = (docs) =>
       "</section>",
     ],
     currentHref: "./",
+    backHref: "../",
     docs,
     nav: {
       brandHref: "../",
@@ -448,6 +451,7 @@ const renderConceptPage = (docs, concept) =>
       </article>`,
     ],
     currentHref: `./${concept.slug}.html`,
+    backHref: "../",
     docs,
     nav: {
       brandHref: "../../",
@@ -460,7 +464,7 @@ const renderConceptPage = (docs, concept) =>
     title: `${concept.title} · ${docs.packageJson.name}`,
   });
 
-const renderReferencePage = (docs) => {
+const renderReferencePage = async (docs) => {
   const groups = groupBy(docs.api, (doc) => doc.group);
 
   return layout({
@@ -470,14 +474,17 @@ const renderReferencePage = (docs) => {
         <h1>${escapeHtml(docs.packageJson.name)}</h1>
         <p>Public APIs grouped by concept and backed by tested examples.</p>
       </section>`,
-      ...Array.from(groups.entries()).map(
-        ([group, apiDocs]) => `<section id="${slugify(group)}">
+      ...(await Promise.all(
+        Array.from(groups.entries()).map(async ([group, apiDocs]) => {
+          return `<section id="${slugify(group)}">
           <h2>${escapeHtml(group)}</h2>
-          ${apiDocs.map(renderApiDoc).join("\n")}
-        </section>`,
-      ),
+          ${(await Promise.all(apiDocs.map(renderApiDoc))).join("\n")}
+        </section>`;
+        }),
+      )),
     ],
     currentHref: "./reference.html",
+    backHref: "./",
     docs,
     nav: {
       brandHref: "../",
@@ -491,7 +498,9 @@ const renderReferencePage = (docs) => {
   });
 };
 
-const renderApiDoc = (doc) => `<article class="doc" id="${slugify(doc.name)}">
+const renderApiDoc = async (
+  doc,
+) => `<article class="doc" id="${slugify(doc.name)}">
   <div class="meta">${escapeHtml(doc.declarationKind)} · ${escapeHtml(
     doc.filePath,
   )}</div>
@@ -499,12 +508,12 @@ const renderApiDoc = (doc) => `<article class="doc" id="${slugify(doc.name)}">
   ${doc.intent ? `<p class="intent">${renderInlineMarkdown(doc.intent)}</p>` : ""}
   <p>${renderInlineMarkdown(doc.description)}</p>
   ${renderTags(doc.tags)}
-  ${doc.examples.length > 0 ? renderExamples(doc.examples) : ""}
+  ${doc.examples.length > 0 ? await renderExamples(doc.examples) : ""}
 </article>`;
 
-const renderExamples = (examples) => `<div class="examples">
+const renderExamples = async (examples) => `<div class="examples">
   <h4>Tested examples</h4>
-  ${examples.map(renderSnippet).join("\n")}
+  ${(await Promise.all(examples.map(renderSnippet))).join("\n")}
 </div>`;
 
 const renderTags = (tags) => {
@@ -522,17 +531,21 @@ const renderTags = (tags) => {
     .join("")}</dl>`;
 };
 
-const renderSnippet = (
+const renderSnippet = async (
   snippet,
 ) => `<figure class="snippet" id="${snippet.slug}">
   <figcaption>${escapeHtml(snippet.title)} <span>${escapeHtml(
     snippet.filePath,
   )}:${snippet.startLine}</span></figcaption>
-  <pre><code>${escapeHtml(snippet.code)}</code></pre>
+  ${await codeToHtml(snippet.code, {
+    lang: "ts",
+    theme: catppuccinMocha,
+  })}
 </figure>`;
 
 const layout = ({
   body,
+  backHref,
   currentHref,
   docs,
   nav,
@@ -549,7 +562,7 @@ const layout = ({
   </head>
   <body>
     <div class="shell">
-      ${renderSidebar({ currentHref, docs, nav, packageDocs })}
+      ${renderSidebar({ backHref, currentHref, docs, nav, packageDocs })}
       <main>
         ${body.join("\n")}
       </main>
@@ -558,7 +571,7 @@ const layout = ({
 </html>
 `;
 
-const renderSidebar = ({ currentHref, docs, nav, packageDocs }) => {
+const renderSidebar = ({ backHref, currentHref, docs, nav, packageDocs }) => {
   const packageLinks = packageDocs.map((packageDoc) =>
     navLink(
       packageDoc.packageJson.name,
@@ -574,6 +587,7 @@ const renderSidebar = ({ currentHref, docs, nav, packageDocs }) => {
 
   return `<aside class="sidebar">
     <a class="brand" href="${nav.brandHref}">Smite</a>
+    ${backHref ? `<a class="back" href="${backHref}">Go back</a>` : ""}
     <nav>
       <span>Packages</span>
       ${packageLinks.join("\n")}
@@ -595,12 +609,31 @@ const navLink = (label, href, currentHref, className = "") =>
   )}</a>`;
 
 const renderStyles = () => `:root {
-  color-scheme: light;
+  color-scheme: dark;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  color: #17202a;
-  background: #f6f7f9;
+  --base: #1e1e2e;
+  --mantle: #181825;
+  --crust: #11111b;
+  --surface-0: #313244;
+  --surface-1: #45475a;
+  --surface-2: #585b70;
+  --overlay-0: #6c7086;
+  --text: #cdd6f4;
+  --subtext: #a6adc8;
+  --blue: #89b4fa;
+  --teal: #94e2d5;
+  --green: #a6e3a1;
+  --yellow: #f9e2af;
+  --peach: #fab387;
+  --pink: #f5c2e7;
+  --mauve: #cba6f7;
+  --red: #f38ba8;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(203, 166, 247, 0.08), transparent 30%),
+    linear-gradient(180deg, var(--base), var(--mantle));
 }
 
 * {
@@ -609,10 +642,11 @@ const renderStyles = () => `:root {
 
 body {
   margin: 0;
+  background: transparent;
 }
 
 a {
-  color: #0a66c2;
+  color: var(--blue);
 }
 
 .shell {
@@ -625,8 +659,9 @@ a {
   position: sticky;
   top: 0;
   height: 100vh;
-  border-right: 1px solid #d7dce2;
-  background: #ffffff;
+  border-right: 1px solid rgba(69, 71, 90, 0.9);
+  background: rgba(17, 17, 27, 0.92);
+  backdrop-filter: blur(10px);
   padding: 28px 20px;
   overflow-y: auto;
 }
@@ -635,14 +670,33 @@ a {
   display: block;
   font-size: 22px;
   font-weight: 800;
-  color: #111820;
+  color: var(--text);
   text-decoration: none;
   margin-bottom: 28px;
 }
 
+.back {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--surface-1);
+  background: var(--surface-0);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 14px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.back:hover {
+  color: var(--mauve);
+  border-color: var(--mauve);
+}
+
 nav span {
   display: block;
-  color: #6a7480;
+  color: var(--overlay-0);
   font-size: 12px;
   font-weight: 700;
   margin: 22px 0 8px;
@@ -651,7 +705,7 @@ nav span {
 
 nav a {
   display: block;
-  color: #27313d;
+  color: var(--text);
   text-decoration: none;
   padding: 8px 10px;
   border-radius: 8px;
@@ -664,8 +718,8 @@ nav a.nested {
 
 nav a.active,
 nav a:hover {
-  background: #eef4fb;
-  color: #0a4f94;
+  background: var(--surface-0);
+  color: var(--mauve);
 }
 
 main {
@@ -685,7 +739,7 @@ main {
 
 .hero p:first-child,
 .eyebrow {
-  color: #5c6672;
+  color: var(--overlay-0);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0;
@@ -708,7 +762,7 @@ h1 {
 
 h2 {
   margin-top: 44px;
-  border-bottom: 1px solid #d7dce2;
+  border-bottom: 1px solid var(--surface-1);
   padding-bottom: 10px;
 }
 
@@ -718,7 +772,7 @@ h3 {
 
 .lead,
 .hero p {
-  color: #4b5663;
+  color: var(--subtext);
   font-size: 18px;
   line-height: 1.6;
 }
@@ -729,7 +783,7 @@ h3 {
 
 .content p,
 .content li {
-  color: #303b47;
+  color: var(--text);
   line-height: 1.7;
 }
 
@@ -742,9 +796,9 @@ h3 {
 .card,
 .doc {
   display: block;
-  border: 1px solid #d7dce2;
+  border: 1px solid var(--surface-1);
   border-radius: 8px;
-  background: #ffffff;
+  background: rgba(49, 50, 68, 0.7);
   padding: 20px;
   text-decoration: none;
   color: inherit;
@@ -758,17 +812,18 @@ h3 {
 
 .card span {
   display: block;
-  color: #5a6572;
+  color: var(--subtext);
   margin-top: 6px;
 }
 
 .button {
   display: inline-block;
   border-radius: 8px;
-  background: #17202a;
-  color: #ffffff;
+  background: var(--mauve);
+  color: var(--crust);
   padding: 10px 14px;
   text-decoration: none;
+  font-weight: 700;
 }
 
 .doc {
@@ -776,14 +831,14 @@ h3 {
 }
 
 .intent {
-  border-left: 3px solid #0a66c2;
+  border-left: 3px solid var(--teal);
   padding-left: 12px;
-  color: #25313d;
+  color: var(--text);
 }
 
 .meta,
 figcaption span {
-  color: #6a7480;
+  color: var(--overlay-0);
   font-size: 13px;
 }
 
@@ -792,23 +847,36 @@ figcaption span {
 }
 
 figcaption {
-  color: #26313c;
+  color: var(--text);
   font-weight: 700;
   margin-bottom: 8px;
 }
 
-pre {
+pre,
+pre.shiki {
   overflow-x: auto;
-  background: #101820;
-  color: #f3f7fb;
+  background: var(--crust) !important;
+  border: 1px solid var(--surface-1);
   padding: 16px;
   border-radius: 8px;
+  margin: 0;
 }
 
-code {
+pre.shiki code {
   font-family:
     "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 14px;
+  line-height: 1.7;
+}
+
+code:not(pre code) {
+  font-family:
+    "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.95em;
+  background: rgba(69, 71, 90, 0.65);
+  color: var(--peach);
+  border-radius: 6px;
+  padding: 0.15rem 0.35rem;
 }
 
 dt {
@@ -828,7 +896,7 @@ dd {
     position: static;
     height: auto;
     border-right: 0;
-    border-bottom: 1px solid #d7dce2;
+    border-bottom: 1px solid var(--surface-1);
   }
 
   main {

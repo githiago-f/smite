@@ -92,6 +92,10 @@ Compiler Plugins
 
 ↓
 
+Runtime Emitters
+
+↓
+
 Generated Artifacts
 
 ↓
@@ -111,6 +115,7 @@ The compiler is responsible for:
 - validating declarations
 - building the semantic graph
 - executing compiler plugins
+- executing runtime emitters
 - generating artifacts
 
 The compiler does not execute application logic.
@@ -185,7 +190,7 @@ Providers decide how that requirement is implemented.
 
 # Plugins
 
-Plugins belong to two categories.
+Plugins belong to three categories.
 
 ## Compile-time plugins
 
@@ -200,6 +205,18 @@ Examples:
 - Documentation
 
 These should normally be development dependencies.
+
+## Runtime emitters
+
+Runtime emitters consume merged descriptors during compilation and generate platform-specific runtime source code.
+
+Examples:
+
+- Express
+- Fastify
+- Hono
+
+They disappear after generation and do not survive into the runtime bundle.
 
 ## Runtime plugins
 

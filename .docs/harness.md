@@ -112,6 +112,8 @@ Compile-time code disappears.
 
 Whenever possible, move complexity into the compiler.
 
+If the behavior can be emitted as source code, prefer a runtime emitter over a hand-written runtime abstraction.
+
 Ask:
 
 > Can this be generated?
