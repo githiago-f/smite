@@ -139,3 +139,30 @@ export interface HttpControllerDescriptor
   readonly lifecycle: LifecycleCompositionDescriptor;
   readonly routes: readonly HttpRouteDescriptor[];
 }
+
+/**
+ * Semantic descriptor for a reusable messaging consumer.
+ *
+ * @group Messaging
+ * @intent Captures queue binding, handler reference and lifecycle policy for message-driven execution.
+ * @example Messaging consumer with lifecycle
+ */
+export interface MessagingConsumerDescriptor
+  extends Descriptor<"messaging.consumer"> {
+  readonly queue: string;
+  readonly handler?: HandlerReference;
+  readonly lifecycle: LifecycleCompositionDescriptor;
+}
+
+/**
+ * Semantic descriptor for a scheduled job.
+ *
+ * @group Scheduler
+ * @intent Captures the schedule expression, handler reference and lifecycle policy for time-driven execution.
+ * @example Scheduled job with lifecycle
+ */
+export interface SchedulerJobDescriptor extends Descriptor<"scheduler.job"> {
+  readonly cron: string;
+  readonly handler?: HandlerReference;
+  readonly lifecycle: LifecycleCompositionDescriptor;
+}

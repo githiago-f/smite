@@ -20,6 +20,12 @@ Routes can also apply lifecycle builders directly. The compiler later merges rou
 
 @example Route-specific lifecycle
 
+## Custom lifecycle handlers
+
+Controller and route lifecycle descriptors may reference runtime implementations such as validators and error filters. The compiler preserves those references for generated runtimes.
+
+@example HTTP controller with custom lifecycle implementations
+
 ## Immutability
 
 Each builder call returns a new builder. This makes shared base descriptors safe to reuse across modules.

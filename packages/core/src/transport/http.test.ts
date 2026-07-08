@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { http, lifecycle } from "../index.js";
+import { http, lifecycle, mergeLifecycleDescriptors } from "../index.js";
 
 const JwtGuard = lifecycle.guard("jwt");
 const ValidationPipe = lifecycle.pipe("validation");
@@ -15,7 +15,7 @@ describe("http", () => {
     const route = http.route.post("/", createUser).use(validated);
     const controller = http
       .controller()
-      .use(authenticated.descriptor)
+      .use(authenticated)
       .path("/users")
       .routes(http.route.get("/", listUsers), route);
 
@@ -36,6 +36,56 @@ describe("http", () => {
       validated.descriptor,
     ]);
     expect(Object.isFrozen(controller.descriptor.routes)).toBe(true);
+  });
+
+  it("preserves custom lifecycle implementations on controller and route descriptors", () => {
+    const validateUserInput = ({ body }: { readonly body: unknown }) => body;
+    const localizeHttpErrors = (
+      error: Error,
+      { locale }: { readonly locale: string },
+    ) => ({
+      message: `${locale}:${error.message}`,
+    });
+
+    const validation = lifecycle.pipe(
+      "validate-user-input",
+      validateUserInput,
+      { source: "http.body" },
+    );
+    const errors = lifecycle.filter("localized-errors", localizeHttpErrors, {
+      dictionary: "errors",
+    });
+
+    const controller = http
+      .controller()
+      .use(lifecycle.create().pipes(validation).filters(errors))
+      .path("/users")
+      .routes(http.route.post("/", createUser).use(lifecycle.guard("jwt")));
+
+    const [route] = controller.descriptor.routes;
+    if (!route) {
+      throw new Error("expected route to exist");
+    }
+
+    const merged = mergeLifecycleDescriptors(
+      controller.descriptor.lifecycle,
+      route.lifecycle,
+    );
+
+    expect(controller.descriptor.lifecycle.entries).toEqual([
+      validation.descriptor,
+      errors.descriptor,
+    ]);
+    expect(merged.entries.map((entry) => entry.implementation)).toEqual([
+      validateUserInput,
+      localizeHttpErrors,
+      undefined,
+    ]);
+    expect(merged.entries.map((entry) => entry.entryKind)).toEqual([
+      "pipe",
+      "filter",
+      "guard",
+    ]);
   });
 
   it("does not mutate earlier controller builders", () => {

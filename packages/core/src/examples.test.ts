@@ -76,6 +76,47 @@ describe("examples", () => {
     ]);
   });
 
+  it("preserves custom lifecycle handlers on an HTTP controller", () => {
+    // #section - HTTP controller with custom lifecycle implementations
+    const UserInput = {
+      parse: (input: unknown) => input as { readonly name: string },
+    };
+
+    const ValidateUserInput = lifecycle.pipe(
+      "validate-user-input",
+      ({ body }: { readonly body: unknown }) => UserInput.parse(body),
+      { source: "http.body" },
+    );
+
+    const LocalizedErrors = lifecycle.filter(
+      "localized-errors",
+      (error: Error, { locale }: { readonly locale: string }) => ({
+        message: `${locale}:${error.message}`,
+      }),
+      { dictionary: "errors" },
+    );
+
+    const UsersController = http
+      .controller()
+      .use(lifecycle.create().pipes(ValidateUserInput).filters(LocalizedErrors))
+      .path("/users")
+      .routes(http.route.post("/", () => undefined));
+    // #endsection
+
+    expect(UsersController.descriptor.lifecycle.entries).toEqual([
+      ValidateUserInput.descriptor,
+      LocalizedErrors.descriptor,
+    ]);
+    expect(
+      UsersController.descriptor.lifecycle.entries.map(
+        (entry) => entry.implementation,
+      ),
+    ).toEqual([
+      ValidateUserInput.descriptor.implementation,
+      LocalizedErrors.descriptor.implementation,
+    ]);
+  });
+
   it("applies lifecycle composition to an HTTP controller", () => {
     // #section - HTTP controller with lifecycle
     const JwtGuard = lifecycle.guard("jwt");
@@ -85,7 +126,7 @@ describe("examples", () => {
 
     const UsersController = http
       .controller()
-      .use(authenticated.descriptor)
+      .use(authenticated)
       .path("/users")
       .routes(http.route.get("/", listUsers), http.route.post("/", createUser));
     // #endsection
@@ -126,11 +167,11 @@ describe("examples", () => {
     const ValidationPipe = lifecycle.pipe("validation");
     const AuditInterceptor = lifecycle.interceptor("audit");
 
-    const controllerPolicy = lifecycle.create().guards(JwtGuard).descriptor;
+    const controllerPolicy = lifecycle.create().guards(JwtGuard);
     const routePolicy = lifecycle
       .create()
       .pipes(ValidationPipe)
-      .interceptors(AuditInterceptor).descriptor;
+      .interceptors(AuditInterceptor);
 
     const mergedPolicy = mergeLifecycleDescriptors(
       controllerPolicy,
