@@ -1,0 +1,16 @@
+{
+  "name": "@smitejs/example-http",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Small HTTP example using @smitejs/core and express.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@smitejs/core": "0.1.0",
+    "@smitejs/runtime-express": "0.1.0",
+    "express": "^5.2.1"
+  }
+}

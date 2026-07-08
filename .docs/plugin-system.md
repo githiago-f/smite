@@ -82,6 +82,8 @@ Compiler plugins are responsible for tasks such as:
 
 Runtime emitters are responsible for turning merged descriptors into platform-native runtime source. They are compile-time tools and do not survive into the final bundle.
 
+When an adapter layer is needed at runtime, it should be minimal and translate platform-specific request/response objects into the core execution model instead of reimplementing lifecycle ordering.
+
 The CLI also executes compile-time commands.
 
 Examples:

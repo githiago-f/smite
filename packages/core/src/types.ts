@@ -141,6 +141,53 @@ export interface HttpControllerDescriptor
 }
 
 /**
+ * Normalized HTTP request consumed by core execution.
+ *
+ * @group HTTP
+ * @intent Lets runtime adapters translate platform-specific requests into one executable core shape.
+ */
+export interface HttpExecutionRequest {
+  readonly method: string;
+  readonly path: string;
+  readonly headers: Readonly<
+    Record<string, string | readonly string[] | undefined>
+  >;
+  readonly query: Readonly<Record<string, unknown>>;
+  readonly params: Readonly<Record<string, string>>;
+  readonly body: unknown;
+  readonly raw: unknown;
+}
+
+/**
+ * Execution context passed through lifecycle components and handlers.
+ *
+ * @group HTTP
+ * @intent Keeps lifecycle ordering in core while adapters only translate input and output.
+ */
+export interface HttpExecutionContext {
+  readonly request: HttpExecutionRequest;
+  readonly state: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Normalized HTTP response produced by core execution.
+ *
+ * @group HTTP
+ * @intent Gives runtime adapters one result shape to serialize for their platform.
+ */
+export interface HttpExecutionResult {
+  readonly status?: number;
+  readonly headers?: Readonly<Record<string, string>>;
+  readonly body?: unknown;
+}
+
+export type HttpHandlerResult = HttpExecutionResult | unknown;
+
+export type HttpRuntimeFunction = (
+  ...args: readonly unknown[]
+) => unknown | Promise<unknown>;
+
+/**
  * Semantic descriptor for a reusable messaging consumer.
  *
  * @group Messaging

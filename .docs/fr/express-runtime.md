@@ -12,7 +12,7 @@ The generated output should be equivalent to hand-written Express code and prese
 The proposed package name is:
 
 ```
-@smite/runtime-express
+@smitejs/runtime-express
 ```
 
 This naming establishes a scalable convention for future runtime targets such as Fastify, Hono, Cloudflare Workers, AWS Lambda, Bun, Node.js and others.
@@ -177,6 +177,8 @@ Express Middleware Chain
 ```
 
 The runtime emitter should only translate descriptors into executable code.
+
+When an executable adapter is needed, it should translate platform request and response objects into the core execution model and delegate lifecycle ordering to the core.
 
 ---
 

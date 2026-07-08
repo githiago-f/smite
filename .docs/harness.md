@@ -113,6 +113,7 @@ Compile-time code disappears.
 Whenever possible, move complexity into the compiler.
 
 If the behavior can be emitted as source code, prefer a runtime emitter over a hand-written runtime abstraction.
+If a target runtime needs a thin adapter, keep it focused on translating platform objects into the core execution context and result shape.
 
 Ask:
 

@@ -124,6 +124,8 @@ They should:
 
 Runtime emitters should not inspect source files or construct the semantic graph.
 
+If a platform needs runtime bridging, keep that bridge separate from the emitter. It should only adapt platform I/O to the core execution context and serialize the core result back to the platform.
+
 ---
 
 # Runtime Plugins

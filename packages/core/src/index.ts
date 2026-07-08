@@ -1,4 +1,5 @@
 export { http } from "./transport/http.js";
+export { executeHttpPipeline } from "./transport/execute.js";
 export { messaging } from "./transport/messaging.js";
 export { scheduler } from "./transport/scheduler.js";
 export { lifecycle } from "./lifecycle/lifecycle.js";
@@ -20,7 +21,12 @@ export type {
   DescriptorBuilder,
   HandlerReference,
   HttpControllerDescriptor,
+  HttpExecutionContext,
+  HttpExecutionRequest,
+  HttpExecutionResult,
+  HttpHandlerResult,
   HttpMethod,
+  HttpRuntimeFunction,
   HttpRouteDescriptor,
   LifecycleCompositionDescriptor,
   LifecycleEntry,

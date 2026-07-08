@@ -4,7 +4,7 @@ import { emitExpressModule } from "./index.js";
 
 describe("@smitejs/runtime-express", () => {
   it("emits an express-ready module with custom lifecycle handlers", () => {
-    // #section - Express runtime usage
+    // #section - Express module emission
     const ValidateUserInput = lifecycle.pipe(
       "validate-user-input",
       ({ body }: { readonly body: unknown }) => body,

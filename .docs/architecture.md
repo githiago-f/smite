@@ -218,6 +218,8 @@ Examples:
 
 They disappear after generation and do not survive into the runtime bundle.
 
+When a target runtime needs a thin executable bridge, that bridge belongs in the runtime layer and only translates platform request/response objects into the core execution context and result shape.
+
 ## Runtime plugins
 
 Provide executable behavior.

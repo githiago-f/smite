@@ -18,7 +18,9 @@ import type {
  */
 export interface MessagingConsumerBuilder {
   readonly descriptor: MessagingConsumerDescriptor;
-  readonly use: (...sources: readonly LifecycleSource[]) => MessagingConsumerBuilder;
+  readonly use: (
+    ...sources: readonly LifecycleSource[]
+  ) => MessagingConsumerBuilder;
   readonly queue: (queue: string) => MessagingConsumerBuilder;
   readonly handler: (handler: HandlerReference) => MessagingConsumerBuilder;
 }
