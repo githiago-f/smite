@@ -4,6 +4,7 @@ import type {
   HttpExecutionContext,
   HttpExecutionResult,
   HttpHandlerResult,
+  HttpResult,
   HttpRouteDescriptor,
   HttpRuntimeFunction,
   LifecycleSource,
@@ -173,11 +174,27 @@ export const executeHttpPipeline = async (
 const normalizeHttpExecutionResult = (
   result: HttpHandlerResult,
 ): HttpExecutionResult => {
+  if (isHttpResult(result)) {
+    return {
+      status: result.status,
+      ...(result.body !== undefined ? { body: result.body } : {}),
+      ...(result.headers !== undefined ? { headers: result.headers } : {}),
+    };
+  }
+
   if (isHttpExecutionResult(result)) {
     return result;
   }
 
   return { body: result };
+};
+
+const isHttpResult = (result: unknown): result is HttpResult => {
+  if (typeof result !== "object" || result === null) {
+    return false;
+  }
+
+  return (result as { readonly kind?: unknown }).kind === "http.result";
 };
 
 const isHttpExecutionResult = (

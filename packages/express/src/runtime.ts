@@ -1,16 +1,13 @@
 import { executeHttpPipeline } from "@smite/core";
-import {
-  type Router as ExpressRouter,
-  type RequestHandler,
-  Router,
-} from "express";
+import { Result } from "@smite/fp";
 import type {
-  ExpressControllerDescriptor,
+  ExpressNextFunction,
   ExpressRequestLike,
   ExpressResponseLike,
   ExpressRouteDescriptor,
   ExpressRuntimeOptions,
 } from "./types.js";
+import type { HttpControllerDescriptor } from "@smite/core";
 
 const routeMethods = {
   GET: "get",
@@ -24,16 +21,33 @@ const routeMethods = {
 
 export const createExpressRuntime = (
   options: ExpressRuntimeOptions,
-): ExpressRouter => {
-  const router = Router();
+): ((
+  request: ExpressRequestLike,
+  response: ExpressResponseLike,
+  next: ExpressNextFunction,
+) => Promise<void>) => {
+  const controllers = options.application.descriptor.controllers;
 
   for (const controller of options.controllers.map(unwrapController)) {
     const controllerRouter = Router();
 
-    for (const route of controller.routes) {
-      controllerRouter[routeMethods[route.method]](
-        route.path,
-        createRouteMiddleware(controller, route),
+      if (!match) {
+        sendExpressResult(response, {
+          status: 404,
+          body: { error: "Not found" },
+        });
+        return;
+      }
+
+      const wrappedRoute = {
+        ...match.route,
+        handler: wrapHandler(match.route.handler),
+      };
+
+      const result = await executeHttpPipeline(
+        match.controller,
+        wrappedRoute,
+        createHttpExecutionContext(request),
       );
     }
 
@@ -61,14 +75,58 @@ const createRouteMiddleware =
     }
   };
 
-const unwrapController = (
-  source: ExpressRuntimeOptions["controllers"][number],
-): ExpressControllerDescriptor => {
-  if ("descriptor" in source) {
-    return source.descriptor;
+const wrapHandler = (
+  handler: ExpressRouteDescriptor["handler"],
+): ExpressRouteDescriptor["handler"] =>
+  async (context: unknown) => {
+    const raw = await (handler as (context: unknown) => unknown)(context);
+
+    if (raw instanceof Result) {
+      return raw.match(
+        (value: unknown) => ({ body: value }),
+        (error: unknown) => {
+          if (
+            error !== null &&
+            typeof error === "object" &&
+            "tag" in error &&
+            typeof (error as Record<string, unknown>).tag === "number"
+          ) {
+            return {
+              status: (error as { readonly tag: number }).tag,
+              body: (error as unknown as { readonly data: unknown }).data,
+            };
+          }
+
+          return { status: 500, body: { error: "Internal Server Error" } };
+        },
+      );
+    }
+
+    return raw;
+  };
+
+const findRoute = (
+  controllers: readonly HttpControllerDescriptor[],
+  request: ExpressRequestLike,
+):
+  | {
+      readonly controller: HttpControllerDescriptor;
+      readonly route: ExpressRouteDescriptor;
+    }
+  | undefined => {
+  const method = request.method?.toUpperCase() ?? "GET";
+  const path = getRequestPath(request);
+
+  for (const controller of controllers) {
+    for (const route of controller.routes) {
+      const routePath = normalizePath(`${controller.path}${route.path}`);
+      if (route.method === method && routePath === path) {
+        return { controller, route };
+      }
+    }
   }
 
-  return source;
+  return undefined;
 };
 
 const createHttpExecutionContext = (

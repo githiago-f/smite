@@ -80,6 +80,47 @@ export const extractSnippets = (source, filePath) => {
   return snippets;
 };
 
+const endsectionPattern = /^\s*\/\/\s*#endsection\s*$/u;
+
+export const extractSnippetExpected = (testSource, snippet) => {
+  const lines = testSource.split("\n");
+  const sectionLine = lines.findIndex(
+    (line, idx) =>
+      idx >= snippet.startLine - 1 && endsectionPattern.test(line),
+  );
+
+  if (sectionLine === -1) {
+    return null;
+  }
+
+  const expectedLines = [];
+  const sectionIndent = lines[sectionLine]?.match(/^\s*/u)?.[0] ?? "";
+  let i = sectionLine + 1;
+
+  for (; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (line.trim().length === 0) {
+      continue;
+    }
+
+    const lineIndent = line.match(/^\s*/u)?.[0] ?? "";
+
+    if (lineIndent.length < sectionIndent.length) {
+      break;
+    }
+
+    expectedLines.push(line);
+  }
+
+  if (expectedLines.length === 0) {
+    return null;
+  }
+
+  const code = dedent(expectedLines.join("\n")).trim();
+  return code.length > 0 ? code : null;
+};
+
 export const collectTestSnippets = async ({ packageName, rootDir, srcDir }) => {
   const testFiles = await collectFiles(srcDir, (filePath) =>
     filePath.endsWith(".test.ts"),
@@ -88,7 +129,15 @@ export const collectTestSnippets = async ({ packageName, rootDir, srcDir }) => {
 
   for (const filePath of testFiles) {
     const source = await readFile(filePath, "utf8");
-    snippets.push(...extractSnippets(source, path.relative(rootDir, filePath)));
+    const relativePath = path.relative(rootDir, filePath);
+    const extracted = extractSnippets(source, relativePath);
+
+    for (const snippet of extracted) {
+      const raw = extractSnippetExpected(source, snippet);
+      snippet.expected = raw ? transformExpectedToResult(raw) : null;
+    }
+
+    snippets.push(...extracted);
   }
 
   return {
@@ -123,6 +172,61 @@ export const slugify = (value) =>
     .replaceAll("/", "-")
     .replace(/[^a-zA-Z0-9-]+/gu, "-")
     .toLowerCase();
+
+const findMatchingCloseParen = (code, openIndex) => {
+  let depth = 1;
+
+  for (let i = openIndex + 1; i < code.length; i++) {
+    if (code[i] === "(") {
+      depth++;
+    } else if (code[i] === ")") {
+      depth--;
+
+      if (depth === 0) {
+        return i;
+      }
+    }
+  }
+
+  return -1;
+};
+
+export const transformExpectedToResult = (code) => {
+  const results = [];
+  let idx = 0;
+
+  while (idx < code.length) {
+    const expectIdx = code.indexOf("expect(", idx);
+
+    if (expectIdx === -1) {
+      break;
+    }
+
+    const expectOpen = expectIdx + 6;
+    const expectClose = findMatchingCloseParen(code, expectOpen);
+
+    if (expectClose === -1) {
+      break;
+    }
+
+    const matcherOpen = code.indexOf("(", expectClose + 1);
+
+    if (matcherOpen === -1) {
+      break;
+    }
+
+    const matcherClose = findMatchingCloseParen(code, matcherOpen);
+
+    if (matcherClose === -1) {
+      break;
+    }
+
+    results.push(code.slice(matcherOpen + 1, matcherClose).trim());
+    idx = matcherClose + 1;
+  }
+
+  return results.length > 0 ? results.join("\n") : code;
+};
 
 const dedent = (value) => {
   const lines = value.replace(/\s+$/u, "").split("\n");

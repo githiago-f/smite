@@ -1,5 +1,5 @@
 import type {
-  DescriptorBuilder,
+  ApplicationBuilder,
   HttpControllerDescriptor,
   HttpExecutionContext,
   HttpExecutionRequest,
@@ -51,12 +51,8 @@ export type SmiteHttpHandlerResult = HttpHandlerResult;
 
 export type SmiteHttpRuntimeFunction = HttpRuntimeFunction;
 
-export type ExpressControllerSource =
-  | ExpressControllerDescriptor
-  | DescriptorBuilder<ExpressControllerDescriptor>;
-
 export interface ExpressRuntimeOptions {
-  readonly controllers: readonly ExpressControllerSource[];
+  readonly application: ApplicationBuilder;
 }
 
 export interface NodeHttpRequest extends AsyncIterable<Uint8Array> {

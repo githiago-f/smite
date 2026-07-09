@@ -5,6 +5,7 @@ export { executePipeline } from "./transport/execute.js";
 export { handleify } from "./transport/handleify.js";
 export { messaging } from "./transport/messaging.js";
 export { scheduler } from "./transport/scheduler.js";
+export { createApplication } from "./transport/application.js";
 export { lifecycle } from "./lifecycle/lifecycle.js";
 export { mergeLifecycleDescriptors } from "./lifecycle/merge.js";
 
@@ -32,6 +33,7 @@ export type {
   HttpControllerBuilder,
   HttpExtractor,
   HttpRouteBuilder,
+  RouteConfigurator,
 } from "./transport/http.js";
 export type {
   CronEvent,
@@ -43,6 +45,11 @@ export type {
 export type { MessagingConsumerBuilder } from "./transport/messaging.js";
 export type { SchedulerJobBuilder } from "./transport/scheduler.js";
 export type {
+  ApplicationBuilder,
+  SmiteComponent,
+} from "./transport/application.js";
+export type {
+  ApplicationDescriptor,
   Descriptor,
   DescriptorBuilder,
   HandlerReference,
@@ -52,8 +59,11 @@ export type {
   HttpExecutionResult,
   HttpHandlerResult,
   HttpMethod,
+  HttpResult,
   HttpRuntimeFunction,
   HttpRouteDescriptor,
+  HttpStatusCode,
+  InputSchema,
   LifecycleCompositionDescriptor,
   LifecycleEntry,
   LifecycleEntryImplementation,
@@ -61,5 +71,11 @@ export type {
   LifecycleEntryOptions,
   LifecycleSource,
   MessagingConsumerDescriptor,
+  RouteHandlerContext,
+  RouteInputConfig,
+  RouteOutputConfig,
+  RouteSpecBuilder,
+  RouteSpecDescriptor,
   SchedulerJobDescriptor,
+  TypeOfInputSchema,
 } from "./types.js";

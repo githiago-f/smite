@@ -1,6 +1,5 @@
 export { createExpressRuntime } from "./runtime.js";
 export type {
-  ExpressControllerSource,
   ExpressControllerDescriptor,
   ExpressNextFunction,
   ExpressRequestLike,

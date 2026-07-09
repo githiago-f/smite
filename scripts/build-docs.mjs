@@ -575,10 +575,26 @@ const renderSnippet = async (
   <figcaption>${escapeHtml(snippet.title)} <span>${escapeHtml(
     snippet.filePath,
   )}:${snippet.startLine}</span></figcaption>
-  ${await codeToHtml(snippet.code, {
-    lang: "ts",
-    theme: catppuccinMocha,
-  })}
+  <div class="snippet-panes">
+    <div class="snippet-pane">
+      <span class="pane-label">Code</span>
+      ${await codeToHtml(snippet.code, {
+        lang: "ts",
+        theme: catppuccinMocha,
+      })}
+    </div>
+    ${
+      snippet.expected
+        ? `<div class="snippet-pane">
+            <span class="pane-label">Result</span>
+            ${await codeToHtml(snippet.expected, {
+              lang: "ts",
+              theme: catppuccinMocha,
+            })}
+          </div>`
+        : ""
+    }
+  </div>
 </figure>`;
 
 const benchmarkLatency = (duration, candidates) => {
@@ -943,36 +959,29 @@ figcaption span {
   margin: 18px 0;
 }
 
-.benchmark {
-  margin: 18px 0;
+.snippet-panes {
+  display: flex;
+  gap: 12px;
 }
 
-.benchmark table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0 0 12px;
+.snippet-pane {
+  flex: 1;
+  min-width: 0;
 }
 
-.benchmark th,
-.benchmark td {
-  border: 1px solid var(--surface-1);
-  padding: 8px 12px;
-  text-align: left;
-}
-
-.benchmark th {
-  color: var(--subtext);
-  font-size: 13px;
+.pane-label {
+  display: block;
+  color: var(--overlay-0);
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
+  margin-bottom: 6px;
 }
 
-.benchmark td {
-  font-variant-numeric: tabular-nums;
-}
-
-.benchmark p {
-  color: var(--subtext);
-  margin: 0;
+@media (max-width: 860px) {
+  .snippet-panes {
+    flex-direction: column;
+  }
 }
 
 figcaption {

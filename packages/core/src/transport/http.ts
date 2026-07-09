@@ -1,6 +1,7 @@
 import { Option, extractorMetadata } from "@smite/fp";
 import type { Extractor, ExtractorMetadata, ExtractorSource } from "@smite/fp";
 import { freeze, freezeArray } from "../internal/freeze.js";
+import { lifecycle } from "../lifecycle/lifecycle.js";
 import {
   emptyLifecycleDescriptor,
   mergeLifecycleDescriptors,
@@ -11,9 +12,14 @@ import type {
   HttpExecutionContext,
   HttpExecutionRequest,
   HttpMethod,
+  HttpResult,
   HttpRouteDescriptor,
   LifecycleCompositionDescriptor,
   LifecycleSource,
+  RouteInputConfig,
+  RouteOutputConfig,
+  RouteSpecBuilder,
+  RouteSpecDescriptor,
 } from "../types.js";
 
 /**
@@ -26,6 +32,9 @@ import type {
 export interface HttpRouteBuilder {
   readonly descriptor: HttpRouteDescriptor;
   readonly use: (...sources: readonly LifecycleSource[]) => HttpRouteBuilder;
+  readonly input: (config: RouteInputConfig) => HttpRouteBuilder;
+  readonly output: (config: RouteOutputConfig) => HttpRouteBuilder;
+  readonly extend: (spec: RouteSpecBuilder) => HttpRouteBuilder;
 }
 
 /**
@@ -47,11 +56,47 @@ export interface HttpControllerBuilder {
   ) => HttpControllerBuilder;
 }
 
-export const createRouteDescriptor = (
+export interface RouteConfigurator {
+  readonly get: (
+    path: string,
+    handler: HandlerReference,
+  ) => HttpRouteBuilder;
+  readonly post: (
+    path: string,
+    handler: HandlerReference,
+  ) => HttpRouteBuilder;
+  readonly put: (
+    path: string,
+    handler: HandlerReference,
+  ) => HttpRouteBuilder;
+  readonly patch: (
+    path: string,
+    handler: HandlerReference,
+  ) => HttpRouteBuilder;
+  readonly delete: (
+    path: string,
+    handler: HandlerReference,
+  ) => HttpRouteBuilder;
+  readonly head: (
+    path: string,
+    handler: HandlerReference,
+  ) => HttpRouteBuilder;
+  readonly options: (
+    path: string,
+    handler: HandlerReference,
+  ) => HttpRouteBuilder;
+  readonly input: (config: RouteInputConfig) => RouteSpecBuilder;
+  readonly output: (config: RouteOutputConfig) => RouteSpecBuilder;
+  readonly extend: (spec: RouteSpecBuilder) => RouteConfigurator;
+}
+
+const createRouteDescriptor = (
   method: HttpMethod,
   path: string,
   handler: HandlerReference,
   lifecycle: LifecycleCompositionDescriptor = emptyLifecycleDescriptor(),
+  input?: RouteInputConfig,
+  output?: RouteOutputConfig,
 ): HttpRouteDescriptor =>
   freeze({
     kind: "http.route",
@@ -59,7 +104,67 @@ export const createRouteDescriptor = (
     path,
     handler,
     lifecycle,
+    ...(input !== undefined ? { input } : {}),
+    ...(output !== undefined ? { output } : {}),
   });
+
+const createLifecycleEntryFromInput = (
+  config: RouteInputConfig,
+): readonly LifecycleSource[] => {
+  const sources: LifecycleSource[] = [];
+
+  if (config.params) {
+    const schema = config.params;
+    sources.push(
+      lifecycle.guard("input-params", ((context: HttpExecutionContext) => {
+        try {
+          schema.parse(context.request.params);
+          return true;
+        } catch {
+          return false;
+        }
+      }) as (...args: readonly unknown[]) => boolean),
+    );
+  }
+
+  if (config.query) {
+    const schema = config.query;
+    sources.push(
+      lifecycle.guard("input-query", ((context: HttpExecutionContext) => {
+        try {
+          schema.parse(context.request.query);
+          return true;
+        } catch {
+          return false;
+        }
+      }) as (...args: readonly unknown[]) => boolean),
+    );
+  }
+
+  if (config.headers) {
+    const schema = config.headers;
+    sources.push(
+      lifecycle.guard("input-headers", ((context: HttpExecutionContext) => {
+        try {
+          schema.parse(context.request.headers);
+          return true;
+        } catch {
+          return false;
+        }
+      }) as (...args: readonly unknown[]) => boolean),
+    );
+  }
+
+  if (config.body) {
+    const schema = config.body;
+    sources.push(
+      lifecycle.pipe("input-body", ((body: unknown) =>
+        schema.parse(body)) as (...args: readonly unknown[]) => unknown),
+    );
+  }
+
+  return sources;
+};
 
 const createRouteBuilder = (
   descriptor: HttpRouteDescriptor,
@@ -71,6 +176,37 @@ const createRouteBuilder = (
         ...descriptor,
         lifecycle: mergeLifecycleDescriptors(descriptor.lifecycle, ...sources),
       }),
+    input: (config) => {
+      const merged = mergeLifecycleDescriptors(
+        descriptor.lifecycle,
+        ...createLifecycleEntryFromInput(config),
+      );
+
+      return createRouteBuilder({
+        ...descriptor,
+        input: freeze({ ...config }),
+        lifecycle: merged,
+      });
+    },
+    output: (config) =>
+      createRouteBuilder({
+        ...descriptor,
+        output: freeze({ ...config }),
+      }),
+    extend: (spec) => {
+      const specDescriptor = spec.descriptor;
+      let result = createRouteBuilder(descriptor);
+
+      if (specDescriptor.input) {
+        result = result.input(specDescriptor.input);
+      }
+
+      if (specDescriptor.output) {
+        result = result.output(specDescriptor.output);
+      }
+
+      return result;
+    },
   });
 
 const route = (
@@ -79,6 +215,67 @@ const route = (
   handler: HandlerReference,
 ): HttpRouteBuilder =>
   createRouteBuilder(createRouteDescriptor(method, path, handler));
+
+const createSpecDescriptor = (
+  input?: RouteInputConfig,
+  output?: RouteOutputConfig,
+): RouteSpecDescriptor =>
+  freeze({
+    kind: "http.spec",
+    ...(input ? { input: freeze({ ...input }) } : {}),
+    ...(output ? { output: freeze({ ...output }) } : {}),
+    lifecycle: emptyLifecycleDescriptor(),
+  });
+
+const createSpecBuilder = (
+  descriptor: RouteSpecDescriptor,
+): RouteSpecBuilder =>
+  freeze({
+    descriptor,
+    input: (config) =>
+      createSpecBuilder(
+        createSpecDescriptor(config, descriptor.output),
+      ),
+    output: (config) =>
+      createSpecBuilder(
+        createSpecDescriptor(descriptor.input, config),
+      ),
+  });
+
+const createRouteConfigurator = (
+  spec?: RouteSpecDescriptor,
+): RouteConfigurator => {
+  const verb =
+    (method: HttpMethod) =>
+    (path: string, handler: HandlerReference): HttpRouteBuilder => {
+      let routeBuilder = route(method, path, handler);
+
+      if (spec) {
+        if (spec.input) {
+          routeBuilder = routeBuilder.input(spec.input);
+        }
+
+        if (spec.output) {
+          routeBuilder = routeBuilder.output(spec.output);
+        }
+      }
+
+      return routeBuilder;
+    };
+
+  return freeze({
+    get: verb("GET"),
+    post: verb("POST"),
+    put: verb("PUT"),
+    patch: verb("PATCH"),
+    delete: verb("DELETE"),
+    head: verb("HEAD"),
+    options: verb("OPTIONS"),
+    input: (config) => createSpecBuilder(createSpecDescriptor(config)),
+    output: (config) => createSpecBuilder(createSpecDescriptor(undefined, config)),
+    extend: (specBuilder) => createRouteConfigurator(specBuilder.descriptor),
+  });
+};
 
 const createControllerBuilder = (
   descriptor: HttpControllerDescriptor,
@@ -103,86 +300,22 @@ const createControllerBuilder = (
   });
 
 /**
- * Extractor specialized to the HTTP execution context.
+ * Creates an {@link HttpResult} that the pipeline recognises and
+ * normalises into an {@link HttpExecutionResult}.
  *
  * @group HTTP
  */
-export type HttpExtractor = Extractor<HttpExecutionContext, string>;
-
-type HttpExtractorRead = (
-  context: HttpExecutionContext,
-) => string | null | undefined;
-
-const createHttpExtractor = (
-  source: ExtractorSource,
-  key: string,
-  read: HttpExtractorRead,
-): HttpExtractor => {
-  const extractor = ((context: HttpExecutionContext) =>
-    Option.fromNullable(read(context))) as HttpExtractor;
-  const metadata: ExtractorMetadata = freeze({
-    kind: "fp.extractor",
-    source,
-    key,
+const createHttpResult = (
+  status: number,
+  body?: unknown,
+  headers?: Readonly<Record<string, string>>,
+): HttpResult =>
+  freeze({
+    kind: "http.result",
+    status,
+    ...(body !== undefined ? { body } : {}),
+    ...(headers !== undefined ? { headers } : {}),
   });
-
-  Object.defineProperty(extractor, extractorMetadata, {
-    configurable: false,
-    enumerable: false,
-    value: metadata,
-  });
-
-  return extractor;
-};
-
-const readHeaderValue = (
-  request: HttpExecutionRequest,
-  name: string,
-): string | undefined => {
-  for (const [key, value] of Object.entries(request.headers)) {
-    if (key.toLowerCase() !== name.toLowerCase()) {
-      continue;
-    }
-
-    if (typeof value === "string") {
-      return value;
-    }
-
-    return Array.isArray(value) ? value[0] : undefined;
-  }
-
-  return undefined;
-};
-
-const readQueryValue = (
-  request: HttpExecutionRequest,
-  name: string,
-): string | undefined => {
-  const value = request.query[name];
-  return typeof value === "string" ? value : undefined;
-};
-
-const readAuthorizationValue = (
-  request: HttpExecutionRequest,
-  scheme?: string,
-): string | undefined => {
-  const value = readHeaderValue(request, "authorization");
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (scheme === undefined) {
-    return value;
-  }
-
-  const [actualScheme, ...rest] = value.trim().split(/\s+/u);
-  if (actualScheme !== scheme) {
-    return undefined;
-  }
-
-  const token = rest.join(" ");
-  return token.length > 0 ? token : undefined;
-};
 
 /**
  * Namespace for HTTP transport builders.
@@ -205,104 +338,27 @@ export const http = freeze({
         routes: freezeArray([]),
       }),
     ),
-  route: freeze({
-    get: (path: string, handler: HandlerReference) =>
-      route("GET", path, handler),
-    post: (path: string, handler: HandlerReference) =>
-      route("POST", path, handler),
-    put: (path: string, handler: HandlerReference) =>
-      route("PUT", path, handler),
-    patch: (path: string, handler: HandlerReference) =>
-      route("PATCH", path, handler),
-    delete: (path: string, handler: HandlerReference) =>
-      route("DELETE", path, handler),
-    head: (path: string, handler: HandlerReference) =>
-      route("HEAD", path, handler),
-    options: (path: string, handler: HandlerReference) =>
-      route("OPTIONS", path, handler),
-  }),
-  /**
-   * Extracts a cookie value by name.
-   *
-   * The value is missing when the request does not carry the cookie.
-   *
-   * @group HTTP
-   * @intent Reads a request cookie as an optional string.
-   * @example Extract a cookie
-   */
-  cookie: (name: string): HttpExtractor =>
-    createHttpExtractor(
-      "cookie",
-      name,
-      (context) => context.request.cookies[name],
-    ),
-  /**
-   * Extracts an HTTP header value by name.
-   *
-   * Header lookup is case-insensitive. Array-valued headers yield their first
-   * element. The value is missing when the header is absent.
-   *
-   * @group HTTP
-   * @intent Reads a request header as an optional string.
-   * @example Extract a header
-   */
-  header: (name: string): HttpExtractor =>
-    createHttpExtractor("header", name, (context) =>
-      readHeaderValue(context.request, name),
-    ),
-  /**
-   * Extracts a query parameter by name.
-   *
-   * Only string values are extracted; other query values are treated as
-   * missing.
-   *
-   * @group HTTP
-   * @intent Reads a URL query parameter as an optional string.
-   * @example Extract a query parameter
-   */
-  query: (name: string): HttpExtractor =>
-    createHttpExtractor("query", name, (context) =>
-      readQueryValue(context.request, name),
-    ),
-  /**
-   * Extracts a path parameter by name.
-   *
-   * The value is missing when the route does not declare the parameter.
-   *
-   * @group HTTP
-   * @intent Reads a URL path parameter as an optional string.
-   * @example Extract a path parameter
-   */
-  param: (name: string): HttpExtractor =>
-    createHttpExtractor(
-      "param",
-      name,
-      (context) => context.request.params[name],
-    ),
-  /**
-   * Extracts a token from the Authorization header.
-   *
-   * When a scheme is provided, the header must match `"<scheme> <token>"`.
-   * Without a scheme, the raw header value is returned.
-   *
-   * @group HTTP
-   * @intent Reads an Authorization header value or token as an optional string.
-   * @example Extract an authorization scheme
-   */
-  authHeader: (scheme?: string): HttpExtractor =>
-    createHttpExtractor("authHeader", "authorization", (context) =>
-      readAuthorizationValue(context.request, scheme),
-    ),
-  /**
-   * Extracts a value with a custom reader.
-   *
-   * The reader receives the full execution context and returns a string or a
-   * nullish value.
-   *
-   * @group HTTP
-   * @intent Lets applications read request values not covered by built-in extractors.
-   * @example Custom extractor
-   */
-  custom: (name: string, read: HttpExtractorRead): HttpExtractor =>
-    createHttpExtractor("custom", name, read),
+  route: createRouteConfigurator(),
+  result: createHttpResult,
+
+  /** HTTP status constants */
+  OK: 200 as const,
+  CREATED: 201 as const,
+  ACCEPTED: 202 as const,
+  NO_CONTENT: 204 as const,
+  MOVED_PERMANENTLY: 301 as const,
+  FOUND: 302 as const,
+  NOT_MODIFIED: 304 as const,
+  BAD_REQUEST: 400 as const,
+  UNAUTHORIZED: 401 as const,
+  FORBIDDEN: 403 as const,
+  NOT_FOUND: 404 as const,
+  METHOD_NOT_ALLOWED: 405 as const,
+  CONFLICT: 409 as const,
+  UNSUPPORTED_MEDIA_TYPE: 415 as const,
+  UNPROCESSABLE_ENTITY: 422 as const,
+  TOO_MANY_REQUESTS: 429 as const,
+  INTERNAL_SERVER_ERROR: 500 as const,
+  BAD_GATEWAY: 502 as const,
+  SERVICE_UNAVAILABLE: 503 as const,
 });

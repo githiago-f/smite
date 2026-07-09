@@ -21,6 +21,7 @@
   "sideEffects": false,
   "dependencies": {
     "@smite/core": "0.1.0",
+    "@smite/fp": "0.1.0",
     "express": "^5.2.1"
   }
 }

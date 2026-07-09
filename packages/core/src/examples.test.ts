@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { http, lifecycle, mergeLifecycleDescriptors } from "./index.js";
+import {
+  http,
+  lifecycle,
+  mergeLifecycleDescriptors,
+} from "./index.js";
+import type {
+  HttpExecutionContext,
+  InputSchema,
+  RouteHandlerContext,
+  RouteInputConfig,
+} from "./index.js";
 
 describe("examples", () => {
   it("builds a reusable lifecycle composition", () => {
@@ -201,5 +211,75 @@ describe("examples", () => {
     expect(UsersController.descriptor.lifecycle.entries).toEqual(
       BillingController.descriptor.lifecycle.entries,
     );
+  });
+
+  it("attaches input schema and auto-generates validation lifecycle", () => {
+    // #section - Route input with validation lifecycle
+    const schema: InputSchema<{ readonly name: string }> = {
+      parse: (input) => input as { readonly name: string },
+    };
+
+    const route = http.route
+      .post("/users", () => ({ status: 201 }))
+      .input({ body: schema });
+    // #endsection
+
+    expect(route.descriptor.input).toBeDefined();
+    expect(route.descriptor.input?.body).toBe(schema);
+    expect(
+      route.descriptor.lifecycle.entries.find(
+        (entry) => entry.name === "input-body",
+      ),
+    ).toBeDefined();
+  });
+
+  it("composes reusable specs with extend", () => {
+    // #section - Reusable route spec
+    const schema: InputSchema<{ readonly id: string }> = {
+      parse: (input) => input as { readonly id: string },
+    };
+
+    const base = http.route.input({
+      params: schema,
+    });
+
+    const route = http.route.extend(base).get("/:id", () => undefined);
+    // #endsection
+
+    expect(route.descriptor.input?.params).toBe(schema);
+    expect(
+      route.descriptor.lifecycle.entries.find(
+        (entry) => entry.name === "input-params",
+      ),
+    ).toBeDefined();
+  });
+
+  it("returns http result objects from handlers", () => {
+    // #section - Http result from handler
+    const handler = () => http.result(http.NOT_FOUND, { message: "missing" });
+    // #endsection
+
+    const result = handler();
+
+    expect(result).toMatchObject({
+      kind: "http.result",
+      status: 404,
+      body: { message: "missing" },
+    });
+  });
+
+  it("attaches output schemas for documentation", () => {
+    // #section - Route output schema
+    const UserSchema: InputSchema<{ readonly id: string }> = {
+      parse: (input) => input as { readonly id: string },
+    };
+
+    const route = http.route
+      .get("/users/:id", () => undefined)
+      .output({ [http.OK]: UserSchema, [http.NOT_FOUND]: UserSchema });
+    // #endsection
+
+    expect(route.descriptor.output?.[http.OK]).toBe(UserSchema);
+    expect(route.descriptor.output?.[http.NOT_FOUND]).toBe(UserSchema);
   });
 });

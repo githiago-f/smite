@@ -1,5 +1,5 @@
-import { http, lifecycle } from "@smite/core";
-import type { Request, Response } from "express";
+import { createApplication, http, lifecycle } from "@smite/core";
+import { Result } from "@smite/fp";
 import { describe, expect, it } from "vitest";
 import { createExpressRuntime } from "./runtime.js";
 import type {
@@ -33,8 +33,10 @@ describe("createExpressRuntime", () => {
         })),
       );
 
-    const response = await dispatch(
-      createExpressRuntime({ controllers: [controller] }),
+    const runtime = createExpressRuntime({ application: createApplication().add(controller) });
+    const response = createResponse();
+
+    await runtime(
       {
         method: "POST",
         url: "/users",
@@ -86,10 +88,12 @@ describe("createExpressRuntime", () => {
         }),
       );
 
-    const response = await dispatch(
-      createExpressRuntime({ controllers: [controller] }),
-      { method: "GET", url: "/users" },
-    );
+    const runtime = createExpressRuntime({ application: createApplication().add(controller) });
+    const response = createResponse();
+
+    await runtime({ method: "GET", url: "/users" }, response, (error) => {
+      throw error;
+    });
 
     expect(executed).toBe(false);
     expect(response.statusCode).toBe(403);
@@ -165,6 +169,266 @@ describe("createExpressRuntime", () => {
     expect(nextCalled).toBe(true);
     expect(response.statusCode).toBe(200);
     expect(response.headersSent).toBe(false);
+  });
+
+  it("converts Result.err with status tag to HTTP response", async () => {
+    // #section - Result err to HTTP
+    const controller = http
+      .controller()
+      .path("/users")
+      .routes(
+        http.route.get("/42", () =>
+          Result.err(404, { message: "User not found" }),
+        ),
+      );
+
+    const runtime = createExpressRuntime({ application: createApplication().add(controller) });
+    const response = createResponse();
+
+    await runtime(
+      { method: "GET", url: "/users/42" },
+      response,
+      (error) => {
+        throw error;
+      },
+    );
+
+    expect(response.statusCode).toBe(404);
+    expect(response.body).toEqual({ message: "User not found" });
+    // #endsection
+  });
+
+  it("converts Result.ok to 200 response", async () => {
+    // #section - Result ok to HTTP
+    const controller = http
+      .controller()
+      .path("/users")
+      .routes(
+        http.route.get("/42", () =>
+          Result.ok({ id: "42", name: "Ada" }),
+        ),
+      );
+
+    const runtime = createExpressRuntime({ application: createApplication().add(controller) });
+    const response = createResponse();
+
+    await runtime(
+      { method: "GET", url: "/users/42" },
+      response,
+      (error) => {
+        throw error;
+      },
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toEqual({ id: "42", name: "Ada" });
+    // #endsection
+  });
+
+  it("applies lifecycle to individual routes", async () => {
+    // #section - Route-specific lifecycle
+    const apiKeyGuard = lifecycle.guard(
+      "api-key",
+      (context: SmiteHttpContext) =>
+        context.request.headers["x-api-key"] === "admin",
+    );
+
+    const controller = http
+      .controller()
+      .path("/admin")
+      .routes(
+        http.route
+          .delete("/users", () => ({ status: 204 }))
+          .use(apiKeyGuard),
+        http.route.get("/health", () => ({ body: "ok" })),
+      );
+
+    const runtime = createExpressRuntime({ application: createApplication().add(controller) });
+    const denied = createResponse();
+    const passed = createResponse();
+
+    await runtime(
+      { method: "DELETE", url: "/admin/users", headers: {} },
+      denied,
+      (error) => {
+        throw error;
+      },
+    );
+    await runtime(
+      { method: "GET", url: "/admin/health" },
+      passed,
+      (error) => {
+        throw error;
+      },
+    );
+
+    expect(denied.statusCode).toBe(403);
+    expect(passed.statusCode).toBe(200);
+    // #endsection
+  });
+
+  it("reuses lifecycle compositions across controllers", async () => {
+    // #section - Reusable lifecycle composition
+    const authenticated = lifecycle.create().guards(
+      lifecycle.guard("auth", (context: SmiteHttpContext) =>
+        Boolean(context.request.headers.authorization),
+      ),
+    );
+
+    const UsersController = http
+      .controller()
+      .use(authenticated)
+      .path("/users")
+      .routes(http.route.get("/", () => ({ body: "users" })));
+
+    const BillingController = http
+      .controller()
+      .use(authenticated)
+      .path("/billing")
+      .routes(http.route.get("/", () => ({ body: "billing" })));
+
+    const runtime = createExpressRuntime({
+      application: createApplication().add(UsersController, BillingController),
+    });
+    const denied = createResponse();
+    const passed = createResponse();
+
+    await runtime({ method: "GET", url: "/users" }, denied, (error) => {
+      throw error;
+    });
+    expect(denied.statusCode).toBe(403);
+
+    await runtime(
+      { method: "GET", url: "/billing", headers: { authorization: "tok" } },
+      passed,
+      (error) => {
+        throw error;
+      },
+    );
+    expect(passed.statusCode).toBe(200);
+    // #endsection
+  });
+
+  it("attaches input schemas to routes", async () => {
+    // #section - Route input schema
+    const BodySchema = {
+      parse: (input: unknown) => input as { readonly name: string },
+    };
+
+    const controller = http
+      .controller()
+      .path("/users")
+      .routes(
+        http.route
+          .post("/", (context: SmiteHttpContext) => ({
+            body: context.request.body,
+          }))
+          .input({ body: BodySchema }),
+      );
+
+    const runtime = createExpressRuntime({ application: createApplication().add(controller) });
+    const response = createResponse();
+
+    await runtime(
+      { method: "POST", url: "/users", body: { name: "Ada" } },
+      response,
+      (error) => {
+        throw error;
+      },
+    );
+
+    expect(response.statusCode).toBe(200);
+    // #endsection
+  });
+
+  it("returns http result objects from handlers", async () => {
+    // #section - HttpResult from handler
+    const controller = http
+      .controller()
+      .path("/items")
+      .routes(
+        http.route.get("/missing", () =>
+          http.result(http.NOT_FOUND, { message: "missing" }),
+        ),
+      );
+
+    const runtime = createExpressRuntime({ application: createApplication().add(controller) });
+    const response = createResponse();
+
+    await runtime(
+      { method: "GET", url: "/items/missing" },
+      response,
+      (error) => {
+        throw error;
+      },
+    );
+
+    expect(response.statusCode).toBe(404);
+    expect(response.body).toEqual({ message: "missing" });
+    // #endsection
+  });
+
+  it("produces new builders without mutating previous ones", async () => {
+    // #section - Immutable builder derivation
+    const jwtGuard = lifecycle.guard("jwt");
+
+    const base = http.controller().use(jwtGuard);
+    const UsersController = base.path("/users");
+    const BillingController = base.path("/billing");
+
+    expect(base.descriptor.path).toBe("");
+    expect(UsersController.descriptor.path).toBe("/users");
+    expect(BillingController.descriptor.path).toBe("/billing");
+    // #endsection
+  });
+
+  it("attaches output schemas to routes", async () => {
+    // #section - Route output schema
+    const UserSchema = {
+      parse: (input: unknown) => input as { readonly id: string },
+    };
+
+    const controller = http
+      .controller()
+      .path("/users")
+      .routes(
+        http.route
+          .get("/:id", () => undefined)
+          .output({ [http.OK]: UserSchema, [http.NOT_FOUND]: UserSchema }),
+      );
+
+    expect(controller.descriptor.routes[0]?.output?.[http.OK]).toBe(UserSchema);
+    // #endsection
+  });
+
+  it("composes reusable specs with extend", async () => {
+    // #section - Route spec extend
+    const ParamsSchema = {
+      parse: (input: unknown) => input as { readonly id: string },
+    };
+
+    const base = http.route.input({ params: ParamsSchema });
+
+    const controller = http
+      .controller()
+      .path("/users")
+      .routes(
+        http.route.extend(base).get("/profile", () => ({ body: "user" })),
+        http.route.extend(base).delete("/profile", () => ({ status: 204 })),
+      );
+
+    const runtime = createExpressRuntime({ application: createApplication().add(controller) });
+    const response = createResponse();
+
+    await runtime(
+      { method: "GET", url: "/users/profile" },
+      response,
+      (error) => {
+        throw error;
+      },
+    );
+    expect(response.statusCode).toBe(200);
+    // #endsection
   });
 });
 

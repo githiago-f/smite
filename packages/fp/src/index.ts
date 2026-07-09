@@ -346,8 +346,21 @@ export class Result<Value, ErrorValue = Error> {
 
   static err<ErrorValue, Value = never>(
     error: ErrorValue,
-  ): Result<Value, ErrorValue> {
-    return new Result(freeze({ error, tag: "err" }));
+  ): Result<Value, ErrorValue>;
+
+  static err<Tag, Data>(
+    tag: Tag,
+    data: Data,
+  ): Result<never, { readonly tag: Tag; readonly data: Data }>;
+
+  static err(errorOrTag: unknown, data?: unknown): Result<unknown, unknown> {
+    if (arguments.length === 1) {
+      return new Result(freeze({ error: errorOrTag, tag: "err" }));
+    }
+
+    return new Result(
+      freeze({ error: freeze({ tag: errorOrTag, data }), tag: "err" }),
+    );
   }
 
   static fromThrowable<Value, ErrorValue = unknown>(

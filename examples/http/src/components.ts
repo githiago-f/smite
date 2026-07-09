@@ -1,4 +1,4 @@
-import { http, lifecycle } from "@smite/core";
+import { createApplication, http, lifecycle } from "@smite/core";
 import type { HttpExecutionContext } from "@smite/core";
 
 const ApiGuard = lifecycle.guard(
@@ -40,4 +40,4 @@ export const UsersController = http
   .path("/users")
   .routes(http.route.get("/", listUsers), http.route.post("/", createUser));
 
-export const controllers = [UsersController];
+export const application = createApplication().add(UsersController);

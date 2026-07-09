@@ -113,6 +113,86 @@ export type HttpMethod =
   | "OPTIONS";
 
 /**
+ * Common HTTP status codes as a numeric union.
+ *
+ * @group HTTP
+ * @intent Provides autocomplete-friendly status constants for builders and handlers.
+ */
+export type HttpStatusCode =
+  | 200 | 201 | 202 | 204
+  | 301 | 302 | 304
+  | 400 | 401 | 403 | 404 | 405 | 409 | 415 | 422 | 429
+  | 500 | 502 | 503;
+
+/**
+ * Validating schema with a known output type.
+ *
+ * Library-agnostic — any schema library that exposes a `parse` function
+ * (Zod, Valibot, ArkType, io-ts) satisfies this interface.
+ *
+ * @group HTTP
+ * @intent Keeps schema validation pluggable while letting the compiler infer types.
+ */
+export interface InputSchema<out T = unknown> {
+  readonly parse: (input: unknown) => T;
+}
+
+/**
+ * Extracts the inferred output type from an {@link InputSchema}.
+ *
+ * @group HTTP
+ */
+export type TypeOfInputSchema<T> = T extends InputSchema<infer O> ? O : unknown;
+
+/**
+ * Declarative input specification for an HTTP route or spec.
+ *
+ * Each optional field binds a Zod-compatible schema to a request
+ * bucket. The builder automatically generates lifecycle entries that
+ * validate and transform at execution time.
+ *
+ * @group HTTP
+ * @intent Lets route authors declare what data enters the handler without
+ * writing validation plumbing.
+ */
+export interface RouteInputConfig {
+  readonly params?: InputSchema;
+  readonly query?: InputSchema;
+  readonly headers?: InputSchema;
+  readonly body?: InputSchema;
+}
+
+/**
+ * Declarative output specification for an HTTP route or spec.
+ *
+ * Maps HTTP status codes to response body schemas. Consumed by
+ * artifact generators (OpenAPI, SDKs); no runtime validation.
+ *
+ * @group HTTP
+ * @intent Gives documentation and code-gen tools a complete picture of the
+ * route contract without executing the handler.
+ */
+export type RouteOutputConfig = Readonly<Record<number, InputSchema>>;
+
+/**
+ * Recognised return value from route handlers.
+ *
+ * When a handler returns an `HttpResult` the pipeline normalises it
+ * directly into {@link HttpExecutionResult} instead of wrapping it as
+ * the response body.
+ *
+ * @group HTTP
+ * @intent Lets handlers return structured HTTP responses without coupling
+ * the handler to the pipeline's return type.
+ */
+export interface HttpResult {
+  readonly kind: "http.result";
+  readonly status: number;
+  readonly body?: unknown;
+  readonly headers?: Readonly<Record<string, string>>;
+}
+
+/**
  * Semantic descriptor for a single HTTP route.
  *
  * @group HTTP
@@ -124,15 +204,42 @@ export interface HttpRouteDescriptor extends Descriptor<"http.route"> {
   readonly path: string;
   readonly handler: HandlerReference;
   readonly lifecycle: LifecycleCompositionDescriptor;
+  readonly input?: Readonly<RouteInputConfig>;
+  readonly output?: Readonly<RouteOutputConfig>;
 }
 
 /**
- * Semantic descriptor for a reusable HTTP controller.
+ * Semantic descriptor for a route specification (partial route config).
+ *
+ * A spec carries input/output schemas and optionally lifecycle entries
+ * but has no verb, path or handler. It is applied to concrete routes
+ * via {@link extend}.
  *
  * @group HTTP
- * @intent Groups route descriptors and shared lifecycle policy without introducing an application object.
- * @example HTTP controller with lifecycle
+ * @intent Lets authors define reusable interface contracts that multiple
+ * routes can extend without repeating schema declarations.
  */
+export interface RouteSpecDescriptor extends Descriptor<"http.spec"> {
+  readonly input?: Readonly<RouteInputConfig>;
+  readonly output?: Readonly<RouteOutputConfig>;
+  readonly lifecycle: LifecycleCompositionDescriptor;
+}
+
+/**
+ * Builder for a route specification.
+ *
+ * Returned by {@link http.route.input} and {@link http.route.output}
+ * when no verb has been attached yet.
+ *
+ * @group HTTP
+ * @intent Lets authors chain input/output declarations into a reusable spec.
+ */
+export interface RouteSpecBuilder {
+  readonly descriptor: RouteSpecDescriptor;
+  readonly input: (config: RouteInputConfig) => RouteSpecBuilder;
+  readonly output: (config: RouteOutputConfig) => RouteSpecBuilder;
+}
+
 export interface HttpControllerDescriptor
   extends Descriptor<"http.controller"> {
   readonly path: string;
@@ -169,6 +276,37 @@ export interface HttpExecutionContext {
   readonly request: HttpExecutionRequest;
   readonly state: Readonly<Record<string, unknown>>;
 }
+
+/**
+ * Infers the handler context type from a {@link RouteInputConfig}.
+ *
+ * Each schema bucket is narrowed to its inferred output type so that
+ * handlers access validated data without casting.
+ *
+ * @group HTTP
+ * @intent Bridges the gap between schema-declared input and handler contracts,
+ * keeping the annotation explicit but the inference automatic.
+ */
+export type RouteHandlerContext<Input extends RouteInputConfig> =
+  HttpExecutionContext & {
+    readonly request: {
+      readonly params: Input extends { params: InputSchema<infer T> }
+        ? T
+        : Readonly<Record<string, string>>;
+      readonly query: Input extends { query: InputSchema<infer T> }
+        ? T
+        : Readonly<Record<string, unknown>>;
+      readonly headers: Input extends { headers: InputSchema<infer T> }
+        ? T
+        : Readonly<Record<string, string | readonly string[] | undefined>>;
+      readonly body: Input extends { body: InputSchema<infer T> }
+        ? T
+        : unknown;
+    } & Omit<
+      HttpExecutionRequest,
+      "params" | "query" | "headers" | "body"
+    >;
+  };
 
 /**
  * Normalized HTTP response produced by core execution.
@@ -213,4 +351,19 @@ export interface SchedulerJobDescriptor extends Descriptor<"scheduler.job"> {
   readonly cron: string;
   readonly handler?: HandlerReference;
   readonly lifecycle: LifecycleCompositionDescriptor;
+}
+
+/**
+ * Semantic descriptor for a Smite application — an aggregate of all
+ * components (controllers, consumers, jobs) that a runtime adapter
+ * can consume.
+ *
+ * @group Application
+ * @intent Provides a single, predictable entry point for runtime adapters.
+ */
+export interface ApplicationDescriptor
+  extends Descriptor<"smite.application"> {
+  readonly controllers: readonly HttpControllerDescriptor[];
+  readonly consumers: readonly MessagingConsumerDescriptor[];
+  readonly jobs: readonly SchedulerJobDescriptor[];
 }
