@@ -5,7 +5,7 @@
 Smite is a compile-time-first TypeScript framework built around a semantic compiler.
 
 Applications describe intent through a functional DSL. During compilation, Smite generates runtime code, infrastructure, documentation and other production artifacts while minimizing runtime overhead.
-Runtime emitters turn descriptors into platform-native source, such as an Express app module, before the final bundle is produced. Runtime adapters like `@smitejs/runtime-express` bridge Express requests and responses to the execution model owned by the core.
+Runtime emitters turn descriptors into platform-native source, such as an Express app module, before the final bundle is produced. Runtime adapters like `@smite/express` bridge Express requests and responses to the execution model owned by the core.
 
 ## Why?
 
@@ -75,7 +75,7 @@ During compilation the framework collects semantic information, validates it, bu
 The generated output becomes the production application.
 
 The framework itself should contribute as little runtime code as possible.
-The first Express runtime adapter prototype in this repository is `@smitejs/runtime-express`, which targets Express and consumes the core HTTP execution pipeline.
+The first Express runtime adapter prototype in this repository is `@smite/express`, which targets Express and consumes the core HTTP execution pipeline.
 
 ## Monorepo
 

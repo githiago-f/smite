@@ -8,7 +8,7 @@ The Express runtime adapter turns Express requests into the Smite HTTP execution
 
 Use `createExpressRuntime(...)` when you already have validated controller descriptors and want to mount them on an Express application.
 
-The package also exposes `createNodeHttpServer(...)` for environments that want to reuse the same core execution path without Express.
+`createExpressRuntime(...)` returns an Express-compatible request handler that can be mounted with `app.use(...)`.
 
 ## Basic usage
 

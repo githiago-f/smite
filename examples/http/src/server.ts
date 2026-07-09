@@ -1,6 +1,6 @@
-import { createExpressRuntime } from "@smitejs/runtime-express";
+import { createExpressRuntime } from "@smite/express";
 import express from "express";
-import { controllers } from "./index.js";
+import { controllers } from "./components.js";
 
 const port = Number(process.env.PORT ?? "3000");
 const host = process.env.HOST ?? "127.0.0.1";

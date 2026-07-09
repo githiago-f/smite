@@ -1,5 +1,5 @@
-import { http, lifecycle } from "@smitejs/core";
-import type { HttpExecutionContext } from "@smitejs/core";
+import { http, lifecycle } from "@smite/core";
+import type { HttpExecutionContext } from "@smite/core";
 
 const ApiGuard = lifecycle.guard(
   "api-key",

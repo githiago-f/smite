@@ -11,7 +11,7 @@ The package should also expose a reusable `node:http` helper for environments th
 The proposed package name is:
 
 ```
-@smitejs/runtime-express
+@smite/express
 ```
 
 ---
@@ -111,4 +111,3 @@ No runtime source generation is required for the example application.
 Some environments may prefer `node:http` instead of Express.
 
 That helper can live alongside the Express adapter as a separate runtime bridge, but it should remain optional and reuse the same core execution path.
-

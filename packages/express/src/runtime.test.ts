@@ -1,4 +1,4 @@
-import { http, lifecycle } from "@smitejs/core";
+import { http, lifecycle } from "@smite/core";
 import { describe, expect, it } from "vitest";
 import { createExpressRuntime } from "./runtime.js";
 import type { ExpressResponseLike, SmiteHttpContext } from "./types.js";
@@ -50,6 +50,7 @@ describe("createExpressRuntime", () => {
 
   it("short-circuits denied guards before executing the handler", async () => {
     let executed = false;
+    // #section - open circuit with guards
     const Deny = lifecycle.guard("deny", () => false);
     const controller = http
       .controller()
@@ -71,6 +72,7 @@ describe("createExpressRuntime", () => {
     expect(executed).toBe(false);
     expect(response.statusCode).toBe(403);
     expect(response.body).toEqual({ error: "Forbidden" });
+    // #endsection
   });
 });
 

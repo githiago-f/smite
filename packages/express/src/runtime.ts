@@ -1,4 +1,4 @@
-import { executeHttpPipeline } from "@smitejs/core";
+import { executeHttpPipeline } from "@smite/core";
 import type {
   ExpressControllerDescriptor,
   ExpressNextFunction,

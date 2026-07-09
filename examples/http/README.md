@@ -1,7 +1,7 @@
 # HTTP Example
 
-Small example project that imports `@smitejs/core` and builds a simple HTTP controller.
-The executable server uses `express` and `@smitejs/runtime-express`.
+Small example project that imports `@smite/core` and builds a simple HTTP controller.
+The executable server uses `express` and `@smite/express`.
 
 ## What it shows
 
@@ -14,13 +14,13 @@ The executable server uses `express` and `@smitejs/runtime-express`.
 ## Build
 
 ```sh
-yarn workspace @smitejs/example-http build
+yarn workspace @smite/example-http build
 ```
 
 ## Run
 
 ```sh
-yarn workspace @smitejs/example-http start
+yarn workspace @smite/example-http start
 ```
 
 The server listens on `http://localhost:3000` by default.

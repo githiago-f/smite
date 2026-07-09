@@ -10,7 +10,7 @@ import type {
   LifecycleCompositionDescriptor,
   LifecycleEntry,
   LifecycleEntryKind,
-} from "@smitejs/core";
+} from "@smite/core";
 
 export type ExpressNextFunction = (error?: unknown) => void;
 

@@ -1,7 +1,7 @@
 {
-  "name": "@smite/core",
+  "name": "@smite/fp",
   "version": "0.1.0",
-  "description": "Core functional descriptors and builders for Smite.",
+  "description": "Small functional programming primitives for Smite applications and framework code.",
   "license": "MIT",
   "type": "module",
   "exports": {
