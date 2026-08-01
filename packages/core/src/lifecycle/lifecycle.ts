@@ -1,9 +1,9 @@
 import { freeze } from "../internal/freeze.js";
 import type {
   DescriptorBuilder,
+  HttpExecutionContext,
   LifecycleCompositionDescriptor,
   LifecycleEntry,
-  LifecycleEntryImplementation,
   LifecycleEntryKind,
   LifecycleEntryOptions,
   LifecycleSource,
@@ -24,12 +24,141 @@ import {
 export type LifecycleEntryBuilder<Kind extends LifecycleEntryKind> =
   DescriptorBuilder<LifecycleEntry<Kind>>;
 
-export type LifecycleEntryDefinition =
-  | readonly [options?: LifecycleEntryOptions]
-  | readonly [
-      implementation: LifecycleEntryImplementation,
-      options?: LifecycleEntryOptions,
-    ];
+/**
+ * Runtime implementation referenced by a guard.
+ *
+ * Receives the execution context and decides whether execution may continue.
+ *
+ * @group Lifecycle
+ */
+export type GuardImplementation<Context = HttpExecutionContext> = (
+  context: Context,
+) => unknown;
+
+/**
+ * Runtime implementation referenced by a filter.
+ *
+ * Receives the captured error and the execution context, and may return a
+ * handled result.
+ *
+ * @group Lifecycle
+ */
+export type FilterImplementation<
+  ErrorValue = unknown,
+  Context = HttpExecutionContext,
+> = (error: ErrorValue, context: Context) => unknown;
+
+/**
+ * Runtime implementation referenced by a pipe.
+ *
+ * Receives the request body and the execution context, and returns the
+ * transformed body.
+ *
+ * @group Lifecycle
+ */
+export type PipeImplementation<
+  Body = unknown,
+  Context = HttpExecutionContext,
+> = (body: Body, context: Context) => unknown;
+
+/**
+ * Runtime implementation referenced by a provider.
+ *
+ * Receives the execution context and returns the value stored in context
+ * state.
+ *
+ * @group Lifecycle
+ */
+export type ProviderImplementation<Context = HttpExecutionContext> = (
+  context: Context,
+) => unknown;
+
+/**
+ * Runtime implementation referenced by an interceptor.
+ *
+ * Receives the execution context for side effects.
+ *
+ * @group Lifecycle
+ */
+export type InterceptorImplementation<Context = HttpExecutionContext> = (
+  context: Context,
+) => unknown;
+
+/**
+ * Definition accepted by `lifecycle.guard`.
+ *
+ * Either a runtime implementation or only options.
+ *
+ * @group Lifecycle
+ */
+export type GuardDefinition<Context = HttpExecutionContext> = readonly [
+  implementationOrOptions?:
+    | GuardImplementation<Context>
+    | LifecycleEntryOptions,
+  options?: LifecycleEntryOptions,
+];
+
+/**
+ * Definition accepted by `lifecycle.filter`.
+ *
+ * Either a runtime implementation or only options.
+ *
+ * @group Lifecycle
+ */
+export type FilterDefinition<
+  ErrorValue = unknown,
+  Context = HttpExecutionContext,
+> = readonly [
+  implementationOrOptions?:
+    | FilterImplementation<ErrorValue, Context>
+    | LifecycleEntryOptions,
+  options?: LifecycleEntryOptions,
+];
+
+/**
+ * Definition accepted by `lifecycle.pipe`.
+ *
+ * Either a runtime implementation or only options.
+ *
+ * @group Lifecycle
+ */
+export type PipeDefinition<
+  Body = unknown,
+  Context = HttpExecutionContext,
+> = readonly [
+  implementationOrOptions?:
+    | PipeImplementation<Body, Context>
+    | LifecycleEntryOptions,
+  options?: LifecycleEntryOptions,
+];
+
+/**
+ * Definition accepted by `lifecycle.provider`.
+ *
+ * Either a runtime implementation or only options.
+ *
+ * @group Lifecycle
+ */
+export type ProviderDefinition<Context = HttpExecutionContext> = readonly [
+  implementationOrOptions?:
+    | ProviderImplementation<Context>
+    | LifecycleEntryOptions,
+  options?: LifecycleEntryOptions,
+];
+
+/**
+ * Definition accepted by `lifecycle.interceptor`.
+ *
+ * Either a runtime implementation or only options.
+ *
+ * @group Lifecycle
+ */
+export type InterceptorDefinition<Context = HttpExecutionContext> = readonly [
+  implementationOrOptions?:
+    | InterceptorImplementation<Context>
+    | LifecycleEntryOptions,
+  options?: LifecycleEntryOptions,
+];
 
 /**
  * Immutable builder for composing reusable execution policies.
@@ -91,14 +220,29 @@ const createBuilder = (
  */
 export const lifecycle = freeze({
   create: (): LifecycleBuilder => createBuilder(emptyLifecycleDescriptor()),
-  guard: (name: string, ...definition: LifecycleEntryDefinition) =>
+  guard: <Context = HttpExecutionContext>(
+    name: string,
+    ...definition: GuardDefinition<Context>
+  ): LifecycleEntryBuilder<"guard"> =>
     createLifecycleEntryBuilder("guard", name, ...definition),
-  filter: (name: string, ...definition: LifecycleEntryDefinition) =>
+  filter: <ErrorValue = unknown, Context = HttpExecutionContext>(
+    name: string,
+    ...definition: FilterDefinition<ErrorValue, Context>
+  ): LifecycleEntryBuilder<"filter"> =>
     createLifecycleEntryBuilder("filter", name, ...definition),
-  interceptor: (name: string, ...definition: LifecycleEntryDefinition) =>
+  interceptor: <Context = HttpExecutionContext>(
+    name: string,
+    ...definition: InterceptorDefinition<Context>
+  ): LifecycleEntryBuilder<"interceptor"> =>
     createLifecycleEntryBuilder("interceptor", name, ...definition),
-  pipe: (name: string, ...definition: LifecycleEntryDefinition) =>
+  pipe: <Body = unknown, Context = HttpExecutionContext>(
+    name: string,
+    ...definition: PipeDefinition<Body, Context>
+  ): LifecycleEntryBuilder<"pipe"> =>
     createLifecycleEntryBuilder("pipe", name, ...definition),
-  provider: (name: string, ...definition: LifecycleEntryDefinition) =>
+  provider: <Context = HttpExecutionContext>(
+    name: string,
+    ...definition: ProviderDefinition<Context>
+  ): LifecycleEntryBuilder<"provider"> =>
     createLifecycleEntryBuilder("provider", name, ...definition),
 });

@@ -11,13 +11,13 @@ describe("scheduler", () => {
     const RefreshCacheJob = scheduler
       .job()
       .use(audited)
-      .cron("0 */5 * * *")
+      .cron("0 0 * * *")
       .handler(refreshCache);
     // #endsection
 
     expect(RefreshCacheJob.descriptor).toMatchObject({
       kind: "scheduler.job",
-      cron: "0 */5 * * *",
+      cron: "0 0 * * *",
       handler: refreshCache,
     });
     expect(RefreshCacheJob.descriptor.lifecycle.entries).toEqual(

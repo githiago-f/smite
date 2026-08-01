@@ -1,7 +1,13 @@
 import { http, lifecycle } from "@smite/core";
+import type { Request, Response } from "express";
 import { describe, expect, it } from "vitest";
 import { createExpressRuntime } from "./runtime.js";
-import type { ExpressResponseLike, SmiteHttpContext } from "./types.js";
+import type {
+  ExpressRequestLike,
+  ExpressResponseLike,
+  ExpressRouter,
+  SmiteHttpContext,
+} from "./types.js";
 
 describe("createExpressRuntime", () => {
   it("adapts express requests into the internal HTTP context", async () => {
@@ -27,30 +33,48 @@ describe("createExpressRuntime", () => {
         })),
       );
 
-    const runtime = createExpressRuntime({ controllers: [controller] });
-    const response = createResponse();
-
-    await runtime(
+    const response = await dispatch(
+      createExpressRuntime({ controllers: [controller] }),
       {
         method: "POST",
         url: "/users",
         headers: { "x-api-key": "local-dev" },
         body: { name: "Lin" },
       },
-      response,
-      (error) => {
-        throw error;
-      },
     );
+    // #endsection
 
     expect(response.statusCode).toBe(201);
     expect(response.body).toEqual({ name: "Lin", parsed: true });
+  });
+
+  it("parses the cookie header into the internal request context", async () => {
+    // #section - Express cookie adaptation
+    const controller = http
+      .controller()
+      .path("/")
+      .routes(
+        http.route.get("/", (context: SmiteHttpContext) => ({
+          body: context.request.cookies,
+        })),
+      );
+
+    const response = await dispatch(
+      createExpressRuntime({ controllers: [controller] }),
+      {
+        method: "GET",
+        url: "/",
+        headers: { cookie: "session_id=abc123; theme=dark" },
+      },
+    );
     // #endsection
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toEqual({ session_id: "abc123", theme: "dark" });
   });
 
   it("short-circuits denied guards before executing the handler", async () => {
     let executed = false;
-    // #section - open circuit with guards
     const Deny = lifecycle.guard("deny", () => false);
     const controller = http
       .controller()
@@ -62,24 +86,129 @@ describe("createExpressRuntime", () => {
         }),
       );
 
-    const runtime = createExpressRuntime({ controllers: [controller] });
-    const response = createResponse();
-
-    await runtime({ method: "GET", url: "/users" }, response, (error) => {
-      throw error;
-    });
+    const response = await dispatch(
+      createExpressRuntime({ controllers: [controller] }),
+      { method: "GET", url: "/users" },
+    );
 
     expect(executed).toBe(false);
     expect(response.statusCode).toBe(403);
     expect(response.body).toEqual({ error: "Forbidden" });
-    // #endsection
+  });
+
+  it("binds express route params into the internal request params", async () => {
+    const controller = http
+      .controller()
+      .path("/users")
+      .routes(
+        http.route.get("/:profileId", (context: SmiteHttpContext) => ({
+          body: context.request.params,
+        })),
+      );
+
+    const response = await dispatch(
+      createExpressRuntime({ controllers: [controller] }),
+      { method: "GET", url: "/users/42" },
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toEqual({ profileId: "42" });
+  });
+
+  it("mounts multiple controllers at their own paths", async () => {
+    const users = http
+      .controller()
+      .path("/users")
+      .routes(http.route.get("/", () => ({ body: { users: true } })));
+    const posts = http
+      .controller()
+      .path("/posts")
+      .routes(http.route.get("/", () => ({ body: { posts: true } })));
+
+    const runtime = createExpressRuntime({ controllers: [users, posts] });
+
+    const usersResponse = await dispatch(runtime, {
+      method: "GET",
+      url: "/users",
+    });
+    const postsResponse = await dispatch(runtime, {
+      method: "GET",
+      url: "/posts",
+    });
+
+    expect(usersResponse.body).toEqual({ users: true });
+    expect(postsResponse.body).toEqual({ posts: true });
+  });
+
+  it("falls through to the next middleware when no route matches", async () => {
+    const controller = http
+      .controller()
+      .path("/users")
+      .routes(http.route.get("/", () => ({ body: { users: true } })));
+
+    let nextCalled = false;
+    const response = createResponse();
+
+    createExpressRuntime({ controllers: [controller] })(
+      { method: "GET", url: "/missing" } as Request,
+      response as unknown as Response,
+      (error) => {
+        if (error) {
+          throw error;
+        }
+        nextCalled = true;
+        response.settle();
+      },
+    );
+    await response.settled;
+
+    expect(nextCalled).toBe(true);
+    expect(response.statusCode).toBe(200);
+    expect(response.headersSent).toBe(false);
   });
 });
 
-const createResponse = (): ExpressResponseLike & { body?: unknown } => {
-  const response: ExpressResponseLike & { body?: unknown } = {
+const dispatch = async (
+  router: ExpressRouter,
+  request: ExpressRequestLike,
+): Promise<ExpressResponseLike & { body?: unknown }> => {
+  const response = createResponse();
+  let reject: (error: unknown) => void = () => {};
+  const failed = new Promise<never>((_, rej) => {
+    reject = rej;
+  });
+
+  router(request as Request, response as unknown as Response, (error) => {
+    if (error) {
+      reject(error);
+      return;
+    }
+    response.settle();
+  });
+
+  await Promise.race([response.settled, failed]);
+
+  return response;
+};
+
+const createResponse = (): ExpressResponseLike & {
+  body?: unknown;
+  settled: Promise<void>;
+  settle: () => void;
+} => {
+  let resolveSettled: () => void = () => {};
+  const settled = new Promise<void>((resolve) => {
+    resolveSettled = resolve;
+  });
+
+  const response: ExpressResponseLike & {
+    body?: unknown;
+    settled: Promise<void>;
+    settle: () => void;
+  } = {
     statusCode: 200,
     headersSent: false,
+    setHeader: () => {},
     status: (status) => {
       response.statusCode = status;
       return response;
@@ -87,10 +216,14 @@ const createResponse = (): ExpressResponseLike & { body?: unknown } => {
     json: (body) => {
       response.headersSent = true;
       response.body = body;
+      resolveSettled();
     },
     end: () => {
       response.headersSent = true;
+      resolveSettled();
     },
+    settled,
+    settle: () => resolveSettled(),
   };
 
   return response;

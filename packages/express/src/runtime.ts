@@ -1,45 +1,65 @@
 import { executeHttpPipeline } from "@smite/core";
+import {
+  type Router as ExpressRouter,
+  type RequestHandler,
+  Router,
+} from "express";
 import type {
   ExpressControllerDescriptor,
-  ExpressNextFunction,
   ExpressRequestLike,
   ExpressResponseLike,
   ExpressRouteDescriptor,
   ExpressRuntimeOptions,
 } from "./types.js";
 
+const routeMethods = {
+  GET: "get",
+  POST: "post",
+  PUT: "put",
+  PATCH: "patch",
+  DELETE: "delete",
+  HEAD: "head",
+  OPTIONS: "options",
+} as const;
+
 export const createExpressRuntime = (
   options: ExpressRuntimeOptions,
-): ((
-  request: ExpressRequestLike,
-  response: ExpressResponseLike,
-  next: ExpressNextFunction,
-) => Promise<void>) => {
-  const controllers = options.controllers.map(unwrapController);
+): ExpressRouter => {
+  const router = Router();
 
-  return async (request, response, next) => {
-    try {
-      const match = findRoute(controllers, request);
+  for (const controller of options.controllers.map(unwrapController)) {
+    const controllerRouter = Router();
 
-      if (!match) {
-        sendExpressResult(response, {
-          status: 404,
-          body: { error: "Not found" },
-        });
-        return;
-      }
-
-      const result = await executeHttpPipeline(
-        match.controller,
-        match.route,
-        createHttpExecutionContext(request),
+    for (const route of controller.routes) {
+      controllerRouter[routeMethods[route.method]](
+        route.path,
+        createRouteMiddleware(controller, route),
       );
-      sendExpressResult(response, result);
+    }
+
+    router.use(controller.path, controllerRouter);
+  }
+
+  return router;
+};
+
+const createRouteMiddleware =
+  (
+    controller: ExpressControllerDescriptor,
+    route: ExpressRouteDescriptor,
+  ): RequestHandler =>
+  async (request, response, next) => {
+    try {
+      const result = await executeHttpPipeline(
+        controller,
+        route,
+        createHttpExecutionContext(request as unknown as ExpressRequestLike),
+      );
+      sendExpressResult(response as unknown as ExpressResponseLike, result);
     } catch (error) {
       next(error);
     }
   };
-};
 
 const unwrapController = (
   source: ExpressRuntimeOptions["controllers"][number],
@@ -49,30 +69,6 @@ const unwrapController = (
   }
 
   return source;
-};
-
-const findRoute = (
-  controllers: readonly ExpressControllerDescriptor[],
-  request: ExpressRequestLike,
-):
-  | {
-      readonly controller: ExpressControllerDescriptor;
-      readonly route: ExpressRouteDescriptor;
-    }
-  | undefined => {
-  const method = request.method?.toUpperCase() ?? "GET";
-  const path = getRequestPath(request);
-
-  for (const controller of controllers) {
-    for (const route of controller.routes) {
-      const routePath = normalizePath(`${controller.path}${route.path}`);
-      if (route.method === method && routePath === path) {
-        return { controller, route };
-      }
-    }
-  }
-
-  return undefined;
 };
 
 const createHttpExecutionContext = (
@@ -88,6 +84,8 @@ const createHttpExecutionContext = (
       method: request.method?.toUpperCase() ?? "GET",
       path: normalizePath(request.path ?? url.pathname),
       headers: request.headers ?? {},
+      cookies:
+        request.cookies ?? parseCookies(readCookieHeader(request.headers)),
       query: request.query ?? Object.fromEntries(url.searchParams.entries()),
       params: request.params ?? {},
       body: request.body,
@@ -95,6 +93,60 @@ const createHttpExecutionContext = (
     },
     state: {},
   };
+};
+
+const readCookieHeader = (
+  headers: ExpressRequestLike["headers"],
+): string | undefined => {
+  if (!headers) {
+    return undefined;
+  }
+
+  for (const [name, value] of Object.entries(headers)) {
+    if (name.toLowerCase() !== "cookie") {
+      continue;
+    }
+
+    if (typeof value === "string") {
+      return value;
+    }
+
+    return Array.isArray(value) ? value[0] : undefined;
+  }
+
+  return undefined;
+};
+
+const parseCookies = (header: string | undefined): Record<string, string> => {
+  const cookies: Record<string, string> = {};
+
+  if (!header) {
+    return cookies;
+  }
+
+  for (const part of header.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator === -1) {
+      continue;
+    }
+
+    const name = part.slice(0, separator).trim();
+    if (name.length === 0) {
+      continue;
+    }
+
+    cookies[name] = decodeCookieValue(part.slice(separator + 1).trim());
+  }
+
+  return cookies;
+};
+
+const decodeCookieValue = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 };
 
 const sendExpressResult = (
@@ -129,19 +181,6 @@ const sendExpressResult = (
 
   response.setHeader?.("content-type", "application/json");
   response.end?.(JSON.stringify(result.body));
-};
-
-const getRequestPath = (request: ExpressRequestLike): string => {
-  const path = request.path;
-  if (path) {
-    return normalizePath(path);
-  }
-
-  const url = new URL(
-    request.originalUrl ?? request.url ?? "/",
-    "http://smite.local",
-  );
-  return normalizePath(url.pathname);
 };
 
 const normalizePath = (path: string): string => {

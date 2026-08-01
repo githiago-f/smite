@@ -3,8 +3,7 @@ import type { HttpExecutionContext } from "@smite/core";
 
 const ApiGuard = lifecycle.guard(
   "api-key",
-  (context: HttpExecutionContext) =>
-    context.request.headers["x-api-key"] === "local-dev",
+  (context) => context.request.headers["x-api-key"] === "local-dev",
 );
 const ParseUserBody = lifecycle.pipe(
   "parse-user-body",

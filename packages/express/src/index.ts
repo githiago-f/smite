@@ -5,6 +5,7 @@ export type {
   ExpressNextFunction,
   ExpressRequestLike,
   ExpressResponseLike,
+  ExpressRouter,
   ExpressLifecycleComposition,
   ExpressLifecycleEntry,
   ExpressLifecycleEntryKind,

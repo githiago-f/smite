@@ -7,9 +7,12 @@ import {
   Task,
   TaskResult,
   and,
+  chain,
   compositionMetadata,
+  extractorMetadata,
   flow,
   getCompositionMetadata,
+  getExtractorMetadata,
   isNumber,
   isString,
   not,
@@ -173,5 +176,86 @@ describe("Predicate", () => {
 
     expect(valid).toBe(true);
     expect(isNumber(1)).toBe(true);
+  });
+});
+
+describe("Extractor", () => {
+  type HttpLike = {
+    readonly cookies: Readonly<Record<string, string | undefined>>;
+    readonly headers: Readonly<Record<string, string | undefined>>;
+  };
+
+  const cookie = (name: string) => (source: HttpLike) =>
+    Option.fromNullable(source.cookies[name]);
+  const header = (name: string) => (source: HttpLike) =>
+    Option.fromNullable(source.headers[name]);
+
+  it("extracts an optional value from a source", () => {
+    // #section - Extract a cookie value
+    const extract = (source: HttpLike) =>
+      Option.fromNullable(source.cookies.session_id);
+
+    const value = extract({ cookies: { session_id: "abc123" }, headers: {} });
+    // #endsection
+
+    expect(value.unwrapOr("missing")).toBe("abc123");
+    expect(extract({ cookies: {}, headers: {} }).unwrapOr("missing")).toBe(
+      "missing",
+    );
+  });
+
+  it("chains extractors in order and returns the first value found", () => {
+    // #section - Chain cookie and header extractors
+    const sessionId = chain(cookie("session_id"), header("x-session-id"));
+
+    const fromCookie = sessionId({
+      cookies: { session_id: "abc123" },
+      headers: {},
+    });
+    const fromHeader = sessionId({
+      cookies: {},
+      headers: { "x-session-id": "header-id" },
+    });
+    const missing = sessionId({ cookies: {}, headers: {} });
+    // #endsection
+
+    expect(fromCookie.unwrapOr("missing")).toBe("abc123");
+    expect(fromHeader.unwrapOr("missing")).toBe("header-id");
+    expect(missing.isNone()).toBe(true);
+  });
+
+  it("returns none for an empty chain", () => {
+    const value = chain<HttpLike, string>()({ cookies: {}, headers: {} });
+
+    expect(value.isNone()).toBe(true);
+  });
+
+  it("exposes non-enumerable extractor metadata", () => {
+    // #section - Extractor metadata
+    const read = (source: HttpLike) =>
+      Option.fromNullable(source.headers["x-id"]);
+    const extractor = chain(read);
+    const metadata = getExtractorMetadata(extractor);
+    // #endsection
+
+    expect(metadata).toEqual({
+      kind: "fp.extractor",
+      source: "chain",
+      key: "read",
+      chain: [
+        {
+          kind: "fp.extractor",
+          source: "custom",
+          key: "read",
+        },
+      ],
+    });
+    expect(Object.keys(extractor)).toEqual([]);
+    expect(extractor[extractorMetadata]).toBe(metadata);
+  });
+
+  it("returns undefined metadata for non-extractors", () => {
+    expect(getExtractorMetadata(() => "value")).toBeUndefined();
+    expect(getExtractorMetadata(42)).toBeUndefined();
   });
 });

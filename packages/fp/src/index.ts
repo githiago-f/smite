@@ -718,3 +718,130 @@ export const isEmpty = (value: unknown): boolean => {
 
   return false;
 };
+
+/**
+ * Metadata symbol attached to extractors created by {@link chain} or transport
+ * extractor factories.
+ *
+ * The property is non-enumerable, so normal runtime iteration and
+ * serialization ignore it. Compiler and registry tooling can opt in by reading
+ * this symbol directly.
+ *
+ * @group Extraction
+ */
+export const extractorMetadata: unique symbol = Symbol.for(
+  "@smite/fp/extractorMetadata",
+);
+
+/**
+ * Identifies where an extractor reads its value.
+ *
+ * @group Extraction
+ */
+export type ExtractorSource =
+  | "authHeader"
+  | "chain"
+  | "cookie"
+  | "custom"
+  | "form"
+  | "header"
+  | "param"
+  | "query";
+
+/**
+ * Compile-time friendly metadata for an extractor.
+ *
+ * @group Extraction
+ */
+export interface ExtractorMetadata {
+  readonly kind: "fp.extractor";
+  readonly source: ExtractorSource;
+  readonly key: string;
+  readonly chain?: readonly ExtractorMetadata[];
+}
+
+/**
+ * Function that reads an optional value from a source.
+ *
+ * Transport builders such as `http.cookie` produce extractors specialized to
+ * their execution source. Extractors may carry non-enumerable metadata that
+ * tooling can inspect without executing the extractor.
+ *
+ * @group Extraction
+ * @example Extract a cookie value
+ */
+export interface Extractor<Source, Value = string> {
+  (source: Source): Option<Value>;
+  readonly [extractorMetadata]?: ExtractorMetadata;
+}
+
+/**
+ * Tries extractors in order and returns the first value found.
+ *
+ * Order matters: prefer more secure or more specific sources first. If every
+ * extractor misses, the result is {@link Option.none}.
+ *
+ * The returned extractor carries chain metadata describing every nested
+ * extractor.
+ *
+ * @group Extraction
+ * @example Chain cookie and header extractors
+ */
+export function chain<Source, Value>(
+  ...extractors: readonly Extractor<Source, Value>[]
+): Extractor<Source, Value> {
+  const chained = ((source: Source) => {
+    for (const extractor of extractors) {
+      const value = extractor(source);
+      if (value.isSome()) {
+        return value;
+      }
+    }
+
+    return Option.none<Value>();
+  }) as Extractor<Source, Value>;
+  const metadata: ExtractorMetadata = freeze({
+    kind: "fp.extractor",
+    source: "chain",
+    key: extractorMetadataOf(extractors[0]).key,
+    chain: freeze(extractors.map(extractorMetadataOf)),
+  });
+
+  Object.defineProperty(chained, extractorMetadata, {
+    configurable: false,
+    enumerable: false,
+    value: metadata,
+  });
+
+  return chained;
+}
+
+/**
+ * Reads extractor metadata from a function when it carries any.
+ *
+ * @group Extraction
+ * @example Extractor metadata
+ */
+export const getExtractorMetadata = (
+  fn: unknown,
+): ExtractorMetadata | undefined =>
+  typeof fn === "function"
+    ? (fn as ExtractorMetadataBearer)[extractorMetadata]
+    : undefined;
+
+type ExtractorMetadataBearer = {
+  readonly [extractorMetadata]?: ExtractorMetadata;
+};
+
+const extractorMetadataOf = (extractor: unknown): ExtractorMetadata => {
+  const bearer = extractor as ExtractorMetadataBearer | undefined;
+
+  return (
+    bearer?.[extractorMetadata] ??
+    freeze({
+      kind: "fp.extractor",
+      source: "custom",
+      key: typeof extractor === "function" ? extractor.name : "",
+    })
+  );
+};

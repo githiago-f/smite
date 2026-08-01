@@ -11,6 +11,9 @@ import type {
   LifecycleEntry,
   LifecycleEntryKind,
 } from "@smite/core";
+import type { Router } from "express";
+
+export type ExpressRouter = Router;
 
 export type ExpressNextFunction = (error?: unknown) => void;
 
@@ -22,6 +25,7 @@ export interface ExpressRequestLike {
   readonly headers?: Readonly<
     Record<string, string | readonly string[] | undefined>
   >;
+  readonly cookies?: Readonly<Record<string, string>>;
   readonly body?: unknown;
   readonly query?: Readonly<Record<string, unknown>>;
   readonly params?: Readonly<Record<string, string>>;

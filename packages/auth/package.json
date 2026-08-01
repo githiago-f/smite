@@ -1,7 +1,7 @@
 {
-  "name": "@smite/core",
+  "name": "@smite/auth",
   "version": "0.1.0",
-  "description": "Core functional descriptors and builders for Smite.",
+  "description": "Provider-agnostic authentication patterns for Smite.",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -18,8 +18,9 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run"
   },
+  "sideEffects": false,
   "dependencies": {
+    "@smite/core": "0.1.0",
     "@smite/fp": "0.1.0"
-  },
-  "sideEffects": false
+  }
 }

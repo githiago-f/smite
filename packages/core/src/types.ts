@@ -152,6 +152,7 @@ export interface HttpExecutionRequest {
   readonly headers: Readonly<
     Record<string, string | readonly string[] | undefined>
   >;
+  readonly cookies: Readonly<Record<string, string>>;
   readonly query: Readonly<Record<string, unknown>>;
   readonly params: Readonly<Record<string, string>>;
   readonly body: unknown;

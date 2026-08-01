@@ -59,6 +59,7 @@ describe("executeHttpPipeline", () => {
         method: "POST",
         path: "/users",
         headers: {},
+        cookies: {},
         query: {},
         params: {},
         body: { name: "Lin" },
