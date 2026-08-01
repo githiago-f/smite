@@ -22,6 +22,18 @@ const expandExamples = (source, snippetIndex, packageName, filePath) => {
         return line;
       }
 
+      if (snippet.code.includes("*/")) {
+        throw new Error(
+          [
+            `Cannot expand @example "${title}" in ${filePath} (${packageName}).`,
+            'The snippet code contains "*/", which would close the JSDoc',
+            "comment early and corrupt the emitted declaration.",
+            'Rewrite the snippet to avoid "*/" (e.g. a cron schedule without',
+            'a "*/" step) before releasing.',
+          ].join("\n"),
+        );
+      }
+
       return renderExample(prefix, snippet.code);
     },
   );
