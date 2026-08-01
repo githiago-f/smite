@@ -19,14 +19,25 @@ Read documents in this order:
 
 1. `README.md`
 2. `.docs/architecture.md`
-3. `.docs/harness.md`
-4. `.docs/plugin-system.md`
-5. `.docs/extensibility.md`
-6. `.agents/skills/*/SKILL.md`
+3. `.docs/runtime-contract.md`
+4. `.docs/harness.md`
+5. `.docs/plugin-system.md`
+6. `.docs/extensibility.md`
+7. `.agents/skills/*/SKILL.md`
 
 Each document assumes the previous one has already been read.
 
 Do not duplicate concepts already defined by the documentation.
+
+# Mandatory Quality Bar
+
+Every public capability requires all three of these. They are not negotiable:
+
+1. At least one example — a runnable example in `examples/` or a tested snippet.
+2. Full docs on usage — documented with `@example` references that resolve to tested snippets.
+3. Tests — automated tests through the public API in the same package.
+
+See `.docs/runtime-contract.md` for the full contracts.
 
 ---
 

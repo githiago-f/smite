@@ -1,0 +1,26 @@
+@startuml
+title Smite HTTP application
+
+' Controllers and routes
+component "/users" as c0 {
+  component "GET / -> listUsers" as c0r0
+  component "POST / -> createUser" as c0r1
+}
+
+' Merged lifecycle entries
+component "guard: api-key" as lc0
+component "pipe: parse-user-body" as lc1
+component "filter: json-errors" as lc2
+
+' Route execution order (merged lifecycle, controller then route)
+c0r0 --> lc0
+c0r0 --> lc1
+c0r0 --> lc2
+c0r1 --> lc0
+c0r1 --> lc1
+c0r1 --> lc2
+
+' Filters run only on error
+c0r0 --> lc2 : on error
+c0r1 --> lc2 : on error
+@enduml

@@ -121,6 +121,25 @@ Ask:
 
 before implementing runtime behavior.
 
+# Portability and Bare Metal
+
+`.docs/runtime-contract.md` defines two contracts every feature must satisfy.
+
+- **Portability**: write once, run anywhere. Application code and core express
+  semantics only; every target is a compile-time projection of the Semantic
+  Graph; adding a target never touches application code or the kernel.
+- **Bare metal**: run close to the metal. Generated output is structurally
+  equivalent to hand-written platform code, with zero-runtime-cost for
+  intent-only features and the bar gated by the `benchmarks/` k6 harness against
+  a hand-written twin.
+
+The canonical targets are Express (runtime emitter) and PlantUML (documentation
+projection). Triage every runtime cost with the question:
+
+> Would a hand-written app on this same platform pay this cost at runtime?
+
+Yes — compile it away or make it zero-cost. No — make it an opt-in extension.
+
 ---
 
 # Functional by Default
@@ -229,6 +248,10 @@ Before merging a change, verify:
 - Is runtime code minimized?
 - Is the public API still coherent?
 - Does the documentation remain accurate?
+- Is the target a compile-time projection of the Semantic Graph, leaving application code and the kernel untouched?
+- Would a hand-written app on this same platform pay the same runtime cost?
+- Is generated output structurally equivalent to hand-written platform code?
+- Does the change include at least one example, full usage docs and tests?
 
 If multiple answers are "no", reconsider the design.
 

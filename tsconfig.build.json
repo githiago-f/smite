@@ -5,6 +5,7 @@
     { "path": "./packages/core" },
     { "path": "./packages/express" },
     { "path": "./packages/auth" },
+    { "path": "./packages/spec" },
     { "path": "./examples/http" }
   ]
 }
