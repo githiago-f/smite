@@ -77,6 +77,48 @@ performance.
 
 ---
 
+# Compile-Time Constants — Dropping Unused Code in Production
+
+Build tooling uses esbuild. The `define` contract is the sanctioned mechanism
+for removing code that should not ship to production.
+
+Applications guard optional behavior behind global constants. At build time
+esbuild folds those constants and dead-code elimination removes the guarded
+branches, so production bundles provably exclude what the application did not
+opt into.
+
+## Built-in constants
+
+The build command defines these global identifiers, always:
+
+| Constant | Default | Meaning |
+|----------|---------|---------|
+| `SMITE_TARGET` | `"express"` | Selected runtime target (Express, Fastify, ...) |
+| `SMITE_MODE` | `"production"` | `"production"` or `"development"` |
+| `SMITE_DEBUG` | `false` | `true` when debugging is enabled |
+
+They are declared as ambient globals so application code type-checks against
+them without imports.
+
+## Application constants
+
+Applications declare their own constants with `--define KEY=VALUE`, where `KEY`
+is an uppercase identifier and `VALUE` is a JSON literal. Feature flags and
+per-target behavior belong here.
+
+## Rules
+
+- Optional behavior is guarded by a compile-time constant; production drops it.
+  Never ship a dead branch that could have been folded away.
+- A constant referenced but not defined fails the build. Undefined constants
+  are errors, not silent behavior.
+- Constants are compile-time only. They must never become runtime state,
+  configuration or environment reads.
+- This is by design: applications describe intent, and the build strips what the
+  deployment did not opt into.
+
+---
+
 # Reconciliation
 
 Write-once decides **what** runs.

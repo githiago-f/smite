@@ -140,6 +140,14 @@ projection). Triage every runtime cost with the question:
 
 Yes — compile it away or make it zero-cost. No — make it an opt-in extension.
 
+# Compile-Time Constants
+
+Optional behavior is guarded by global compile-time constants (`SMITE_TARGET`,
+`SMITE_MODE`, `SMITE_DEBUG`, or application `--define KEY=VALUE`) that esbuild
+folds at build time. Production bundles drop the guarded branches. Never ship a
+dead branch that could have been folded away, and never turn a compile-time
+constant into runtime state.
+
 ---
 
 # Functional by Default
@@ -251,6 +259,7 @@ Before merging a change, verify:
 - Is the target a compile-time projection of the Semantic Graph, leaving application code and the kernel untouched?
 - Would a hand-written app on this same platform pay the same runtime cost?
 - Is generated output structurally equivalent to hand-written platform code?
+- Is optional behavior guarded by a compile-time constant so production drops it?
 - Does the change include at least one example, full usage docs and tests?
 
 If multiple answers are "no", reconsider the design.
