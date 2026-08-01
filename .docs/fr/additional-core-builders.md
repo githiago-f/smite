@@ -71,7 +71,7 @@ Example:
 const RefreshCacheJob = scheduler
   .job()
   .use(audited)
-  .cron("0 */5 * * *")
+  .cron("0 0 * * *")
   .handler(refreshCache);
 ```
 

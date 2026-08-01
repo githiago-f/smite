@@ -23,6 +23,12 @@ Lifecycle implementations are explicit function references carried by the descri
 
 @example Lifecycle implementations
 
+## Reading request values
+
+Every lifecycle implementation receives the execution context of its transport. HTTP implementations can read request values with `http` extractors and compose several sources with `chain` from `@smite/fp`.
+
+See the HTTP extractors concept for examples inside guards, filters, providers, pipes and interceptors.
+
 ## Reusable policies
 
 A lifecycle composition can be declared once and applied to multiple controllers, routes or future transports.
