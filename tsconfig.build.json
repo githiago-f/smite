@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/fp" },
+    { "path": "./packages/core" },
+    { "path": "./packages/express" },
+    { "path": "./packages/auth" },
+    { "path": "./examples/http" }
+  ]
+}
