@@ -150,6 +150,11 @@ Generated applications should:
 
 Compilation should eliminate unnecessary layers.
 
+The bare-metal contract (`runtime-contract.md`) gates this: generated output must
+be structurally equivalent to hand-written platform code, and the bar is measured
+with the `benchmarks/` k6 harness against a hand-written twin. Record deltas;
+never assume an optimization helped.
+
 ---
 
 # Measurement
@@ -191,6 +196,7 @@ Before introducing a feature:
 - Is the graph still efficient?
 - Does it preserve determinism?
 - Is performance measurable?
+- Does generated runtime stay within measured distance of a hand-written twin (the k6 harness)?
 
 If not, redesign the solution.
 

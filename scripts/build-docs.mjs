@@ -17,6 +17,37 @@ const jsdocPackage = require("jsdoc/package.json");
 const rootDir = process.cwd();
 const packagesDir = path.join(rootDir, "packages");
 const outputDir = path.resolve(rootDir, process.env.DOCS_OUT ?? "dist/docs");
+const benchmarkResultsDir = path.join(rootDir, "benchmarks", "results");
+
+let benchmarkReport = undefined;
+
+const loadBenchmarkReport = async () => {
+  if (benchmarkReport) {
+    return benchmarkReport;
+  }
+
+  const load = async (name) => {
+    const source = await readFile(
+      path.join(benchmarkResultsDir, `${name}.summary.json`),
+      "utf8",
+    ).catch(() => undefined);
+
+    return source ? JSON.parse(source) : undefined;
+  };
+
+  const express = await load("express");
+  const smite = await load("smite");
+
+  benchmarkReport =
+    express && smite
+      ? {
+          express,
+          smite,
+        }
+      : undefined;
+
+  return benchmarkReport;
+};
 
 const main = async () => {
   const packages = await collectPackages();
@@ -299,6 +330,13 @@ const renderConceptMarkdown = async (
       continue;
     }
 
+    if (line.match(/^\s*@benchmark\s*$/u)) {
+      flushParagraph();
+      flushList();
+      blocks.push(renderBenchmarkResults(await loadBenchmarkReport()));
+      continue;
+    }
+
     if (line.startsWith("### ")) {
       flushParagraph();
       flushList();
@@ -542,6 +580,65 @@ const renderSnippet = async (
     theme: catppuccinMocha,
   })}
 </figure>`;
+
+const benchmarkLatency = (duration, candidates) => {
+  for (const key of candidates) {
+    const value = duration?.[key];
+
+    if (typeof value === "number") {
+      return `${value.toFixed(2)}ms`;
+    }
+  }
+
+  return "-";
+};
+
+const renderBenchmarkResults = (report) => {
+  if (!report) {
+    return `<div class="benchmark">
+  <p>No results yet. Run \`docker compose -f benchmarks/docker-compose.yml up --build --abort-on-container-exit\`, then rebuild the documentation.</p>
+</div>`;
+  }
+
+  const rows = [
+    ["express", report.express],
+    ["express + smite", report.smite],
+  ];
+  const body = rows
+    .map(([name, summary]) => {
+      const duration = summary.http_req_duration;
+
+      return `<tr>
+        <td>${escapeHtml(name)}</td>
+        <td>${Math.round(summary.http_reqs.rate).toLocaleString("en-US")}</td>
+        <td>${benchmarkLatency(duration, ["med", "p(50)", "p50"])}</td>
+        <td>${benchmarkLatency(duration, ["p(90)", "p90"])}</td>
+        <td>${benchmarkLatency(duration, ["p(95)", "p95"])}</td>
+        <td>${benchmarkLatency(duration, ["p(99)", "p99"])}</td>
+        <td>${((summary.http_req_failed?.rate ?? 0) * 100).toFixed(2)}%</td>
+      </tr>`;
+    })
+    .join("\n");
+
+  const expressRate = report.express.http_reqs.rate;
+  const smiteRate = report.smite.http_reqs.rate;
+  const delta = ((smiteRate - expressRate) / expressRate) * 100;
+  const sign = delta >= 0 ? "+" : "";
+  const completedAt = report.express.completedAt ?? "";
+
+  return `<div class="benchmark">
+  <table>
+    <thead>
+      <tr><th>variant</th><th>requests/s</th><th>p50</th><th>p90</th><th>p95</th><th>p99</th><th>fails</th></tr>
+    </thead>
+    <tbody>
+${body}
+    </tbody>
+  </table>
+  <p>express + smite: ${sign}${delta.toFixed(1)}% requests/s vs express-only.</p>
+  <p>Measured by k6 on ${escapeHtml(completedAt)}.</p>
+</div>`;
+};
 
 const layout = ({
   body,
@@ -844,6 +941,38 @@ figcaption span {
 
 .snippet {
   margin: 18px 0;
+}
+
+.benchmark {
+  margin: 18px 0;
+}
+
+.benchmark table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 12px;
+}
+
+.benchmark th,
+.benchmark td {
+  border: 1px solid var(--surface-1);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.benchmark th {
+  color: var(--subtext);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.benchmark td {
+  font-variant-numeric: tabular-nums;
+}
+
+.benchmark p {
+  color: var(--subtext);
+  margin: 0;
 }
 
 figcaption {

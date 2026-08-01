@@ -13,6 +13,7 @@
     "release:prepare": "node scripts/inject-jsdoc-examples.mjs",
     "release:publish": "node scripts/publish-packages.mjs",
     "release:verify": "node scripts/verify-release-tag.mjs",
+    "spec": "yarn build && node scripts/spec.mjs examples/http/dist/components.js examples/http/spec",
     "test": "vitest run"
   },
   "keywords": [],
