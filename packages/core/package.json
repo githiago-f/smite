@@ -1,7 +1,7 @@
 {
   "name": "@smite/core",
   "version": "0.1.0",
-  "description": "Core functional descriptors and builders for Smite.",
+  "description": "Semantic registrar: descriptors (IR nodes), relationships (IR edges) and the global registry.",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -11,15 +11,7 @@
     }
   },
   "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "build": "tsc -b",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@smite/fp": "0.1.0"
-  },
+  "publishConfig": { "access": "public" },
+  "scripts": { "build": "tsc -b", "test": "vitest run" },
   "sideEffects": false
 }
