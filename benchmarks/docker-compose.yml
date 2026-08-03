@@ -1,71 +1,37 @@
-name: smite-benchmarks
-
 services:
-  express:
-    build:
-      context: ..
-      dockerfile: benchmarks/Dockerfile
-    command: ["node", "examples/http/dist/express-server.js"]
-    environment:
-      PORT: "3000"
-      HOST: "0.0.0.0"
-    healthcheck:
-      test:
-        - CMD
-        - node
-        - -e
-        - fetch('http://127.0.0.1:3000/users',{headers:{'x-api-key':'local-dev'}}).then(r=>{if(r.status!==200)process.exit(1)}).catch(()=>process.exit(1))
-      interval: 5s
-      timeout: 3s
-      retries: 12
-      start_period: 5s
-
   smite:
     build:
       context: ..
-      dockerfile: benchmarks/Dockerfile
-    command: ["node", "examples/http/dist/server.js"]
-    environment:
-      PORT: "3000"
-      HOST: "0.0.0.0"
+      dockerfile: benchmarks/servers/smite/Dockerfile
+    ports:
+      - "8080:8080"
     healthcheck:
-      test:
-        - CMD
-        - node
-        - -e
-        - fetch('http://127.0.0.1:3000/users',{headers:{'x-api-key':'local-dev'}}).then(r=>{if(r.status!==200)process.exit(1)}).catch(()=>process.exit(1))
-      interval: 5s
-      timeout: 3s
-      retries: 12
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
       start_period: 5s
 
-  k6:
-    image: grafana/k6:latest
-    user: root
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - >-
-        k6 run
-        -e TARGET=http://express:3000
-        -e OUT=express
-        -e VUS="$$VUS"
-        -e DURATION="$$DURATION"
-        /scripts/script.js &&
-        k6 run
-        -e TARGET=http://smite:3000
-        -e OUT=smite
-        -e VUS="$$VUS"
-        -e DURATION="$$DURATION"
-        /scripts/script.js
-    environment:
-      VUS: "${VUS:-50}"
-      DURATION: "${DURATION:-30s}"
-      K6_SUMMARY_TREND_STATS: "avg,min,med,max,p(90),p(95),p(99)"
-    volumes:
-      - ./k6:/scripts:ro
-      - ./results:/results
-    depends_on:
-      express:
-        condition: service_healthy
-      smite:
-        condition: service_healthy
+  express:
+    build:
+      context: ./servers/express
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+      start_period: 5s
+
+  fastify:
+    build:
+      context: ./servers/fastify
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8082/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+      start_period: 5s
