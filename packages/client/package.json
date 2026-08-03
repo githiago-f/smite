@@ -1,0 +1,28 @@
+{
+  "name": "@smite/client",
+  "version": "0.1.0",
+  "description": "Generates a typed, builder-style HTTP client from a Smite app definition.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "default": "./dist/runtime.js"
+    }
+  },
+  "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
+  "publishConfig": { "access": "public" },
+  "scripts": { "build": "tsc -b", "test": "vitest run" },
+  "dependencies": {
+    "@smite/core": "*",
+    "esbuild": "^0.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0"
+  },
+  "sideEffects": false
+}
