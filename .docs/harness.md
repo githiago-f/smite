@@ -1,297 +1,98 @@
-# Engineering Harness
+# Harness
 
-This document defines the engineering heuristics used throughout the project.
+The engineering heuristics for Smite. Code wins over prose: every rule here is
+exercised by the tests in `packages/*/src/*.test.ts`.
 
-Unlike the architecture documentation, this document focuses on the reasoning process used when designing or modifying the framework.
+## Objective
 
-These guidelines apply equally to human contributors and AI agents.
+Simple, predictable, composable, testable, extensible, maintainable. In that
+order.
 
----
+## Guiding principles
 
-# Objective
+**KISS** — smallest thing that works.
 
-Produce software that is:
+- Do: one constant, one file, one responsibility.
+- Don't: configuration objects, runtime switches, clever indirection.
 
-- Simple
-- Predictable
-- Composable
-- Testable
-- Extensible
-- Easy to maintain
+**DRY** — one source of truth per concept.
 
-Whenever multiple solutions are possible, prefer the one that minimizes long-term complexity.
+- Do: docs reference code and tests; helpers live once in the lowest package.
+- Don't: duplicate a rule in three places with drift.
 
----
+**SOLID** — single responsibility, stable boundaries.
 
-# Engineering Mindset
+- Do: one package = one concern; open/closed via public APIs.
+- Don't: executors reaching into registrars' internals.
 
-Think like a framework architect, not an application developer.
+**Clean** — code that documents itself.
 
-Every change should improve the platform, not only solve the immediate problem.
+- Do: terse files, descriptive names, tests as examples.
+- Don't: comments explaining *what* (read the code), dead code, stale docs.
 
-Avoid implementing isolated solutions when a reusable abstraction naturally exists.
+## Decision process
 
-However, never introduce abstractions before they demonstrate clear value.
+`understand → reuse → extend → replace → introduce`. Read the existing
+slices in `.docs/features/` (grouped by package) before writing new code.
 
----
+## Compile-time first
 
-# Design Process
+Runtime is expensive; move work into the compiler. Guard optional behavior
+with compile-time constants (`ALLOW_GLOBAL_REGISTRY`) that esbuild `define`
+substitutes and folds. If behavior can be decided at build time, it should be.
 
-Before writing code, understand:
+## Runtime/build-time separation
 
-- the problem
-- the affected architectural layer
-- existing abstractions
-- downstream consequences
+- **Descriptors** are build-time metadata: nodes (`Descriptor`) and edges
+  (`RelationshipDescriptor`), composite keys, registered into the global
+  registry only in collect mode.
+- **Executors** are runtime: they walk the IR via child refs
+  (`childrenOf`), never via the registry.
+- The registry must never leak into production bundles (proven by
+  `packages/http/src/tree-shake.test.ts`).
 
-Only then decide whether to:
+## Tree-shaking contract
 
-- reuse;
-- extend;
-- replace;
-- introduce something new.
+- Every package sets `sideEffects: false`.
+- Build-time code must be removable; the guard that makes it removable must
+  reference the **raw** `ALLOW_GLOBAL_REGISTRY` identifier inline (esbuild
+  `define` substitutes only the literal identifier — an imported const binding
+  cannot be folded).
+- Verify with bundle tests, not just unit tests.
 
-Implementation should be the final step.
+## Functional by default
 
----
+Immutable IR: descriptors are frozen at creation (`freeze`), subtrees at
+`finalizeDescriptor` (`deepFreeze`). Builders are pure. Avoid mutable global
+state — the only global is the registry, and only in collect mode.
 
-# Simplicity First
+## Testing philosophy
 
-Prefer:
+- Test the **public API**; assert behavior, not implementation.
+- Unit suites run in **collect mode** (Vitest `define:
+  ALLOW_GLOBAL_REGISTRY: "true"`).
+- Runtime mode is proven by a **bundle test** (`define: "false"`): assert the
+  observable contract (no `globalRegistry`, executor works). Behavior is the
+  contract; string-matching is a proxy.
+- When a doc contradicts a test, the test wins.
 
-- small APIs
-- explicit behavior
-- deterministic execution
-- functional composition
+## Monorepo rules
 
-Avoid:
+- One responsibility per package; stable public APIs (`@smite/*` barrel).
+- One-way dependencies, no cycles: `fp`/`core` base → `http` →
+  `serverless`/`cli`.
+- Packages import from the `@smite/*` public API only, never each other's
+  internals.
 
-- hidden magic
-- implicit state
-- surprising behavior
-- unnecessary configuration
+## Decision checklist
 
-Simple code is usually the correct code.
+Before committing a change:
 
----
-
-# Reuse Before Creation
-
-Before introducing:
-
-- a package
-- a builder
-- a plugin
-- a runtime component
-
-verify whether an existing component can be extended.
-
-Duplicated concepts should be eliminated.
-
----
-
-# Separate Responsibilities
-
-Maintain strict boundaries between:
-
-- DSL
-- Compiler
-- Runtime
-- Providers
-- Generated Artifacts
-
-Responsibilities should never leak across layers.
-
----
-
-# Runtime Is Expensive
-
-Runtime code has a permanent cost.
-
-Compile-time code disappears.
-
-Whenever possible, move complexity into the compiler.
-
-If the behavior can be emitted as source code, prefer a runtime emitter over a hand-written runtime abstraction.
-If a target runtime needs a thin adapter, keep it focused on translating platform objects into the core execution context and result shape.
-
-Ask:
-
-> Can this be generated?
-
-before implementing runtime behavior.
-
-# Portability and Bare Metal
-
-`.docs/runtime-contract.md` defines two contracts every feature must satisfy.
-
-- **Portability**: write once, run anywhere. Application code and core express
-  semantics only; every target is a compile-time projection of the Semantic
-  Graph; adding a target never touches application code or the kernel.
-- **Bare metal**: run close to the metal. Generated output is structurally
-  equivalent to hand-written platform code, with zero-runtime-cost for
-  intent-only features and the bar gated by the `benchmarks/` k6 harness against
-  a hand-written twin.
-
-The canonical targets are Express (runtime emitter) and PlantUML (documentation
-projection). Triage every runtime cost with the question:
-
-> Would a hand-written app on this same platform pay this cost at runtime?
-
-Yes — compile it away or make it zero-cost. No — make it an opt-in extension.
-
-# Compile-Time Constants
-
-Optional behavior is guarded by global compile-time constants (`SMITE_TARGET`,
-`SMITE_MODE`, `SMITE_DEBUG`, or application `--define KEY=VALUE`) that esbuild
-folds at build time. Production bundles drop the guarded branches. Never ship a
-dead branch that could have been folded away, and never turn a compile-time
-constant into runtime state.
-
----
-
-# Functional by Default
-
-Prefer:
-
-- immutable objects
-- pure functions
-- composition
-- deterministic outputs
-
-Avoid:
-
-- mutable global state
-- singleton services
-- hidden caches
-- execution-order dependencies
-
----
-
-# Static Analysis
-
-Everything should be understandable without executing user code.
-
-Prefer:
-
-- static imports
-- explicit declarations
-- deterministic metadata
-
-Avoid:
-
-- runtime discovery
-- reflection
-- decorators
-- dynamic imports
-
----
-
-# Evaluate Trade-offs
-
-Every proposal should consider:
-
-- readability
-- maintainability
-- extensibility
-- performance
-- bundle size
-- compilation cost
-- runtime cost
-
-Optimizing one dimension while harming several others is rarely worthwhile.
-
----
-
-# Monorepo Principles
-
-Each workspace should own exactly one responsibility.
-
-Packages communicate through stable public APIs.
-
-Internal implementation details should remain private.
-
-Dependencies should flow in one direction.
-
-Avoid circular dependencies.
-
----
-
-# Documentation
-
-Documentation is part of the implementation.
-
-Whenever behavior changes:
-
-- update documentation;
-- update examples;
-- update related skills.
-
-Documentation should remain the source of truth.
-
----
-
-# Testing Philosophy
-
-Tests should validate behavior, not implementation details.
-
-Prefer:
-
-- public API tests
-- integration tests
-- compiler output validation
-
-Avoid tests tightly coupled to internal implementation.
-
----
-
-# Decision Checklist
-
-Before merging a change, verify:
-
-- Is the solution simpler than the previous one?
-- Can existing abstractions be reused?
-- Does it preserve architectural boundaries?
-- Can more work move to compile-time?
-- Is runtime code minimized?
-- Is the public API still coherent?
-- Does the documentation remain accurate?
-- Is the target a compile-time projection of the Semantic Graph, leaving application code and the kernel untouched?
-- Would a hand-written app on this same platform pay the same runtime cost?
-- Is generated output structurally equivalent to hand-written platform code?
-- Is optional behavior guarded by a compile-time constant so production drops it?
-- Does the change include at least one example, full usage docs and tests?
-
-If multiple answers are "no", reconsider the design.
-
----
-
-# Guiding Principle
-
-Architecture first.
-
-Implementation second.
-
-Optimization last.
-
-# Prefer Evolution Over Revolution
-
-Large rewrites should be exceptional.
-
-Whenever possible:
-
-- extend existing abstractions;
-- preserve compatibility;
-- migrate incrementally.
-
-Small improvements applied consistently usually produce better software than complete rewrites.
-
-# Design for Plugins
-
-Before adding functionality to the core, ask:
-
-Should this be a plugin?
-
-The kernel should remain as small as possible.
-
-Capabilities belong in plugins unless they are fundamental to the compiler itself.
+- Is this the simplest thing that works?
+- Is there one source of truth, referenced not duplicated?
+- Does it preserve the runtime/build-time boundary?
+- Does it stay tree-shakeable (`sideEffects: false`, raw-identifier guards)?
+- Are types strict-safe (NodeNext, `verbatimModuleSyntax`,
+  `exactOptionalPropertyTypes`)?
+- Is validation zod-only?
+- Are tests green and does the change ship with its test?

@@ -2,263 +2,75 @@
 
 ## Vision
 
-This project is a compile-time-first application framework built as a Yarn Workspace monorepo.
+A compile-time-first, serverless application framework. Users write a
+declarative TypeScript DSL (`@smite/http`), esbuild builds it, and the CLI
+compiles the app in **collect mode**, executes it, and traverses
+`globalThis.globalRegistry` to generate artifacts (OpenAPI first). Executors
+run with **zero registry infrastructure** in the bundle.
 
-Applications are written as declarative TypeScript.
-
-Compilation transforms those declarations into production-ready runtime artifacts.
-
-The framework is not intended to be a runtime platform.
-
----
-
-# Design Goals
-
-- Minimal runtime.
-- Provider-agnostic business logic.
-- Functional APIs.
-- Static analysis.
-- Predictable builds.
-- Independent packages.
-- Extensible compiler.
-
----
-
-# Monorepo
-
-The repository uses Yarn Workspaces.
-
-The monorepo is divided into packages with clear responsibilities.
-
-Example:
+## Layers
 
 ```
-packages/
-    compiler/
-    core/
-    builders/
-    registry/
-    graph/
-
-plugins/
-    aws/
-    openapi/
-    cloudformation/
-
-runtime/
-    http/
-    logger/
-    auth/
-
-examples/
-
-docs/
-
-skills/
+Application DSL (builders)          @smite/http: app, route, req, accept, handler
+→ Semantic Registry (IR)            @smite/core: nodes + edges, global registry
+→ Compiler / CLI                    @smite/cli: compile → execute → traverse
+→ Artifact generators               OpenAPI, infra, docs        [future]
+→ Runtime executors                 @smite/http: serve(); @smite/serverless [future]
 ```
 
-Each workspace owns a single concern.
-
-Cross-package dependencies should remain minimal.
-
-Circular dependencies are prohibited.
-
----
-
-# Architecture Layers
-
-```
-Application
-
-↓
-
-Functional DSL
-
-↓
-
-Semantic Registry
-
-↓
-
-Semantic Graph
-
-↓
-
-Compiler Pipeline
-
-↓
-
-Compiler Plugins
-
-↓
-
-Runtime Emitters
-
-↓
-
-Generated Artifacts
-
-↓
-
-Runtime
-```
-
-Each layer only depends on the layer immediately below it.
-
----
-
-# Compiler
-
-The compiler is responsible for:
-
-- collecting semantic information
-- validating declarations
-- building the semantic graph
-- executing compiler plugins
-- executing runtime emitters
-- generating artifacts
-
-The compiler does not execute application logic.
-
----
-
-# Registry
-
-The registry exists only during compilation.
-
-Lifecycle:
-
-Create
-
-↓
-
-Collect
-
-↓
-
-Normalize
-
-↓
-
-Validate
-
-↓
-
-Plugin Execution
-
-↓
-
-Artifact Generation
-
-↓
-
-Destroy
-
-No runtime component may depend on the registry.
-
----
-
-# Semantic Graph
-
-The semantic graph is the single source of truth.
-
-Compiler plugins consume the graph instead of analyzing source files independently.
-
-Generated artifacts must originate from this graph.
-
----
-
-# Builders
-
-Builders form a functional DSL.
-
-They never perform infrastructure operations.
-
-Example:
-
-```
-bucket("uploads")
-```
-
-does not create a bucket.
-
-It declares an application requirement.
-
-Providers decide how that requirement is implemented.
-
----
-
-# Plugins
-
-Plugins belong to three categories.
-
-## Compile-time plugins
-
-Generate artifacts.
-
-Examples:
-
-- AWS
-- CloudFormation
-- OpenAPI
-- SDK
-- Documentation
-
-These should normally be development dependencies.
-
-## Runtime emitters
-
-Runtime emitters consume merged descriptors during compilation and generate platform-specific runtime source code.
-
-Examples:
-
-- Express
-- Fastify
-- Hono
-
-They disappear after generation and do not survive into the runtime bundle.
-
-When a target runtime needs a thin executable bridge, that bridge belongs in the runtime layer and only translates platform request/response objects into the core execution context and result shape.
-
-## Runtime plugins
-
-Provide executable behavior.
-
-Examples:
-
-- Logger
-- Authentication
-- Metrics
-- Retry
-
-These become runtime dependencies.
-
----
-
-# Runtime
-
-The runtime should contain only code required to execute the application.
-
-Metadata, builders, compiler state and registry must not survive compilation.
-
----
-
-# Package Design
-
-Every workspace should:
-
-- expose a small public API;
-- have a single responsibility;
-- avoid mutable global state;
-- be independently testable;
-- support tree shaking.
-
----
-
-# Guiding Principle
-
-Write intent.
-
-Compile reality.
-
-Ship only what executes.
+## IR model
+
+- **`Descriptor`** — a node: `{ __kind, __key, data }`, composite key
+  (`"GET /users/:id"`). Frozen at creation; `data` is a frozen snapshot.
+- **`RelationshipDescriptor`** — an edge: `{ from, to, relation }`, created by
+  `relate`.
+- **Edges at runtime** — `relate` attaches a non-enumerable child index
+  (`Symbol.for("@smite/core/children")`) on the parent; `childrenOf` reads it.
+  Executors walk these child refs.
+- **Edges at build time** — `register` inserts every node/relationship into
+  `globalThis.globalRegistry`, gated by `ALLOW_GLOBAL_REGISTRY`.
+- **Junction** — `createApp(name?)` roots the graph (`kind: "app"`).
+- **Lifecycle** — build with `defineDescriptor`/`relate`/`refine`, then
+  `finalizeDescriptor(root)` deep-freezes the reachable subtree (cycle-safe).
+
+## Packages
+
+| Package           | Responsibility                    |
+| ----------------- | --------------------------------- |
+| `@smite/core`     | Registrar: nodes, edges, registry, compile-time flag, junction, freeze/refine |
+| `@smite/http`     | HTTP DSL (`app`, `route`, `req`, `accept`, `handler`) + `serve()` executor |
+| `@smite/fp`       | Functional primitives             |
+| `@smite/domain`   | (stub) domain builders            |
+| `@smite/serverless`| (stub) serverless adapters       |
+| `@smite/cli`      | (stub) collect-mode compiler      |
+
+Dependencies flow one way, no cycles: `fp`/`core` base → `http` →
+`serverless`/`cli`. Packages import from the `@smite/*` public API only.
+
+## Compile-time constants
+
+`ALLOW_GLOBAL_REGISTRY` gates all collect-mode behavior. Guards reference the
+raw identifier inline with the safe form
+`typeof ALLOW_GLOBAL_REGISTRY === "boolean" && ALLOW_GLOBAL_REGISTRY` so an
+undefined identifier never throws and esbuild folds the branch.
+
+| Situation                | Result | Mode |
+| ------------------------ | ------ | ---- |
+| esbuild `define` → true  | `true` | collect (CLI) |
+| esbuild `define` → false | `false`| runtime (users) |
+| undefined                | `false`| runtime default |
+
+`allowGlobalRegistry` is also exported from `@smite/core` for tooling.
+
+## Tree-shaking
+
+With `ALLOW_GLOBAL_REGISTRY: "false"` the registry module (`register`,
+`lookup*`, `relationships`, `clear`) is unreachable and dropped. What survives:
+descriptors, the child index, `childrenOf`, `finalizeDescriptor`, and the
+executor. Proven by `packages/http/src/tree-shake.test.ts`.
+
+## Validation
+
+Zod-only. Per-bucket (`query`, `params`, `headers`, `body`) schemas declared in
+`req({ ... })`; `serve` validates and rejects with a 400 on failure. Types are
+inferred from the schemas into the handler context.
