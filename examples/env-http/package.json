@@ -1,0 +1,14 @@
+{
+  "name": "@smite/example-env-http",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.mjs"
+  },
+  "dependencies": {
+    "@smite/env": "*",
+    "@smite/http": "*",
+    "zod": "^4.0.0"
+  }
+}
