@@ -1,0 +1,27 @@
+{
+  "name": "@smite/domain",
+  "version": "0.1.0",
+  "description": "Functional DDD toolkit for Smite: value objects, entities, ports, specifications and usecases.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@smite/core": "*",
+    "@smite/fp": "*",
+    "zod": "^4.0.0"
+  },
+  "sideEffects": false
+}
