@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 import { collectPublishableWorkspaces } from "./release-workspaces.mjs";
 import {
   collectFiles,
@@ -10,7 +11,7 @@ import {
 
 const rootDir = process.cwd();
 
-const expandExamples = (source, snippetIndex, packageName, filePath) => {
+export const expandExamples = (source, snippetIndex, packageName, filePath) => {
   const unresolved = [];
   const expanded = source.replace(
     /^(\s*\*[^\S\r\n]*)@example[^\S\r\n]+([^\r\n]+?)\s*$/gmu,
@@ -90,4 +91,9 @@ const main = async () => {
   }
 };
 
-await main();
+if (
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  await main();
+}

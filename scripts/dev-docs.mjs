@@ -111,7 +111,12 @@ const fingerprintWatchedFiles = async () => {
   const parts = [];
 
   for (const filePath of files) {
-    const fileStats = await stat(filePath);
+    const fileStats = await stat(filePath).catch(() => undefined);
+
+    if (!fileStats?.isFile()) {
+      continue;
+    }
+
     parts.push(
       `${path.relative(rootDir, filePath)}:${fileStats.mtimeMs}:${fileStats.size}`,
     );
@@ -126,10 +131,7 @@ const collectWatchedFiles = async () => {
     path.join(rootDir, "README.md"),
     path.join(rootDir, "AGENTS.md"),
     path.join(rootDir, ".docs", "architecture.md"),
-    path.join(rootDir, ".docs", "extensibility.md"),
     path.join(rootDir, ".docs", "harness.md"),
-    path.join(rootDir, ".docs", "plugin-system.md"),
-    path.join(rootDir, ".docs", "plugin-sysmte.md"),
   ]);
 
   for (const filePath of await collectFiles(

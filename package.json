@@ -9,11 +9,10 @@
     "check": "biome check .",
     "docs:build": "node scripts/build-docs.mjs",
     "docs:dev": "node scripts/dev-docs.mjs",
+    "docs:inject": "node scripts/inject-jsdoc-examples.mjs",
+    "bench:http": "node benchmarks/run.mjs",
+    "bench:clean": "rm -rf benchmarks/results",
     "format": "biome format --write .",
-    "release:prepare": "node scripts/inject-jsdoc-examples.mjs",
-    "release:publish": "node scripts/publish-packages.mjs",
-    "release:verify": "node scripts/verify-release-tag.mjs",
-    "spec": "yarn build && node scripts/spec.mjs examples/http/dist/components.js examples/http/spec",
     "test": "vitest run"
   },
   "keywords": [],
@@ -22,8 +21,9 @@
   "type": "module",
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@shikijs/themes": "^4.3.1",
+    "esbuild": "^0.24.2",
     "jsdoc": "^4.0.5",
-    "semver": "^7.8.5",
     "shiki": "^4.3.1",
     "typescript": "^5.5.4",
     "vitest": "^2.1.1"

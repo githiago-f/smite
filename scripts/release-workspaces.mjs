@@ -25,9 +25,15 @@ export const collectPublishableWorkspaces = async () => {
     }
 
     const dir = path.join(packagesDir, entry.name);
-    const packageJson = JSON.parse(
-      await readFile(path.join(dir, "package.json"), "utf8"),
-    );
+
+    let packageSource;
+    try {
+      packageSource = await readFile(path.join(dir, "package.json"), "utf8");
+    } catch {
+      continue;
+    }
+
+    const packageJson = JSON.parse(packageSource);
 
     if (packageJson.private === true) {
       continue;

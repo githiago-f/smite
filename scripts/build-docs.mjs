@@ -26,25 +26,20 @@ const loadBenchmarkReport = async () => {
     return benchmarkReport;
   }
 
-  const load = async (name) => {
-    const source = await readFile(
-      path.join(benchmarkResultsDir, `${name}.summary.json`),
-      "utf8",
-    ).catch(() => undefined);
-
-    return source ? JSON.parse(source) : undefined;
-  };
-
-  const express = await load("express");
-  const smite = await load("smite");
+  const names = ["smite", "express", "fastify"];
+  const entries = await Promise.all(
+    names.map(async (name) => {
+      const source = await readFile(
+        path.join(benchmarkResultsDir, `${name}.summary.json`),
+        "utf8",
+      ).catch(() => undefined);
+      return [name, source ? JSON.parse(source) : undefined];
+    }),
+  );
+  const report = Object.fromEntries(entries);
 
   benchmarkReport =
-    express && smite
-      ? {
-          express,
-          smite,
-        }
-      : undefined;
+    report.express && report.fastify && report.smite ? report : null;
 
   return benchmarkReport;
 };
@@ -78,7 +73,13 @@ const collectPackages = async () => {
 
     const packageDir = path.join(packagesDir, entry.name);
     const packageJsonPath = path.join(packageDir, "package.json");
-    const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
+    let packageSource;
+    try {
+      packageSource = await readFile(packageJsonPath, "utf8");
+    } catch {
+      continue;
+    }
+    const packageJson = JSON.parse(packageSource);
 
     packages.push({
       conceptDir: path.join(packageDir, "docs", "concepts"),
@@ -128,7 +129,10 @@ const buildPackageDocs = async (packageInfo) => {
   return {
     ...packageInfo,
     api,
-    concepts,
+    concepts: concepts.filter((concept) => concept.category === "workflow"),
+    internalConcepts: concepts.filter(
+      (concept) => concept.category === "internals",
+    ),
     snippets,
     slug: slugify(packageInfo.packageJson.name),
   };
@@ -233,6 +237,9 @@ const collectConceptDocs = async (conceptDir, snippetIndex, packageName) => {
 
     concepts.push({
       ...parsed,
+      category: path.relative(conceptDir, filePath).startsWith("internals")
+        ? "internals"
+        : "workflow",
       examples,
       html,
       slug: slugify(parsed.title),
@@ -394,6 +401,18 @@ const writePackageDocs = async (docs) => {
       renderConceptPage(docs, concept),
     );
   }
+
+  if (docs.internalConcepts.length > 0) {
+    const internalsOutDir = path.join(packageOutDir, "internals");
+    await mkdir(internalsOutDir, { recursive: true });
+
+    for (const concept of docs.internalConcepts) {
+      await writeFile(
+        path.join(internalsOutDir, `${concept.slug}.html`),
+        renderConceptPage(docs, concept),
+      );
+    }
+  }
 };
 
 const renderManifest = (packageDocs) => ({
@@ -402,6 +421,7 @@ const renderManifest = (packageDocs) => ({
   packages: packageDocs.map((docs) => ({
     apiCount: docs.api.length,
     conceptCount: docs.concepts.length,
+    internalConceptCount: docs.internalConcepts.length,
     name: docs.packageJson.name,
     slug: docs.slug,
     snippetCount: docs.snippets.length,
@@ -412,11 +432,62 @@ const renderHome = (packageDocs) =>
   layout({
     body: [
       '<section class="hero">',
-      "<p>Smite Documentation</p>",
-      "<h1>Intent-first APIs, documented by tested code.</h1>",
-      "<p>Generated from JSDoc comments and snippets extracted from Vitest tests. Every documented example must exist between <code>#section</code> and <code>#endsection</code> in the codebase.</p>",
+      "<p>Smite</p>",
+      "<h1>An application framework that compiles away.</h1>",
+      "<p>Describe your application as intent — routes, inputs, responses, environment. Smite turns that description into a validated, typed server, and generates a client that matches it exactly. At runtime only what your app needs survives.</p>",
       "</section>",
-      '<section class="grid">',
+      "<section>",
+      "<h2>What makes Smite unique</h2>",
+      '<div class="grid">',
+      ...[
+        {
+          eyebrow: "Declarative HTTP",
+          title: "An API from a few lines of intent",
+          text: "<code>http.app()</code> builds an app reference; <code>http.route()</code> declares zod-validated inputs; handlers return plain response values. No classes, no boilerplate.",
+          href: "./smite-http/concepts/apps-and-routes.html",
+        },
+        {
+          eyebrow: "Validated by construction",
+          title: "Inputs checked once, typed everywhere",
+          text: "Declare per-bucket zod schemas on a route. Handlers receive validated, typed values, and mismatches fail loudly with 400 before your code runs.",
+          href: "./smite-http/concepts/declared-inputs.html",
+        },
+        {
+          eyebrow: "Typed client codegen",
+          title: "A client that matches your routes",
+          text: "<code>generate</code> compiles the app at build time and emits a TypeScript client mirroring the routes — typed paths, params, query, and bodies, with a tiny fetch runtime.",
+          href: "./smite-client/concepts/generating-a-typed-client.html",
+        },
+        {
+          eyebrow: "Environment as code",
+          title: "Env vars are declared, not scattered",
+          text: "Declare what your app needs and how to validate it with zod. Providers resolve at runtime; missing or invalid values fail loudly, defaults and optionals are first-class.",
+          href: "./smite-env/concepts/registration.html",
+        },
+        {
+          eyebrow: "Functional primitives",
+          title: "FP values without the taxonomy tax",
+          text: "<code>Option</code>, <code>Either</code>, <code>Result</code>, <code>Task</code>, and <code>TaskResult</code> model the code paths your handlers actually take — plus composition metadata that stays invisible.",
+          href: "./smite-fp/concepts/composition.html",
+        },
+        {
+          eyebrow: "Documented by tests",
+          title: "Examples that cannot rot",
+          text: "Every documented example is a tested <code>#section</code> snippet. If a doc example stops compiling, the suite fails. The docs are a render of the test suite.",
+          href: "./smite-http/reference.html",
+        },
+      ].map(
+        (concept) => `<a class="card" href="${concept.href}">
+          <span class="eyebrow">${concept.eyebrow}</span>
+          <strong>${concept.title}</strong>
+          <span>${concept.text}</span>
+        </a>`,
+      ),
+      "</div>",
+      "</section>",
+      "<section>",
+      "<h2>Packages</h2>",
+      '<div class="grid">',
       ...packageDocs.map(
         (docs) => `<a class="card" href="./${docs.slug}/">
           <span class="eyebrow">Package</span>
@@ -426,6 +497,7 @@ const renderHome = (packageDocs) =>
           <span>${docs.snippets.length} tested snippets</span>
         </a>`,
       ),
+      "</div>",
       "</section>",
     ],
     currentHref: "./",
@@ -446,18 +518,27 @@ const renderPackageOverview = (docs) =>
         <h1>${escapeHtml(docs.packageJson.name)}</h1>
         <p>${escapeHtml(docs.packageJson.description ?? "")}</p>
       </section>`,
-      "<section>",
-      "<h2>Concepts</h2>",
-      '<div class="grid">',
-      ...docs.concepts.map(
-        (concept) => `<a class="card" href="./concepts/${concept.slug}.html">
-          <span class="eyebrow">Concept</span>
-          <strong>${escapeHtml(concept.title)}</strong>
-          <span>${escapeHtml(concept.summary)}</span>
-        </a>`,
-      ),
-      "</div>",
-      "</section>",
+      ...(docs.concepts.length > 0
+        ? [
+            "<section>",
+            "<h2>Concepts</h2>",
+            '<div class="grid">',
+            ...docs.concepts.map(renderConceptCard),
+            "</div>",
+            "</section>",
+          ]
+        : []),
+      ...(docs.internalConcepts.length > 0
+        ? [
+            "<section>",
+            "<h2>Internals</h2>",
+            "<p>How the framework is built underneath. Read this when extending Smite or contributing; you do not need it to build apps.</p>",
+            '<div class="grid">',
+            ...docs.internalConcepts.map(renderConceptCard),
+            "</div>",
+            "</section>",
+          ]
+        : []),
       "<section>",
       "<h2>Reference</h2>",
       "<p>The reference is grouped by API intent and includes only examples resolved from tested snippets.</p>",
@@ -469,7 +550,8 @@ const renderPackageOverview = (docs) =>
     docs,
     nav: {
       brandHref: "../",
-      conceptHref: (concept) => `./concepts/${concept.slug}.html`,
+      conceptHref: (concept) =>
+        `./${conceptDirFor(concept)}/${concept.slug}.html`,
       packageHref: () => "./",
       referenceHref: "./reference.html",
     },
@@ -477,6 +559,13 @@ const renderPackageOverview = (docs) =>
     stylesheetHref: "../styles.css",
     title: docs.packageJson.name,
   });
+
+const renderConceptCard = (concept) =>
+  `<a class="card" href="./${conceptDirFor(concept)}/${concept.slug}.html">
+    <span class="eyebrow">${concept.category === "internals" ? "Internal" : "Concept"}</span>
+    <strong>${escapeHtml(concept.title)}</strong>
+    <span>${escapeHtml(concept.summary)}</span>
+  </a>`;
 
 const renderConceptPage = (docs, concept) =>
   layout({
@@ -488,12 +577,13 @@ const renderConceptPage = (docs, concept) =>
         ${concept.html}
       </article>`,
     ],
-    currentHref: `./${concept.slug}.html`,
+    currentHref: `../${conceptDirFor(concept)}/${concept.slug}.html`,
     backHref: "../",
     docs,
     nav: {
       brandHref: "../../",
-      conceptHref: (conceptItem) => `./${conceptItem.slug}.html`,
+      conceptHref: (conceptItem) =>
+        `../${conceptDirFor(conceptItem)}/${conceptItem.slug}.html`,
       packageHref: () => "../",
       referenceHref: "../reference.html",
     },
@@ -526,7 +616,8 @@ const renderReferencePage = async (docs) => {
     docs,
     nav: {
       brandHref: "../",
-      conceptHref: (concept) => `./concepts/${concept.slug}.html`,
+      conceptHref: (concept) =>
+        `./${conceptDirFor(concept)}/${concept.slug}.html`,
       packageHref: () => "./",
       referenceHref: "./reference.html",
     },
@@ -610,18 +701,20 @@ const benchmarkLatency = (duration, candidates) => {
 };
 
 const renderBenchmarkResults = (report) => {
+  const missing = `No results yet. Run \`yarn bench:http\` (builds the
+  server containers, loads them with k6, and writes
+  \`benchmarks/results/*.summary.json\`), then rebuild the documentation.`;
+
   if (!report) {
     return `<div class="benchmark">
-  <p>No results yet. Run \`docker compose -f benchmarks/docker-compose.yml up --build --abort-on-container-exit\`, then rebuild the documentation.</p>
+  <p>${missing}</p>
 </div>`;
   }
 
-  const rows = [
-    ["express", report.express],
-    ["express + smite", report.smite],
-  ];
+  const rows = ["express", "fastify", "smite"];
   const body = rows
-    .map(([name, summary]) => {
+    .map((name) => {
+      const summary = report[name];
       const duration = summary.http_req_duration;
 
       return `<tr>
@@ -636,10 +729,13 @@ const renderBenchmarkResults = (report) => {
     })
     .join("\n");
 
-  const expressRate = report.express.http_reqs.rate;
+  const baseline = report.express.http_reqs.rate;
+  const deltaFor = (rate) => ((rate - baseline) / baseline) * 100;
   const smiteRate = report.smite.http_reqs.rate;
-  const delta = ((smiteRate - expressRate) / expressRate) * 100;
-  const sign = delta >= 0 ? "+" : "";
+  const fastifyRate = report.fastify.http_reqs.rate;
+  const deltaFastify = deltaFor(fastifyRate);
+  const smiteDelta = deltaFor(smiteRate);
+  const sign = (value) => (value >= 0 ? "+" : "");
   const completedAt = report.express.completedAt ?? "";
 
   return `<div class="benchmark">
@@ -651,7 +747,8 @@ const renderBenchmarkResults = (report) => {
 ${body}
     </tbody>
   </table>
-  <p>express + smite: ${sign}${delta.toFixed(1)}% requests/s vs express-only.</p>
+  <p>fastify: ${sign(deltaFastify)}${deltaFastify.toFixed(1)}% vs express.</p>
+  <p>smite: ${sign(smiteDelta)}${smiteDelta.toFixed(1)}% vs express.</p>
   <p>Measured by k6 on ${escapeHtml(completedAt)}.</p>
 </div>`;
 };
@@ -697,6 +794,11 @@ const renderSidebar = ({ backHref, currentHref, docs, nav, packageDocs }) => {
         navLink(concept.title, nav.conceptHref(concept), currentHref, "nested"),
       )
     : [];
+  const internalConceptLinks = docs
+    ? docs.internalConcepts.map((concept) =>
+        navLink(concept.title, nav.conceptHref(concept), currentHref, "nested"),
+      )
+    : [];
 
   return `<aside class="sidebar">
     <a class="brand" href="${nav.brandHref}">Smite</a>
@@ -708,6 +810,12 @@ const renderSidebar = ({ backHref, currentHref, docs, nav, packageDocs }) => {
         docs
           ? `<span>Concepts</span>
             ${conceptLinks.join("\n")}
+            ${
+              docs.internalConcepts.length > 0
+                ? `<span>Internals</span>
+                  ${internalConceptLinks.join("\n")}`
+                : ""
+            }
             <span>Reference</span>
             ${navLink("API Reference", nav.referenceHref, currentHref)}`
           : ""
@@ -715,6 +823,9 @@ const renderSidebar = ({ backHref, currentHref, docs, nav, packageDocs }) => {
     </nav>
   </aside>`;
 };
+
+const conceptDirFor = (concept) =>
+  concept.category === "internals" ? "internals" : "concepts";
 
 const navLink = (label, href, currentHref, className = "") =>
   `<a class="${href === currentHref ? "active" : ""} ${className}" href="${href}">${escapeHtml(

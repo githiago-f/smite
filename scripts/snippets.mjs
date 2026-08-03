@@ -85,8 +85,7 @@ const endsectionPattern = /^\s*\/\/\s*#endsection\s*$/u;
 export const extractSnippetExpected = (testSource, snippet) => {
   const lines = testSource.split("\n");
   const sectionLine = lines.findIndex(
-    (line, idx) =>
-      idx >= snippet.startLine - 1 && endsectionPattern.test(line),
+    (line, idx) => idx >= snippet.startLine - 1 && endsectionPattern.test(line),
   );
 
   if (sectionLine === -1) {

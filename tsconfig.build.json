@@ -3,9 +3,9 @@
   "references": [
     { "path": "./packages/fp" },
     { "path": "./packages/core" },
-    { "path": "./packages/express" },
-    { "path": "./packages/auth" },
-    { "path": "./packages/spec" },
-    { "path": "./examples/http" }
+    { "path": "./packages/domain" },
+    { "path": "./packages/http" },
+    { "path": "./packages/env" },
+    { "path": "./packages/client" }
   ]
 }
