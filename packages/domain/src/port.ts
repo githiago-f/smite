@@ -1,6 +1,6 @@
-import { defineDescriptor } from "@smite/core";
-import type { Descriptor } from "@smite/core";
-import type { Result } from "@smite/fp";
+import { defineDescriptor } from "@smitejs/core";
+import type { Descriptor } from "@smitejs/core";
+import type { Result } from "@smitejs/fp";
 
 /**
  * A `domain.port` IR node naming a dependency contract.

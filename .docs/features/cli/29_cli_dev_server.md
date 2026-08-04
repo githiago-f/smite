@@ -2,10 +2,10 @@
 
 ## Goal
 
-Add `smite dev` to `@smite/cli`: a local-development loop that runs the
+Add `smite dev` to `@smitejs/cli`: a local-development loop that runs the
 generators, bundles the app into a self-contained `node:http` server, serves
 it, and auto-reloads on change (re-run generators → rebundle with esbuild →
-restart). In the same slice, `@smite/http` ships the shared `serveNode`
+restart). In the same slice, `@smitejs/http` ships the shared `serveNode`
 adapter (the "internal server helper" the CLI and scaffolded `server.ts` both
 use, extensible by users), and the scaffolder templates move to
 **always-TypeScript** sources.
@@ -17,21 +17,21 @@ the plugin contract. Today a scaffolded app is `.mjs` and hand-wires a
 `node:http` server + Swagger UI in `src/server.mjs`; there is no watch loop and
 no CLI command that runs the local server.
 
-**Critical constraint (carried over from slice 27): `@smite/cli` must not
-depend on `@smite/http` or `@smite/client`.** The dev server therefore never
+**Critical constraint (carried over from slice 27): `@smitejs/cli` must not
+depend on `@smitejs/http` or `@smitejs/client`.** The dev server therefore never
 imports those packages in the CLI process. Instead `smite dev`:
 
 1. compiles entries in collect mode with the existing `compileApps` (this is
    the esbuild "rebundle" step),
 2. runs every plugin in `smite.config.ts` via a new `runAll` helper,
 3. generates a tiny server entry that `import`s the user's app and
-   `@smite/http`'s `serveNode`, bundles it in **runtime mode**
-   (`ALLOW_GLOBAL_REGISTRY: "false"`), resolving `@smite/http` from the
+   `@smitejs/http`'s `serveNode`, bundles it in **runtime mode**
+   (`ALLOW_GLOBAL_REGISTRY: "false"`), resolving `@smitejs/http` from the
    user's installed packages, and spawns it as a child `node` process.
 
 ## Design
 
-### `serveNode` adapter (in `@smite/http`)
+### `serveNode` adapter (in `@smitejs/http`)
 
 `packages/http/src/node-server.ts`:
 
@@ -53,7 +53,7 @@ serveNode(app, options?): http.Server   // not yet listening
 The returned server handles each request with an internal `try/catch` that
 maps failures to a `500` JSON response.
 
-### `smite dev` loop (in `@smite/cli`)
+### `smite dev` loop (in `@smitejs/cli`)
 
 `packages/cli/src/dev.ts` exports:
 
@@ -63,7 +63,7 @@ maps failures to a `500` JSON response.
   a generated entry via esbuild `stdin` and writes the runtime bundle:
   `platform: node`, `format: esm`, `target: es2022`, `define: {
   ALLOW_GLOBAL_REGISTRY: "false" }`. The entry does `import { serveNode } from
-  "@smite/http"`, imports the user's `app` (`mod.app ?? mod["default"]`), and
+  "@smitejs/http"`, imports the user's `app` (`mod.app ?? mod["default"]`), and
   optionally mounts `swaggerUi` when `docs` is on. Output defaults to
   `node_modules/.smite/dev-server.mjs`.
 - `spawnServer(outfile, { cwd, port, host, stdio? })` — spawns the bundle as a
@@ -101,8 +101,8 @@ loadConfig → compileApps → runAll → bundleDevServer → spawnServer
 - `src/server.ts` (was `server.mjs`) — a thin, extensible wrapper:
 
 ```ts
-import { serveNode } from "@smite/http";
-import { swaggerUi } from "@smite/openapi";
+import { serveNode } from "@smitejs/http";
+import { swaggerUi } from "@smitejs/openapi";
 import { app } from "./app.ts";
 
 const doc = JSON.parse(await readFile(new URL("../openapi.json", import.meta.url), "utf8"));
@@ -124,19 +124,19 @@ needs no build step.
 
 ## Implementation steps
 
-1. `@smite/http` — add `src/node-server.ts` (`serveNode`), export from
+1. `@smitejs/http` — add `src/node-server.ts` (`serveNode`), export from
    `index.ts`, add `@types/node` devDep; tests in `node-server.test.ts`
    (routes over real sockets, cookies/query/body, docs mount,
    `transformRequest`) plus a `#section` example; concept doc
    `docs/concepts/node-server.md`.
-2. `@smite/cli` — `plugins.ts` gains `runAll`; new `dev.ts` (`dev`,
+2. `@smitejs/cli` — `plugins.ts` gains `runAll`; new `dev.ts` (`dev`,
    `bundleDevServer`, `spawnServer`, `collectWatchedFiles`, `DevWatcher`);
    register `smite dev` in `cli.ts`; export from `index.ts`.
-3. `@smite/cli` tests — `dev.test.ts`: `runAll` ordering, bundling a runtime
+3. `@smitejs/cli` tests — `dev.test.ts`: `runAll` ordering, bundling a runtime
    server without `globalRegistry`, spawning the bundle and answering HTTP
    requests, watched-file collection excluding generated files, `DevWatcher`
    change detection.
-4. `@smite/cli` scaffolder — swap templates to `.ts`, add `tsconfig.json`,
+4. `@smitejs/cli` scaffolder — swap templates to `.ts`, add `tsconfig.json`,
    `dev`/`typecheck` scripts, README updates; update `cli.ts` + `create-app`
    next-steps and the `.mjs`-referencing tests.
 5. Docs — this file, AGENTS.md, `packages/cli/docs/index.md` (dev workflow +
@@ -151,7 +151,7 @@ needs no build step.
   from the watched set.
 - **Config change** — `smite.config.ts` changes trigger a config reload before
   the rebuild, so plugins can be added/removed while dev runs.
-- **`@smite/openapi` absent** — `dev` probes resolution from the project
+- **`@smitejs/openapi` absent** — `dev` probes resolution from the project
   (`createRequire`) and omits the Swagger imports; docs endpoints are skipped.
 - **Multiple entries** — the dev server serves the first entry's exported
   `app`; generators still compile the union of all apps.

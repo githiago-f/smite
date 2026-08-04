@@ -2,7 +2,7 @@
 
 ## Goal
 
-Lock the `@smite/core` registrar contract with a focused unit suite. The tests
+Lock the `@smitejs/core` registrar contract with a focused unit suite. The tests
 cover nodes, edges, registry behavior, immutability, and error paths — nothing
 about http yet (that is slice `12_http_tests`).
 
@@ -10,8 +10,8 @@ about http yet (that is slice `12_http_tests`).
 
 Testing philosophy (from the harness): **validate behavior, not
 implementation details**. These tests exercise the public API surface
-(`@smite/core`) exactly as a consumer or the CLI would. Because the Vitest
-config aliases `@smite/core` to `src/index.ts`, no build is required to run
+(`@smitejs/core`) exactly as a consumer or the CLI would. Because the Vitest
+config aliases `@smitejs/core` to `src/index.ts`, no build is required to run
 them.
 
 ## Harness alignment
@@ -122,7 +122,7 @@ Definition of done:
 
 ## Dependencies / prerequisites
 
-- Slices `02`–`06` (full `@smite/core` public API).
+- Slices `02`–`06` (full `@smitejs/core` public API).
 - `vitest.config.ts` alias + `ALLOW_GLOBAL_REGISTRY: "true"` define (slice 01).
 
 ## Notes / open questions

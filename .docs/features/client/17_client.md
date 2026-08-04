@@ -1,4 +1,4 @@
-# 17. Client Codegen (`@smite/client`)
+# 17. Client Codegen (`@smitejs/client`)
 
 ## Goal
 
@@ -16,16 +16,16 @@ const user = await api.users.$id.$get({ params: { id: "42" } });
 ## Context
 
 This establishes the compile → execute → traverse → emit pipeline the roadmap
-assigns to `@smite/cli`; it lives here first so the CLI can wrap the same
+assigns to `@smitejs/cli`; it lives here first so the CLI can wrap the same
 engine later. The emitted artifact is runtime-only: it imports a small
-`@smite/client/runtime` (fetch + serialization) and carries no registry code.
+`@smitejs/client/runtime` (fetch + serialization) and carries no registry code.
 
 ## Design
 
 ### Pipeline: `generate({ entry, outfile, alias?, appName? })`
 
 1. **Bundle** `entry` with esbuild: `define: { ALLOW_GLOBAL_REGISTRY: "true" }`,
-   `platform: "node"`, `format: "cjs"`. `alias` maps `@smite/*` to source when
+   `platform: "node"`, `format: "cjs"`. `alias` maps `@smitejs/*` to source when
    developing in the monorepo; in a user project the installed packages resolve
    from `node_modules`.
 2. **Execute** the bundle, then `clear()` + traverse the registry: find the
@@ -43,8 +43,8 @@ Path segments become nested object keys; dynamic `:param` segments become
 
 ```ts
 // src/app.client.ts (generated)
-import { configure, request } from "@smite/client/runtime";
-import type { ClientConfig } from "@smite/client/runtime";
+import { configure, request } from "@smitejs/client/runtime";
+import type { ClientConfig } from "@smitejs/client/runtime";
 
 export { configure };
 
@@ -73,7 +73,7 @@ Mapping rules:
   per-call override for `configure({ baseUrl, fetch })`.
 - Segments that are not valid identifiers are emitted as quoted keys.
 
-### Runtime: `@smite/client/runtime`
+### Runtime: `@smitejs/client/runtime`
 
 - `configure({ baseUrl, fetch })` — module-level defaults (baseUrl, custom
   `fetch`).
@@ -93,16 +93,16 @@ contains no `globalRegistry` reference.
 
 ## Implementation steps
 
-1. `packages/client/package.json` — deps `@smite/core`, `esbuild`;
+1. `packages/client/package.json` — deps `@smitejs/core`, `esbuild`;
    `exports: { ".": generate, "./runtime": runtime }`;
    `sideEffects: false`.
 2. `packages/client/tsconfig.json` — excludes `*.test.ts`, references
    `../core` (not `../http`: generated output and the runtime never touch
-   `@smite/http`).
+   `@smitejs/http`).
 3. `src/generate.ts`, `src/runtime.ts`, `src/index.ts` (re-export `generate`),
    `src/index.test.ts`, `docs/index.md`.
 4. Root: `tsconfig.build.json` reference; `vitest.config.ts` alias
-   `@smite/client`.
+   `@smitejs/client`.
 5. Fixture `packages/client/test/app.ts` (a small http app) used by the tests.
 
 ## Edge cases & error handling
@@ -130,7 +130,7 @@ Definition of done:
 - A generated client executes against a stubbed `fetch` and mirrors
   `{ status, body }`.
 - The generated artifact contains no `globalRegistry`.
-- The engine is reusable by the future `@smite/cli`.
+- The engine is reusable by the future `@smitejs/cli`.
 
 ## Dependencies / prerequisites
 
@@ -141,6 +141,6 @@ Definition of done:
 - **Zod-inferred bucket types** and response schemas (`route.output`) are the
   next step for full end-to-end typing.
 - **Cookies/session** buckets: the input type is generic over buckets; adding
-  `cookies`/`session` requires touching `@smite/http` + `serve` as well.
+  `cookies`/`session` requires touching `@smitejs/http` + `serve` as well.
 - The collect-mode `generate()` shares its traversal with `serve()` (child
   refs, not the registry) once the app node is located.

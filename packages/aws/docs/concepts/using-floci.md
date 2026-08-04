@@ -4,7 +4,7 @@ summary: Develop and test S3, SSM, DynamoDB, SQS, and EventBridge without AWS cr
 order: 1
 ---
 
-`@smite/aws` records the AWS resources and permissions your application needs;
+`@smitejs/aws` records the AWS resources and permissions your application needs;
 your AWS SDK client remains a normal runtime dependency. Floci gives you a
 local AWS-compatible endpoint for day-to-day development and integration
 tests.
@@ -12,7 +12,7 @@ tests.
 ## Install the pieces
 
 Install the resource package and the SDK client for the service you use with
-`npm install @smite/aws @aws-sdk/client-s3`. Add `@smite/serverless` when the
+`npm install @smitejs/aws @aws-sdk/client-s3`. Add `@smitejs/serverless` when the
 same declarations should become CloudFormation resources during deployment.
 
 Start Floci for a local development session with `docker run --rm --name
@@ -41,7 +41,7 @@ Run your application with `npx smite dev`. The application uses the AWS SDK
 client pointed at Floci, while the Smite resource declaration remains the same
 one you deploy to AWS.
 
-For repeatable integration tests, run `yarn test:floci`. The `@smite/aws` test
+For repeatable integration tests, run `yarn test:floci`. The `@smitejs/aws` test
 suite starts `floci/floci:latest` through Testcontainers, exercises all five
 supported services, and removes the container when the suite finishes. You do
 not need to start a separate Floci container for that command.

@@ -1,5 +1,5 @@
 {
-  "name": "@smite/example-fp-utils",
+  "name": "@smitejs/example-fp-utils",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,6 @@
     "start": "node src/main.mjs"
   },
   "dependencies": {
-    "@smite/fp": "1.0.0"
+    "@smitejs/fp": "1.0.0"
   }
 }

@@ -1,5 +1,5 @@
-import { defineDescriptor, relate } from "@smite/core";
-import type { Descriptor } from "@smite/core";
+import { defineDescriptor, relate } from "@smitejs/core";
+import type { Descriptor } from "@smitejs/core";
 import type { HttpHandler, HttpMethod, RouteInputConfig } from "./types.js";
 import { withMethods } from "./withMethods.js";
 
@@ -35,7 +35,7 @@ export interface HttpEndpointBuilder<
   readonly handler: (fn: HttpHandler<Config>) => void;
 }
 
-const DOMAIN_HANDLER = Symbol.for("@smite/domain/handler");
+const DOMAIN_HANDLER = Symbol.for("@smitejs/domain/handler");
 
 type DomainHandlerRef = { readonly usecaseNode: Descriptor<string, unknown> };
 

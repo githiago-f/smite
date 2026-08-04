@@ -19,7 +19,7 @@ that regenerates, bundles, serves, and reloads.
 
 ## Keeping the CLI free of generators
 
-`@smite/cli` never imports `@smite/http` or the generator packages. The dev
+`@smitejs/cli` never imports `@smitejs/http` or the generator packages. The dev
 server is a generated entry that imports your app and `serveNode` from the
 packages you installed; esbuild bundles it at `ALLOW_GLOBAL_REGISTRY: "false"`
 and a child process runs it. The watcher skips generated artifacts

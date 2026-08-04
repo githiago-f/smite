@@ -1,10 +1,10 @@
-# @smite/core
+# @smitejs/core
 
 The internal library: nodes, edges, the global registry, and the compile-time
 flag. Everything else in Smite builds on these primitives. If you are extending
 Smite — writing a transport, a codegen tool, or new middleware — this is your
 surface. If you are building an app, you do not need to touch it; reach for
-`@smite/http`, `@smite/env`, and `@smite/client` instead.
+`@smitejs/http`, `@smitejs/env`, and `@smitejs/client` instead.
 
 Run the tests in `src/index.test.ts` for the executable contract.
 
@@ -31,7 +31,7 @@ import {
   finalizeDescriptor,
   relate,
   childrenOf,
-} from "@smite/core";
+} from "@smitejs/core";
 
 const app = createApp("my-app");
 const route = defineDescriptor("http.route", "GET /ping", {});

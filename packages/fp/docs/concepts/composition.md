@@ -4,7 +4,7 @@ summary: pipe, flow, and metadata that stays out of the way.
 order: 10
 ---
 
-`@smite/fp` gives you data-first, no-tax functional composition. `pipe` threads
+`@smitejs/fp` gives you data-first, no-tax functional composition. `pipe` threads
 a value through functions left to right; `flow` builds a reusable pipeline;
 both leave introspection metadata attached without polluting the visible
 object.

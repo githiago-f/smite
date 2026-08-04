@@ -4,7 +4,7 @@ summary: Generating an OpenAPI document and browsing it with Swagger UI.
 order: 10
 ---
 
-`@smite/openapi` describes your app the way a spec describes an API: it walks
+`@smitejs/openapi` describes your app the way a spec describes an API: it walks
 the compiled routes and emits an OpenAPI 3.1 document. Because the generator
 runs against your app's live schemas, the `req` buckets you declared (`query`,
 `params`, `headers`, `body`) become accurate parameters and request bodies —
@@ -54,5 +54,5 @@ route to the UI while everything else goes to your API:
 
 ## See also
 
-- `@smite/client`'s "Creating clients" to generate a typed client for the same
+- `@smitejs/client`'s "Creating clients" to generate a typed client for the same
   app.

@@ -31,10 +31,10 @@ We deliver both representations because they serve two different consumers:
   graph library, no adjacency matrix, no classes.
 - **DRY** — one `relate` primitive; every transport (http, scheduler,
   messaging, rpc) uses it rather than re-implementing wiring.
-- **SOLID** — the edge shape lives in `@smite/core`; transports only choose
+- **SOLID** — the edge shape lives in `@smitejs/core`; transports only choose
   relation *names*. Core depends on nothing; transports depend on core.
 - **Clean** — the child index is non-enumerable (invisible to `Object.keys`
-  and JSON serialization, like `@smite/fp`'s metadata symbols), so IR stays
+  and JSON serialization, like `@smitejs/fp`'s metadata symbols), so IR stays
   clean and serializable while the runtime view stays available.
 
 ## Design
@@ -58,7 +58,7 @@ export interface RelationshipDescriptor<
   > {}
 
 /** Symbol key for the runtime child index attached to parent descriptors. */
-export const children: unique symbol = Symbol.for("@smite/core/children");
+export const children: unique symbol = Symbol.for("@smitejs/core/children");
 
 type ChildIndex = ReadonlyMap<
   string,
@@ -155,7 +155,7 @@ Two options were considered:
    "avoid mutable global state" harness.
 
 The chosen approach keeps child refs *on the object they describe*, mirroring
-`@smite/fp`'s metadata-symbol precedent.
+`@smitejs/fp`'s metadata-symbol precedent.
 
 ## Implementation steps
 

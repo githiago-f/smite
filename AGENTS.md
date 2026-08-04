@@ -9,12 +9,12 @@ architecture.
 - **The plan of record is `.docs/features/{package}/{NN}_*.md`** (ordered
   slices, grouped by package: `core` 01–07, `http` 08–13, `meta` 14/15/18/19,
   `env` 16, `client` 17, `domain` 20–26, `cli` 27–29). Slices **01–29 are
-  implemented**: `@smite/core` (registrar), `@smite/http` (DSL + executor +
-  `serveNode` node:http adapter), `@smite/env` (declarative env vars),
-  `@smite/client` (build-time typed-client codegen), `@smite/domain`
-  (functional DDD toolkit), `@smite/cli` (config-driven plugin-host compiler:
+  implemented**: `@smitejs/core` (registrar), `@smitejs/http` (DSL + executor +
+  `serveNode` node:http adapter), `@smitejs/env` (declarative env vars),
+  `@smitejs/client` (build-time typed-client codegen), `@smitejs/domain`
+  (functional DDD toolkit), `@smitejs/cli` (config-driven plugin-host compiler:
   `compileApp`, `smite.config.ts`, `smite` bin, `smite dev` auto-reload local
-  server), `@smite/openapi` (OpenAPI 3.1 generator plugin) and `create-smite-app`
+  server), `@smitejs/openapi` (OpenAPI 3.1 generator plugin) and `create-smite-app`
   (scaffolder: `yarn create smite-app`, always-TypeScript templates) are green,
   18/19 close the
   docs flow (tested `#section` snippets → `@example` JSDoc → injected `dist`
@@ -26,7 +26,7 @@ architecture.
   `typed-client`, `fp-utils`) and `benchmarks/` (docker + k6 routing
   benchmark vs Express/Fastify, `yarn bench:http`). Examples are `.mjs`, so
   Biome lints them too; keep them clean and runnable (`yarn workspace
-  @smite/example-* start`).
+  @smitejs/example-* start`).
 - **Docs integrity is enforced per package**: every `packages/{core,http,env,client,fp}/src/docs.test.ts`
   asserts each `@example` in `src/**/*.ts` resolves to a tested `#section`
   snippet and renders as a ```ts fence. Keep `docs.test.ts` in sync when
@@ -61,7 +61,7 @@ architecture.
 - `yarn check` — Biome (`check`/`format`, indent 2 spaces). Run `yarn format` before `yarn check`.
   Note: `yarn check` is also Yarn's built-in integrity check — run `yarn biome check .`
   to actually run Biome.
-- Run a single package: `yarn workspace @smite/<name> test` or `yarn vitest run packages/<name>`.
+- Run a single package: `yarn workspace @smitejs/<name> test` or `yarn vitest run packages/<name>`.
 - `yarn docs:build` — static docs site generator (`scripts/build-docs.mjs`) into
   `dist/docs/`: reads package JSDoc from `src/**/*.ts` (`@group`/`@intent`/
   `@example <Title>`), renders each package as an overview page
@@ -72,7 +72,7 @@ architecture.
   (frontmatter `order`/`title`/`summary`, inline `@example`/`@benchmark`).
   Concept files under a `concepts/internals/` subfolder render under an
   "Internals" group in the sidebar/overview instead of "Concepts" — use it for
-  the framework's own internals (e.g. `@smite/core`'s descriptor IR); user
+  the framework's own internals (e.g. `@smitejs/core`'s descriptor IR); user
   workflow concepts stay directly in `concepts/`. Benchmarks render from
   `benchmarks/results/*.summary.json` when present.
   Requires `shiki`, `@shikijs/themes`, and `jsdoc` dev deps.
@@ -109,11 +109,11 @@ architecture.
 - Validation is **zod-only**.
 - Dependency direction (one-way, no cycles): `fp`/`core` base →
   `http`/`env` → `client` → `serverless`/`cli`, and `openapi` →
-  `http`/`core`/`cli`. Packages import from the `@smite/*` public API only,
-  never each other's internals. `@smite/cli` imports **no** `@smite/*` beyond
-  `@smite/core`; `@smite/client` depends on `@smite/core` + `@smite/cli` (not
-  `@smite/http`); `@smite/client/runtime` never references the registry or
-  `@smite/http`.
+  `http`/`core`/`cli`. Packages import from the `@smitejs/*` public API only,
+  never each other's internals. `@smitejs/cli` imports **no** `@smitejs/*` beyond
+  `@smitejs/core`; `@smitejs/client` depends on `@smitejs/core` + `@smitejs/cli` (not
+  `@smitejs/http`); `@smitejs/client/runtime` never references the registry or
+  `@smitejs/http`.
 
 ## TypeScript conventions (configured, easy to violate)
 
@@ -126,7 +126,7 @@ architecture.
 
 ## Gotchas
 
-- `packages/fp/package.json` has a self-dependency (`"@smite/fp"`); slice 01
+- `packages/fp/package.json` has a self-dependency (`"@smitejs/fp"`); slice 01
   removes it — don't copy the pattern into new packages.
 - Keep `.docs/features/{package}/*` filenames ordered (global slice numbers)
   and slices in sync with code; the next session picks up at the first

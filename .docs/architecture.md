@@ -3,7 +3,7 @@
 ## Vision
 
 A compile-time-first, serverless application framework. Users write a
-declarative TypeScript DSL (`@smite/http`), esbuild builds it, and the CLI
+declarative TypeScript DSL (`@smitejs/http`), esbuild builds it, and the CLI
 compiles the app in **collect mode**, executes it, and traverses
 `globalThis.globalRegistry` to generate artifacts (OpenAPI first). Executors
 run with **zero registry infrastructure** in the bundle.
@@ -11,11 +11,11 @@ run with **zero registry infrastructure** in the bundle.
 ## Layers
 
 ```
-Application DSL (builders)          @smite/http: app, route, req, accept, handler
-→ Semantic Registry (IR)            @smite/core: nodes + edges, global registry
-→ Compiler / CLI                    @smite/cli: compile → execute → traverse
+Application DSL (builders)          @smitejs/http: app, route, req, accept, handler
+→ Semantic Registry (IR)            @smitejs/core: nodes + edges, global registry
+→ Compiler / CLI                    @smitejs/cli: compile → execute → traverse
 → Artifact generators               OpenAPI, infra, docs        [future]
-→ Runtime executors                 @smite/http: serve(); @smite/serverless [future]
+→ Runtime executors                 @smitejs/http: serve(); @smitejs/serverless [future]
 ```
 
 ## IR model
@@ -25,7 +25,7 @@ Application DSL (builders)          @smite/http: app, route, req, accept, handle
 - **`RelationshipDescriptor`** — an edge: `{ from, to, relation }`, created by
   `relate`.
 - **Edges at runtime** — `relate` attaches a non-enumerable child index
-  (`Symbol.for("@smite/core/children")`) on the parent; `childrenOf` reads it.
+  (`Symbol.for("@smitejs/core/children")`) on the parent; `childrenOf` reads it.
   Executors walk these child refs.
 - **Edges at build time** — `register` inserts every node/relationship into
   `globalThis.globalRegistry`, gated by `ALLOW_GLOBAL_REGISTRY`.
@@ -37,22 +37,22 @@ Application DSL (builders)          @smite/http: app, route, req, accept, handle
 
 | Package           | Responsibility                    |
 | ----------------- | --------------------------------- |
-| `@smite/core`     | Registrar: nodes, edges, registry, compile-time flag, junction, freeze/refine |
-| `@smite/http`     | HTTP DSL (`app`, `route`, `req`, `accept`, `handler`) + `serve()` executor + `routesOf` collector |
-| `@smite/fp`       | Functional primitives             |
-| `@smite/domain`   | (stub) domain builders            |
-| `@smite/serverless`| (stub) serverless adapters       |
-| `@smite/cli`      | Collect-mode compiler: `compileApp`, `smite.config.ts`, plugin dispatch, `smite` bin, `createApp` scaffolder |
-| `@smite/client`   | Typed client codegen (`generate`, `client` plugin), imports `compileApp` from `@smite/cli` |
-| `@smite/openapi`  | OpenAPI 3.1 generator (`openapi` plugin) + `swaggerUi` router |
+| `@smitejs/core`     | Registrar: nodes, edges, registry, compile-time flag, junction, freeze/refine |
+| `@smitejs/http`     | HTTP DSL (`app`, `route`, `req`, `accept`, `handler`) + `serve()` executor + `routesOf` collector |
+| `@smitejs/fp`       | Functional primitives             |
+| `@smitejs/domain`   | (stub) domain builders            |
+| `@smitejs/serverless`| (stub) serverless adapters       |
+| `@smitejs/cli`      | Collect-mode compiler: `compileApp`, `smite.config.ts`, plugin dispatch, `smite` bin, `createApp` scaffolder |
+| `@smitejs/client`   | Typed client codegen (`generate`, `client` plugin), imports `compileApp` from `@smitejs/cli` |
+| `@smitejs/openapi`  | OpenAPI 3.1 generator (`openapi` plugin) + `swaggerUi` router |
 | `create-smite-app`| Starter app scaffolder (`yarn create smite-app`, `--template`) |
 
 Dependencies flow one way, no cycles: `fp`/`core` base → `http` →
-`serverless`/`cli`, with `@smite/client` and `@smite/openapi` importing
-`@smite/cli` for the plugin contract and shared `compileApp`. The CLI imports
-**no** `@smite/*` beyond `@smite/core`; generators are contributed by packages
+`serverless`/`cli`, with `@smitejs/client` and `@smitejs/openapi` importing
+`@smitejs/cli` for the plugin contract and shared `compileApp`. The CLI imports
+**no** `@smitejs/*` beyond `@smitejs/core`; generators are contributed by packages
 installed in the user project and loaded through `smite.config.ts`. Packages
-import from the `@smite/*` public API only.
+import from the `@smitejs/*` public API only.
 
 ## Compile-time constants
 
@@ -67,7 +67,7 @@ undefined identifier never throws and esbuild folds the branch.
 | esbuild `define` → false | `false`| runtime (users) |
 | undefined                | `false`| runtime default |
 
-`allowGlobalRegistry` is also exported from `@smite/core` for tooling.
+`allowGlobalRegistry` is also exported from `@smitejs/core` for tooling.
 
 ## Tree-shaking
 

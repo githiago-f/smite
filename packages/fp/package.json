@@ -1,5 +1,5 @@
 {
-  "name": "@smite/fp",
+  "name": "@smitejs/fp",
   "version": "1.0.0",
   "description": "Small functional programming primitives for Smite applications and framework code.",
   "license": "MIT",

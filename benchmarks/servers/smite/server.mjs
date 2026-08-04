@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { http } from "@smite/http";
+import { http } from "@smitejs/http";
 import { z } from "zod";
 
 const app = http.app("bench");

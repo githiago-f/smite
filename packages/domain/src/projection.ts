@@ -1,5 +1,5 @@
-import { defineDescriptor, relate } from "@smite/core";
-import type { Descriptor, RelationshipDescriptor } from "@smite/core";
+import { defineDescriptor, relate } from "@smitejs/core";
+import type { Descriptor, RelationshipDescriptor } from "@smitejs/core";
 import type { Commit } from "./aggregate.js";
 import { aggregateDescriptorSymbol } from "./aggregate.js";
 

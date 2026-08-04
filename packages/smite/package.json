@@ -21,7 +21,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@smite/cli": "^1.0.0"
+    "@smitejs/cli": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0"

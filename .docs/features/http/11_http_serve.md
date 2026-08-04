@@ -34,8 +34,8 @@ collect-mode state, and must be deterministic.
 ### File: `packages/http/src/serve.ts`
 
 ```ts
-import { childrenOf, finalizeDescriptor } from "@smite/core";
-import type { AppDescriptor, Descriptor } from "@smite/core";
+import { childrenOf, finalizeDescriptor } from "@smitejs/core";
+import type { AppDescriptor, Descriptor } from "@smitejs/core";
 import { match } from "path-to-regexp";
 import type { z } from "zod";
 import type {
@@ -175,7 +175,7 @@ Matches the sketch usage: `http.status(400).json(err)` and `http.json(res)`.
 
 ## Implementation steps
 
-1. Add `path-to-regexp@^8` as a dependency of `@smite/http`.
+1. Add `path-to-regexp@^8` as a dependency of `@smitejs/http`.
 2. Create `validate.ts`, `response.ts`, `serve.ts`.
 3. Wire `app().serve()` → `serve(descriptor)` in `packages/http/src/index.ts`;
    export `json`, `status`, `HttpRouter`, `HttpRequest`, `HttpResponse`.

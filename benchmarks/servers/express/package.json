@@ -1,5 +1,5 @@
 {
-  "name": "@smite/bench-express",
+  "name": "@smitejs/bench-express",
   "version": "0.0.0",
   "private": true,
   "type": "module",

@@ -18,7 +18,7 @@ await esbuild.build({
   format: "cjs",
   target: "es2022",
   alias: {
-    "@smite/client/runtime": join(root, "packages/client/src/runtime.ts"),
+    "@smitejs/client/runtime": join(root, "packages/client/src/runtime.ts"),
   },
 });
 

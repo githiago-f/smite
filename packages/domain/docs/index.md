@@ -1,4 +1,4 @@
-# @smite/domain
+# @smitejs/domain
 
 A functional DDD toolkit for Smite applications. It gives you the building
 blocks to model a domain as immutable values and named operations, without
@@ -6,14 +6,14 @@ enforcing a framework or a container.
 
 ## CLI workflow
 
-Install it with `npm install @smite/domain @smite/http zod` and use
+Install it with `npm install @smitejs/domain @smitejs/http zod` and use
 `npx smite dev` to run an HTTP app whose handlers delegate to domain usecases.
 For the complete in-memory orders example, run `yarn workspace
-@smite/example-domains-orders start` and call it with `curl`.
+@smitejs/example-domains-orders start` and call it with `curl`.
 
 ## When to reach for it
 
-Reach for `@smite/domain` as soon as a route starts to smuggle business logic
+Reach for `@smitejs/domain` as soon as a route starts to smuggle business logic
 into an HTTP handler. It draws a clean line between the **what** (your rules,
 values, and operations) and the **how** (transport, storage, plumbing).
 
@@ -36,7 +36,7 @@ exceptions that unwind the stack.
 Run it with:
 
 ```sh
-yarn workspace @smite/example-domains-orders start
+yarn workspace @smitejs/example-domains-orders start
 ```
 
 then `POST /orders` (place an order) and `GET /orders/:id` (read one back).
@@ -48,7 +48,7 @@ then `POST /orders` (place an order) and `GET /orders/:id` (read one back).
 
 ## Architecture
 
-`@smite/domain` sits on `@smite/fp` (for `Result`/`TaskResult` composition) and
-`@smite/core` (for collect-mode registration), and depends on nothing else. In
+`@smitejs/domain` sits on `@smitejs/fp` (for `Result`/`TaskResult` composition) and
+`@smitejs/core` (for collect-mode registration), and depends on nothing else. In
 collect mode each builder registers a `domain.*` node; at runtime the executors
 walk the IR without touching the registry.

@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-import "@smite/cli/cli";
+import "@smitejs/cli/cli";

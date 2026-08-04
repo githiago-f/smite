@@ -1,5 +1,5 @@
 import type { AddressInfo } from "node:net";
-import { clear } from "@smite/core";
+import { clear } from "@smitejs/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { http, json, serveNode, status } from "./index.js";

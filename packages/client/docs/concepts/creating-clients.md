@@ -4,7 +4,7 @@ summary: Generating a typed client for your API from the command line.
 order: 10
 ---
 
-`@smite/client` turns your server definition into a typed, builder-style
+`@smitejs/client` turns your server definition into a typed, builder-style
 client. Every route you declare becomes a nested object with `$method` calls;
 params come from the path template and are typed. There is no runtime codegen —
 the client is generated once, at build time, and the emitted module is plain
@@ -52,10 +52,10 @@ Call it like any typed function — `configure` sets the defaults, and each
 - `query`, `headers`, and `body` are loose optional buckets; `$config`
   overrides `configure()` per call.
 - Responses are `{ status, body, headers }` and never throw on non-2xx.
-- The generated file imports only `@smite/client/runtime` — no registry, no
+- The generated file imports only `@smitejs/client/runtime` — no registry, no
   framework.
 
 ## See also
 
 - `generated-api` for the builder shape in detail.
-- `@smite/openapi`'s "Exposing OpenAPI" to serve a spec for the same app.
+- `@smitejs/openapi`'s "Exposing OpenAPI" to serve a spec for the same app.

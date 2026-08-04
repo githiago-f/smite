@@ -1,9 +1,9 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import type { SmitePlugin } from "@smite/cli";
-import type { AppDescriptor } from "@smite/core";
-import { routesOf } from "@smite/http";
-import type { CollectedEndpoint, RouteInputConfig } from "@smite/http";
+import type { SmitePlugin } from "@smitejs/cli";
+import type { AppDescriptor } from "@smitejs/core";
+import { routesOf } from "@smitejs/http";
+import type { CollectedEndpoint, RouteInputConfig } from "@smitejs/http";
 
 /**
  * Options for the {@link openapi} CLI plugin.
@@ -138,7 +138,7 @@ const buildDocument = (
 };
 
 /**
- * CLI plugin factory for `@smite/cli`: an `openapi` plugin whose `run` emits an
+ * CLI plugin factory for `@smitejs/cli`: an `openapi` plugin whose `run` emits an
  * OpenAPI 3.1 document for the compiled app's routes, converting each `req`
  * bucket's zod schema to JSON Schema via `.toJSONSchema()` on the user's live
  * schema instances.

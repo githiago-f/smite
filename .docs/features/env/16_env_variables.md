@@ -1,4 +1,4 @@
-# 16. Environment Variables (`@smite/env`)
+# 16. Environment Variables (`@smitejs/env`)
 
 ## Goal
 
@@ -31,7 +31,7 @@ already gives us the mechanism.
 ### File: `packages/env/src/index.ts`
 
 ```ts
-import { defineDescriptor, lookup } from "@smite/core";
+import { defineDescriptor, lookup } from "@smitejs/core";
 import type { z } from "zod";
 
 declare const ALLOW_GLOBAL_REGISTRY: boolean;
@@ -105,7 +105,7 @@ do not collide in the registry. In runtime bundles the node disappears.
 ### API
 
 ```ts
-import { env } from "@smite/env";
+import { env } from "@smitejs/env";
 import { z } from "zod";
 
 const appEnv = env
@@ -121,13 +121,13 @@ const port = await appEnv.port; // number
 
 ## Implementation steps
 
-1. `packages/env/package.json` — deps `@smite/core` + `zod`; `sideEffects:
+1. `packages/env/package.json` — deps `@smitejs/core` + `zod`; `sideEffects:
    false`; standard exports/files/scripts shape.
 2. `packages/env/tsconfig.json` — extends root, excludes `*.test.ts`,
    references `../core`.
 3. `src/index.ts` (above), `src/index.test.ts`, `docs/index.md`.
 4. Root: `tsconfig.build.json` reference; `vitest.config.ts` alias
-   `@smite/env` → `packages/env/src/index.ts`.
+   `@smitejs/env` → `packages/env/src/index.ts`.
 
 ## Edge cases & error handling
 

@@ -1,5 +1,5 @@
-import { childrenOf } from "@smite/core";
-import type { AppDescriptor, Descriptor } from "@smite/core";
+import { childrenOf } from "@smitejs/core";
+import type { AppDescriptor, Descriptor } from "@smitejs/core";
 import type { HttpMethod, RouteInputConfig } from "./types.js";
 
 /**

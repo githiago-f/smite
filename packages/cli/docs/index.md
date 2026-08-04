@@ -1,4 +1,4 @@
-# @smite/cli
+# @smitejs/cli
 
 The command-line workflow for Smite apps. Start with the
 [`Getting started`](./concepts/getting-started.html) concept to create and run
@@ -6,7 +6,7 @@ an HTTP app, then use the sections below when you need generated clients,
 OpenAPI, local reloads, or deployment builds.
 
 The CLI compiles your app declarations and runs the generators contributed by
-the packages you install (`@smite/client`, `@smite/openapi`, …). The CLI itself
+the packages you install (`@smitejs/client`, `@smitejs/openapi`, …). The CLI itself
 does not choose or bundle those generators.
 
 ## First project
@@ -14,7 +14,7 @@ does not choose or bundle those generators.
 For a new project, install the CLI, HTTP DSL, and zod:
 
 ```bash
-npm install -D @smite/cli @smite/http zod
+npm install -D @smitejs/cli @smitejs/http zod
 npx smite create hello-api
 cd hello-api
 npm install
@@ -30,7 +30,7 @@ http://127.0.0.1:3000/health`. The complete first-user walkthrough is in
 Install the generators you need:
 
 ```bash
-npm install -D @smite/client @smite/openapi
+npm install -D @smitejs/client @smitejs/openapi
 ```
 
 Declare a `smite.config.ts` at the project root. `entries` lists the app entry
@@ -38,9 +38,9 @@ points to compile in collect mode — use one entry per serverless handler
 (Lambda, GCP function, …), and `entry` is shorthand for a single entry:
 
 ```ts
-import { defineSmiteConfig } from "@smite/cli";
-import { client } from "@smite/client";
-import { openapi } from "@smite/openapi";
+import { defineSmiteConfig } from "@smitejs/cli";
+import { client } from "@smitejs/client";
+import { openapi } from "@smitejs/openapi";
 
 export default defineSmiteConfig({
   entries: ["./src/app.ts"],
@@ -113,8 +113,8 @@ smite dev --port 4000
 
 It compiles the app entries in collect mode, runs every plugin in
 `smite.config.ts`, bundles a runtime server over `node:http` (via
-`@smite/http`'s `serveNode`) with esbuild, and spawns it. The CLI never
-imports `@smite/http` — the generated entry resolves it from your installed
+`@smitejs/http`'s `serveNode`) with esbuild, and spawns it. The CLI never
+imports `@smitejs/http` — the generated entry resolves it from your installed
 packages at bundle time. On change, the sources are watched (generated
 `*.client.ts` / `openapi.json` excluded), and it re-runs the generators,
 rebundles, and restarts the server. Pass `--no-watch` to serve once.
@@ -144,7 +144,7 @@ available as `yarn create smite-app` via the `create-smite-app` package.
 - **`compileApp`** bundles `entry` with `ALLOW_GLOBAL_REGISTRY: "true"`,
   executes it in-process, and locates the `app` node in
   `globalThis.globalRegistry`. Because the registry lives on `globalThis` and
-  the child index uses `Symbol.for`, this package's own `@smite/core` copy can
+  the child index uses `Symbol.for`, this package's own `@smitejs/core` copy can
   traverse descriptors created by the bundled app.
 - **Plugins** are plain `{ name, run }` objects from your installed packages.
   The CLI has no knowledge of `http.*` or `domain.*` kinds — plugins traverse
@@ -188,5 +188,5 @@ available as `yarn create smite-app` via the `create-smite-app` package.
   `smite dev` watches, excluding generated artifacts.
 - `DevWatcher` — fingerprint-polling file watcher (no native deps).
 
-`alias` maps `@smite/*` to source paths when developing in the monorepo; in a
+`alias` maps `@smitejs/*` to source paths when developing in the monorepo; in a
 user project esbuild resolves them from `node_modules` and it is omitted.

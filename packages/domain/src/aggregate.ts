@@ -1,6 +1,6 @@
-import { defineDescriptor } from "@smite/core";
-import type { Descriptor } from "@smite/core";
-import { Result } from "@smite/fp";
+import { defineDescriptor } from "@smitejs/core";
+import type { Descriptor } from "@smitejs/core";
+import { Result } from "@smitejs/fp";
 import type { z } from "zod";
 import type { DomainValidationError } from "./value-object.js";
 import { freezeDeep } from "./value.js";
@@ -28,7 +28,7 @@ export interface AggregateDescriptor<Event>
  * @group Internals
  */
 export const aggregateDescriptorSymbol: unique symbol = Symbol.for(
-  "@smite/domain/aggregateDescriptor",
+  "@smitejs/domain/aggregateDescriptor",
 );
 
 /**

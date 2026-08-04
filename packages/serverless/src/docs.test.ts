@@ -7,7 +7,7 @@ import {
   collectTestSnippets,
 } from "../../../scripts/snippets.mjs";
 
-const packageName = "@smite/serverless";
+const packageName = "@smitejs/serverless";
 const rootDir = process.cwd();
 const srcDir = join(rootDir, "packages/serverless/src");
 

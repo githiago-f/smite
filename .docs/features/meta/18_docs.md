@@ -166,7 +166,7 @@ commands.
 ## Dependencies / prerequisites
 
 - Slices `01`–`17` (all implemented behavior being documented).
-- `@smite/fp`'s `snippets.mjs` (the `#section` extractor) and its reference
+- `@smitejs/fp`'s `snippets.mjs` (the `#section` extractor) and its reference
   `docs.test.ts` shape.
 
 ## Notes / open questions

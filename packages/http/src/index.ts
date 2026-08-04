@@ -1,6 +1,6 @@
-import { createApp, defineDescriptor, refine, relate } from "@smite/core";
-import type { AppDescriptor, Descriptor } from "@smite/core";
-import { chain, getExtractorMetadata } from "@smite/fp";
+import { createApp, defineDescriptor, refine, relate } from "@smitejs/core";
+import type { AppDescriptor, Descriptor } from "@smitejs/core";
+import { chain, getExtractorMetadata } from "@smitejs/fp";
 import { accept } from "./endpoint.js";
 import type { HttpEndpointBuilder } from "./endpoint.js";
 import { cookies, headers, params, query } from "./extract.js";
@@ -117,8 +117,8 @@ export { routesOf } from "./routes.js";
 export type { CollectedEndpoint, CollectedRoute } from "./routes.js";
 
 export { cookies, headers, params, query } from "./extract.js";
-export { chain, getExtractorMetadata } from "@smite/fp";
-export type { Extractor, ExtractorMetadata } from "@smite/fp";
+export { chain, getExtractorMetadata } from "@smitejs/fp";
+export type { Extractor, ExtractorMetadata } from "@smitejs/fp";
 
 /**
  * The HTTP DSL surface: `app`, `route`, `json`, `status`.

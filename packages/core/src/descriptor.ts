@@ -35,7 +35,7 @@ export interface RelationshipDescriptor<
   > {}
 
 /** Symbol key for the runtime child index attached to parent descriptors. */
-export const children: unique symbol = Symbol.for("@smite/core/children");
+export const children: unique symbol = Symbol.for("@smitejs/core/children");
 
 type ChildIndex = ReadonlyMap<string, readonly Descriptor<string, unknown>[]>;
 

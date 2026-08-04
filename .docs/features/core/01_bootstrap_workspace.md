@@ -4,7 +4,7 @@
 
 Get the monorepo to a **green baseline**: a single `yarn install` leaves us with
 `yarn build`, `yarn test`, and `yarn check` all passing, with only the
-`@smite/fp` package compiling and testing. Every later slice builds on this
+`@smitejs/fp` package compiling and testing. Every later slice builds on this
 baseline, so it must be reproducible and boring.
 
 ## Context
@@ -101,8 +101,8 @@ import { resolve } from "node:path";
 export default defineConfig({
   resolve: {
     alias: {
-      "@smite/core": resolve(import.meta.dirname, "packages/core/src/index.ts"),
-      "@smite/http": resolve(import.meta.dirname, "packages/http/src/index.ts"),
+      "@smitejs/core": resolve(import.meta.dirname, "packages/core/src/index.ts"),
+      "@smitejs/http": resolve(import.meta.dirname, "packages/http/src/index.ts"),
     },
   },
   define: {
@@ -130,7 +130,7 @@ Both packages get the same shape, mirroring `packages/fp`:
 
 ```jsonc
 {
-  "name": "@smite/core",
+  "name": "@smitejs/core",
   "version": "0.1.0",
   "description": "Semantic registrar: descriptors (IR nodes), relationships (IR edges) and the global registry.",
   "license": "MIT",
@@ -163,7 +163,7 @@ Both packages get the same shape, mirroring `packages/fp`:
 }
 ```
 
-`packages/http` gets the same two files (name `@smite/http`), with
+`packages/http` gets the same two files (name `@smitejs/http`), with
 `dependencies` added in later slices (`zod`, `path-to-regexp`) and no
 `references` yet (it will gain `{ "path": "../core" }` once it imports core —
 added in slice `08_http_app_and_route`).
@@ -176,7 +176,7 @@ dropped. It is a hard requirement of the whole framework (see
 ### Cleanups
 
 1. `packages/fp/package.json` currently declares a self-dependency
-   `"@smite/fp": "0.1.0"`. Remove it — a package must not depend on itself.
+   `"@smitejs/fp": "0.1.0"`. Remove it — a package must not depend on itself.
 2. `packages/fp/dist` is stale build output; `yarn install`/`yarn build` will
    regenerate it. Remove it to avoid confusion.
 3. `packages/core/src/index.d.ts` and `packages/http/src/index.ts` are design
@@ -190,7 +190,7 @@ dropped. It is a hard requirement of the whole framework (see
 1. Overwrite `package.json`, `tsconfig.build.json`; add `vitest.config.ts`.
 2. Create `packages/core/package.json` and `packages/core/tsconfig.json`.
 3. Create `packages/http/package.json` and `packages/http/tsconfig.json`.
-4. Remove the `@smite/fp` self-dependency and the stale `packages/fp/dist`.
+4. Remove the `@smitejs/fp` self-dependency and the stale `packages/fp/dist`.
 5. Run `yarn install`.
 6. Run `yarn build` — must compile `fp`, `core`, `http` (empty sources are fine
    as long as at least one file exists; create a placeholder `src/index.ts` in

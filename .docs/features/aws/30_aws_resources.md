@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add a shared `@smite/aws` declaration layer for S3, SSM, DynamoDB, SQS, and
+Add a shared `@smitejs/aws` declaration layer for S3, SSM, DynamoDB, SQS, and
 EventBridge resources. Applications receive their full injected SDK client,
 while compile-time resource and permission descriptors feed deployment
 adapters.
@@ -15,7 +15,7 @@ adapters.
   method inspection is deliberately not used.
 - Permissions are captured per compiled entry, so Serverless can create a role
   for each function instead of applying one global policy.
-- `@smite/serverless` emits CloudFormation resources, cross-stack imports,
+- `@smitejs/serverless` emits CloudFormation resources, cross-stack imports,
   outputs, and function-scoped IAM roles from the shared descriptors.
 - Future Terraform and standalone CloudFormation adapters consume the same IR.
 

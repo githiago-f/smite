@@ -13,7 +13,7 @@ node's payload.
 ## When you notice one
 
 You almost never construct a descriptor by hand. `defineDescriptor` is the
-single creator, and builders such as `@smite/http` call it for you. The same
+single creator, and builders such as `@smitejs/http` call it for you. The same
 function is also the primitive the whole framework reduces to.
 
 @example Define and look up a descriptor

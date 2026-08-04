@@ -1,5 +1,5 @@
-import { childrenOf, finalizeDescriptor } from "@smite/core";
-import type { AppDescriptor, Descriptor } from "@smite/core";
+import { childrenOf, finalizeDescriptor } from "@smitejs/core";
+import type { AppDescriptor, Descriptor } from "@smitejs/core";
 import { match } from "path-to-regexp";
 import type {
   HttpHandler,

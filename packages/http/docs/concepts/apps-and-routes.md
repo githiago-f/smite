@@ -4,7 +4,7 @@ summary: Building an HTTP application with http.app and http.route.
 order: 10
 ---
 
-`@smite/http` is a declarative DSL for describing an HTTP API. You describe
+`@smitejs/http` is a declarative DSL for describing an HTTP API. You describe
 routes and handlers; the DSL takes care of turning that description into a
 serving application.
 

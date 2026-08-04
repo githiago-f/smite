@@ -70,7 +70,7 @@ import { usecase } from "./usecase.js";
 import { valueObject } from "./value-object.js";
 
 /**
- * The `@smite/domain` namespace: a single import for the full DDD toolkit.
+ * The `@smitejs/domain` namespace: a single import for the full DDD toolkit.
  *
  * @group Surface
  */

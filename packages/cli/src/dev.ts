@@ -4,7 +4,7 @@ import type { Dirent } from "node:fs";
 import { mkdir, readdir, stat } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
-import { clear } from "@smite/core";
+import { clear } from "@smitejs/core";
 import * as esbuild from "esbuild";
 import { appsOf, compileAppEntries } from "./compile.js";
 import { buildEntriesOf, entriesOf, loadConfig } from "./config.js";
@@ -51,12 +51,12 @@ const generatedServerEntry = (options: {
   readonly title: string;
   readonly openapiJson: string;
 }): string => `
-import { serveNode } from "@smite/http";
+import { serveNode } from "@smitejs/http";
 import * as mod from ${JSON.stringify(options.entry)};
 ${
   options.docs
     ? `import { readFile } from "node:fs/promises";
-import { swaggerUi } from "@smite/openapi";`
+import { swaggerUi } from "@smitejs/openapi";`
     : ""
 }
 
@@ -104,7 +104,7 @@ export interface BundleDevServerOptions {
   readonly entry: string;
   /** Monorepo aliases passed to the bundle. */
   readonly alias?: Readonly<Record<string, string>>;
-  /** Mount Swagger UI and `/openapi.json` when `@smite/openapi` is present. */
+  /** Mount Swagger UI and `/openapi.json` when `@smitejs/openapi` is present. */
   readonly docs?: boolean;
   /** Title for the docs page. */
   readonly title?: string;
@@ -117,7 +117,7 @@ export interface BundleDevServerOptions {
  * (`ALLOW_GLOBAL_REGISTRY` folded to `false`) from a generated entry that
  * imports the user's app and serves it over `node:http`. Returns `outfile`.
  *
- * The CLI never imports `@smite/http` itself; esbuild resolves it from the
+ * The CLI never imports `@smitejs/http` itself; esbuild resolves it from the
  * user's installed packages at bundle time.
  *
  * @group Dev
@@ -390,7 +390,7 @@ export async function dev(options: DevOptions = {}): Promise<void> {
 
   let config = await loadConfig(configPath, alias);
   const outfile = join(cwd, DEV_OUTFILE);
-  const docs = canResolve("@smite/openapi", cwd);
+  const docs = canResolve("@smitejs/openapi", cwd);
 
   let child: ChildProcess | undefined;
   let building = false;

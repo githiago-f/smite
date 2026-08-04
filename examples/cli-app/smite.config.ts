@@ -1,6 +1,6 @@
-import { defineSmiteConfig } from "@smite/cli";
-import { client } from "@smite/client";
-import { openapi } from "@smite/openapi";
+import { defineSmiteConfig } from "@smitejs/cli";
+import { client } from "@smitejs/client";
+import { openapi } from "@smitejs/openapi";
 
 export default defineSmiteConfig({
   entry: "./src/app.mjs",

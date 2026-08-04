@@ -7,7 +7,7 @@ import {
   chain,
   flow,
   not,
-} from "@smite/fp";
+} from "@smitejs/fp";
 
 const parseUserId = (request) =>
   Option.fromNullable(request?.query?.userId)

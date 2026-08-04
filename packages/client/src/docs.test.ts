@@ -7,7 +7,7 @@ import {
   collectTestSnippets,
 } from "../../../scripts/snippets.mjs";
 
-const packageName = "@smite/client";
+const packageName = "@smitejs/client";
 const rootDir = process.cwd();
 const srcDir = join(rootDir, "packages/client/src");
 

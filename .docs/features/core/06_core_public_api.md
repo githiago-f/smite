@@ -2,7 +2,7 @@
 
 ## Goal
 
-Close out the `@smite/core` public surface:
+Close out the `@smitejs/core` public surface:
 
 1. A **barrel** (`src/index.ts`) exposing the exact, minimal API consumers and
    tooling rely on.
@@ -122,8 +122,8 @@ What is deliberately **not** exported:
 
 ### Stability contract
 
-This barrel is the **public API** of `@smite/core`. Later slices import only
-from `@smite/core`, never from `./descriptor.js` paths of another package
+This barrel is the **public API** of `@smitejs/core`. Later slices import only
+from `@smitejs/core`, never from `./descriptor.js` paths of another package
 (monorepo rule: packages communicate through stable public APIs).
 
 ## Implementation steps
@@ -159,7 +159,7 @@ Assertions locked in slice `07_core_registrar_tests`:
 
 Definition of done:
 
-- `@smite/core` exposes exactly the documented surface; `yarn build` emits a
+- `@smitejs/core` exposes exactly the documented surface; `yarn build` emits a
   clean `dist/index.d.ts`.
 
 ## Dependencies / prerequisites

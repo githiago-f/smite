@@ -1,4 +1,4 @@
-import type { AppDescriptor } from "@smite/core";
+import type { AppDescriptor } from "@smitejs/core";
 import type { CompiledEntry } from "./compile.js";
 import type { SmiteBuildConfig } from "./config.js";
 

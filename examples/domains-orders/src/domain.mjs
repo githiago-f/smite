@@ -1,5 +1,5 @@
-import { domain } from "@smite/domain";
-import { Result } from "@smite/fp";
+import { domain } from "@smitejs/domain";
+import { Result } from "@smitejs/fp";
 import { z } from "zod";
 
 export const OrderId = domain.valueObject({

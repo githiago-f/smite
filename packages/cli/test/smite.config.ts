@@ -1,5 +1,5 @@
-import { defineSmiteConfig } from "@smite/cli";
-import { client } from "@smite/client";
+import { defineSmiteConfig } from "@smitejs/cli";
+import { client } from "@smitejs/client";
 
 export default defineSmiteConfig({
   entry: "packages/cli/test/app.ts",

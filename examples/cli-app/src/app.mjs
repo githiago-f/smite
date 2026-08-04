@@ -1,4 +1,4 @@
-import { http } from "@smite/http";
+import { http } from "@smitejs/http";
 import { z } from "zod";
 
 export const app = http.app("pets");

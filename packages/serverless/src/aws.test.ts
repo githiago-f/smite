@@ -1,12 +1,12 @@
-import { clear } from "@smite/core";
-import { http } from "@smite/http";
+import { clear } from "@smitejs/core";
+import { http } from "@smitejs/http";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { lambdaify } from "./aws.js";
 
 afterEach(() => clear());
 
-describe("@smite/serverless/aws", () => {
+describe("@smitejs/serverless/aws", () => {
   it("adapts API Gateway v2 events to a Smite app", async () => {
     const app = http.app("lambda-fixture");
     const routes = http.route(app);

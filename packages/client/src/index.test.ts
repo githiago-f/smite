@@ -7,14 +7,14 @@ import {
   defineSmiteConfig,
   dispatch,
   entriesOf,
-} from "@smite/cli";
+} from "@smitejs/cli";
 import {
   client,
   collectEndpointsFromApps,
   emitClient,
   generate,
-} from "@smite/client";
-import { clear } from "@smite/core";
+} from "@smitejs/client";
+import { clear } from "@smitejs/core";
 import * as esbuild from "esbuild";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -23,13 +23,13 @@ const cwd = process.cwd();
 const entry = join(cwd, "packages/client/test/app.ts");
 
 const sourceAliases = {
-  "@smite/core": join(cwd, "packages/core/src/index.ts"),
-  "@smite/http": join(cwd, "packages/http/src/index.ts"),
+  "@smitejs/core": join(cwd, "packages/core/src/index.ts"),
+  "@smitejs/http": join(cwd, "packages/http/src/index.ts"),
 };
 
 const clientAliases = {
   ...sourceAliases,
-  "@smite/client/runtime": join(cwd, "packages/client/src/runtime.ts"),
+  "@smitejs/client/runtime": join(cwd, "packages/client/src/runtime.ts"),
 };
 
 const buildClient = async (entryPath: string = entry) => {
@@ -52,7 +52,7 @@ const buildClient = async (entryPath: string = entry) => {
 
 afterEach(() => clear());
 
-describe("@smite/client", () => {
+describe("@smitejs/client", () => {
   it("emits a builder client from the app IR", async () => {
     const dir = await mkdtemp(join(tmpdir(), "smite-client-"));
     const outfile = join(dir, "app.client.ts");

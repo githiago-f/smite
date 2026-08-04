@@ -39,8 +39,8 @@ OpenAPI per-endpoint and lets `serve()` match precisely.
 ### File: `packages/http/src/endpoint.ts`
 
 ```ts
-import { defineDescriptor, relate } from "@smite/core";
-import type { Descriptor, RelationshipDescriptor } from "@smite/core";
+import { defineDescriptor, relate } from "@smitejs/core";
+import type { Descriptor, RelationshipDescriptor } from "@smitejs/core";
 import type { HttpHandler, HttpMethod, RouteInputConfig } from "./types.js";
 
 export interface EndpointDescriptor extends Descriptor<

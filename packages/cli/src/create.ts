@@ -67,10 +67,10 @@ const PACKAGE_JSON = `{
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@smite/cli": "latest",
-    "@smite/client": "latest",
-    "@smite/http": "latest",
-    "@smite/openapi": "latest",
+    "@smitejs/cli": "latest",
+    "@smitejs/client": "latest",
+    "@smitejs/http": "latest",
+    "@smitejs/openapi": "latest",
     "zod": "^4.0.0"
   },
   "devDependencies": {
@@ -94,9 +94,9 @@ const TSCONFIG = `{
 }
 `;
 
-const SMITE_CONFIG = `import { defineSmiteConfig } from "@smite/cli";
-import { client } from "@smite/client";
-import { openapi } from "@smite/openapi";
+const SMITE_CONFIG = `import { defineSmiteConfig } from "@smitejs/cli";
+import { client } from "@smitejs/client";
+import { openapi } from "@smitejs/openapi";
 
 export default defineSmiteConfig({
   entries: ["./src/app.ts"],
@@ -118,9 +118,9 @@ const MINIMAL_PACKAGE_JSON = `{
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@smite/cli": "latest",
-    "@smite/client": "latest",
-    "@smite/http": "latest",
+    "@smitejs/cli": "latest",
+    "@smitejs/client": "latest",
+    "@smitejs/http": "latest",
     "zod": "^4.0.0"
   },
   "devDependencies": {
@@ -129,8 +129,8 @@ const MINIMAL_PACKAGE_JSON = `{
 }
 `;
 
-const MINIMAL_SMITE_CONFIG = `import { defineSmiteConfig } from "@smite/cli";
-import { client } from "@smite/client";
+const MINIMAL_SMITE_CONFIG = `import { defineSmiteConfig } from "@smitejs/cli";
+import { client } from "@smitejs/client";
 
 export default defineSmiteConfig({
   entries: ["./src/app.ts"],
@@ -138,7 +138,7 @@ export default defineSmiteConfig({
 });
 `;
 
-const APP_SOURCE = `import { http } from "@smite/http";
+const APP_SOURCE = `import { http } from "@smitejs/http";
 import { z } from "zod";
 
 export const app = http.app("{{name}}");
@@ -166,8 +166,8 @@ routes
   .handler((ctx) => ({ status: 201, body: { title: ctx.body?.title } }));
 `;
 
-const SERVER_SOURCE = `import { serveNode } from "@smite/http";
-import { swaggerUi } from "@smite/openapi";
+const SERVER_SOURCE = `import { serveNode } from "@smitejs/http";
+import { swaggerUi } from "@smitejs/openapi";
 import { readFile } from "node:fs/promises";
 import { app } from "./app.ts";
 
@@ -220,7 +220,7 @@ npm run dev
 - \`npm run generate\` — \`smite generate client\` writes \`src/app.client.ts\`;
   \`smite generate openapi\` writes \`openapi.json\`.
 - \`npm run start\` — serves the app in production via \`src/server.ts\`
-  (built on \`@smite/http\`'s \`serveNode\`, with Swagger UI at \`/docs\`).
+  (built on \`@smitejs/http\`'s \`serveNode\`, with Swagger UI at \`/docs\`).
 - \`npm run typecheck\` — \`tsc --noEmit\`.
 
 ## Endpoints

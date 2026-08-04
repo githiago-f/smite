@@ -9,17 +9,17 @@ out of each package's primary Concepts list and into a dedicated **Internals**
 sub-menu, and rewrite the workflow-facing docs to lead with usage, not with how
 the machinery is built.
 
-Scope: **docs taxonomy only.** Do NOT change the `@smite/core` public barrel
+Scope: **docs taxonomy only.** Do NOT change the `@smitejs/core` public barrel
 (`defineDescriptor`, `Descriptor`, `relate`, … remain exported). "Descriptors
 are not public API" here means the IR is not part of the user-facing workflow
-story; `@smite/core` stays a normal package with a normal reference page.
+story; `@smitejs/core` stays a normal package with a normal reference page.
 
 ## Context
 
 The docs site (`scripts/build-docs.mjs`) rendered every concept doc as a flat
 "Concepts" item in the sidebar and package overview, and the landing page
 promoted internal machinery ("graph of descriptors", "global registry",
-"ALLOW_GLOBAL_REGISTRY") as headline features. `@smite/core`'s concepts describe
+"ALLOW_GLOBAL_REGISTRY") as headline features. `@smitejs/core`'s concepts describe
 the internal representation later transports (http/client/env), tooling, and
 the future compiler build on. Presenting these as first-class workflow concepts
 leaked implementation detail into the user journey.
@@ -41,7 +41,7 @@ Moved into `packages/core/docs/concepts/internals/`:
 - `junction.md`
 - `immutability.md`
 
-`@smite/core` therefore ships zero workflow concepts; its whole slate renders
+`@smitejs/core` therefore ships zero workflow concepts; its whole slate renders
 under Internals, which reads correctly as "the internal library".
 
 ### 2. Renderer: split into two groups (`build-docs.mjs`)
@@ -72,7 +72,7 @@ under Internals, which reads correctly as "the internal library".
   environment. Smite turns that description into a validated, typed server, and
   generates a client that matches it exactly." (drops "graph of descriptors /
   executors / bundle").
-- Six cards, all workflow targets and none pointing into `@smite/core
+- Six cards, all workflow targets and none pointing into `@smitejs/core
   internals`:
   1. **Declarative HTTP** — "An API from a few lines of intent" →
      `smite-http/concepts/apps-and-routes.html`
@@ -83,7 +83,7 @@ under Internals, which reads correctly as "the internal library".
   4. **Environment as code** ↔ `smite-env/concepts/registration.html`
   5. **Functional primitives** ↔ `smite-fp/concepts/composition.html`
   6. **Documented by tests** → `smite-http/reference.html`
-- Package grid unchanged: `@smite/core` is a normal package card (per decision).
+- Package grid unchanged: `@smitejs/core` is a normal package card (per decision).
 - The three old IR/registry cards (which linked to `descriptor-nodes` and
   `the-global-registry`) are removed; the home page no longer references
   internal concepts.
@@ -124,7 +124,7 @@ time", env "build-time manifest"), it is kept but phrased in workflow terms.
 ### 5. Core package reframing
 
 `packages/core/docs/index.md` is rewritten as the **internal library** landing:
-states explicitly that app builders do not need `@smite/core` (reach for http/
+states explicitly that app builders do not need `@smitejs/core` (reach for http/
 env/client) and that this is the surface for extenders — the five internals
 concepts, plus the registrar usage sample.
 
@@ -156,7 +156,7 @@ subfolder convention and the "Concepts" vs "Internals" groups.
 ## Edge cases & error handling
 
 - **Empty groups**: the Concepts grid only renders when workflow concepts
-  exist; Internals only when internals exist. `@smite/core` shows only the
+  exist; Internals only when internals exist. `@smitejs/core` shows only the
   Internals section (correct).
 - **Slug collision**: workflow and internal pages write to different
   directories (`concepts/` vs `internals/`), so equal titles cannot collide.
@@ -193,11 +193,11 @@ and a fresh agent following `AGENTS.md` understands the split.
 
 ## Notes / open questions
 
-- Broader internals (e.g. `@smite/http` DSL internals or `@smite/fp`
+- Broader internals (e.g. `@smitejs/http` DSL internals or `@smitejs/fp`
   extractor metadata) could also move under `internals/`; this slice moves the
   core IR only and leaves the convention general.
 - "Not public API" is docs-taxonomy-only here. If a future slice de-exports
-  the IR from `@smite/core`, the `@internal` JSDoc belongs in that slice.
+  the IR from `@smitejs/core`, the `@internal` JSDoc belongs in that slice.
 - `docs.test.ts` does not assert the Internals/Concepts split; the convention
   is enforced by convention + code review. A test asserting that every
   `internals/` concept renders could be added later.

@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { compileApp } from "@smite/cli";
-import type { SmitePlugin } from "@smite/cli";
+import { compileApp } from "@smitejs/cli";
+import type { SmitePlugin } from "@smitejs/cli";
 import {
   collectEndpoints,
   collectEndpointsFromApps,
@@ -55,7 +55,7 @@ export async function generate(options: GenerateOptions): Promise<string> {
 }
 
 /**
- * CLI plugin factory for `@smite/cli`: a `client` plugin whose `run` emits the
+ * CLI plugin factory for `@smitejs/cli`: a `client` plugin whose `run` emits the
  * typed client from the compiled app node.
  *
  * @group Codegen

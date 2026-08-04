@@ -78,10 +78,10 @@ state — the only global is the registry, and only in collect mode.
 
 ## Monorepo rules
 
-- One responsibility per package; stable public APIs (`@smite/*` barrel).
+- One responsibility per package; stable public APIs (`@smitejs/*` barrel).
 - One-way dependencies, no cycles: `fp`/`core` base → `http` →
   `serverless`/`cli`.
-- Packages import from the `@smite/*` public API only, never each other's
+- Packages import from the `@smitejs/*` public API only, never each other's
   internals.
 
 ## Decision checklist

@@ -1,4 +1,4 @@
-import { clear, lookupAll } from "@smite/core";
+import { clear, lookupAll } from "@smitejs/core";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   cloudFormationResourceOf,
@@ -10,7 +10,7 @@ import {
 
 afterEach(() => clear());
 
-describe("@smite/aws providers", () => {
+describe("@smitejs/aws providers", () => {
   it("declares a managed resource and lazily caches its client", () => {
     let creates = 0;
     const bucket = provider(

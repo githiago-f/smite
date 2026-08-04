@@ -52,7 +52,7 @@ export type WritePort<Value, Id> = Pick<Repository<Value, Id>, "save">;
   the contract — swap an in-memory map for Postgres with zero usecase changes
   (the **L** substitution test).
 - Usecases declare `deps: { accounts: ReadPort<User, string> }`; the caller
-  passes any matching object. Nothing inside `@smite/domain` performs I/O.
+  passes any matching object. Nothing inside `@smitejs/domain` performs I/O.
 
 ### IR registration
 
@@ -86,7 +86,7 @@ export type WritePort<Value, Id> = Pick<Repository<Value, Id>, "save">;
   method keys against the port's `methods` list and returns an `err` naming the
   missing method. Collect-mode only; the runtime `.with` fast-paths to a shape
   check that stays tree-shakeable.
-- **Async vs sync**: repo bodies may return `PromiseLike<Result>`; `@smite/fp`
+- **Async vs sync**: repo bodies may return `PromiseLike<Result>`; `@smitejs/fp`
   `TaskResult.from` normalizes them. Sync functions coerce via `Task.of`.
 - **No reflection**: the contract is type-level and structural; `port` never
   synthesizes interfaces at runtime — document that introspection of method
@@ -103,7 +103,7 @@ export type WritePort<Value, Id> = Pick<Repository<Value, Id>, "save">;
 ## Dependencies / prerequisites
 
 - `domain/20` (skeleton), `domain/21` (value objects/entities as the `Value`
-  shapes), `@smite/core`, `@smite/fp`, `zod`.
+  shapes), `@smitejs/core`, `@smitejs/fp`, `zod`.
 
 ## Notes / open questions
 

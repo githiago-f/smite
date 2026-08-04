@@ -4,7 +4,7 @@ summary: Where raw environment values come from.
 order: 10
 ---
 
-`@smite/env` does not read `process.env` directly. It reads through a provider:
+`@smitejs/env` does not read `process.env` directly. It reads through a provider:
 a single function `(key) => Promise<raw>` that you attach to a built instance
 with `withProvider`. This indirection is what makes the library testable,
 portable, and declarative.

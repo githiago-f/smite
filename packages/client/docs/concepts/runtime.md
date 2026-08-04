@@ -5,7 +5,7 @@ order: 30
 ---
 
 Every generated call funnels through `request(method, path, input)` in
-`@smite/client/runtime`. The runtime is a small fetch layer: it interpolates
+`@smitejs/client/runtime`. The runtime is a small fetch layer: it interpolates
 path params, serializes query and body, performs the request, and parses the
 response. Just HTTP — no server package, no framework, no magic.
 

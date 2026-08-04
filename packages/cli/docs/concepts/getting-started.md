@@ -10,7 +10,7 @@ run generators and build the server entry.
 
 ## Create a project
 
-Install the CLI in a new project with `npm install -D @smite/cli @smite/http
+Install the CLI in a new project with `npm install -D @smitejs/cli @smitejs/http
 zod`, then create the starter files with `npx smite create hello-api`.
 
 Move into the project with `cd hello-api` and install its dependencies with

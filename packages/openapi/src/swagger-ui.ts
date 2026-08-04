@@ -1,4 +1,4 @@
-import type { HttpRequest, HttpResponse, HttpRouter } from "@smite/http";
+import type { HttpRequest, HttpResponse, HttpRouter } from "@smitejs/http";
 
 /**
  * Options for {@link swaggerUi}.

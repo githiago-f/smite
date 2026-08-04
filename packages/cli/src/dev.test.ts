@@ -16,8 +16,8 @@ const cwd = process.cwd().endsWith("/packages/cli")
   : process.cwd();
 
 const sourceAliases = {
-  "@smite/core": join(cwd, "packages/core/src/index.ts"),
-  "@smite/http": join(cwd, "packages/http/src/index.ts"),
+  "@smitejs/core": join(cwd, "packages/core/src/index.ts"),
+  "@smitejs/http": join(cwd, "packages/http/src/index.ts"),
   zod: join(cwd, "node_modules/zod/index.cjs"),
 };
 
@@ -32,7 +32,7 @@ const closeProcess = (child: { kill: (signal: string) => unknown }) => {
   child.kill("SIGKILL");
 };
 
-describe("@smite/cli dev", () => {
+describe("@smitejs/cli dev", () => {
   it("runs every configured plugin in order", async () => {
     const calls: string[] = [];
     const plugins: SmitePlugin[] = [

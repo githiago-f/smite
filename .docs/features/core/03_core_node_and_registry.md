@@ -10,7 +10,7 @@ Implement the two most fundamental primitives of the registrar:
    node (and, later, every relationship edge), enabling the compiler/CLI to
    compile with collect mode and traverse all descriptors.
 
-This slice delivers `@smite/core`'s identity: one stable, typed, serializable
+This slice delivers `@smitejs/core`'s identity: one stable, typed, serializable
 node shape plus a traversable store.
 
 ## Context

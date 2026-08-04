@@ -26,7 +26,7 @@ applications exist here?".
 
 ## Bootstrap pattern
 
-The `@smite/http` DSL wraps this: `http.app()` calls `createApp` and returns a
+The `@smitejs/http` DSL wraps this: `http.app()` calls `createApp` and returns a
 reference that *is* the app descriptor, carrying the route builder and `serve`.
 Handing the app to executors such as `serve` and the compiler takes the
 reference directly — there is no separate `.descriptor` to unwrap.

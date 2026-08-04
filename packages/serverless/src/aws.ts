@@ -1,6 +1,6 @@
-import type { AppDescriptor } from "@smite/core";
-import { serve } from "@smite/http";
-import type { HttpRequest, HttpResponse } from "@smite/http";
+import type { AppDescriptor } from "@smitejs/core";
+import { serve } from "@smitejs/http";
+import type { HttpRequest, HttpResponse } from "@smitejs/http";
 
 /**
  * The subset of an API Gateway v2 event consumed by {@link lambdaify}.

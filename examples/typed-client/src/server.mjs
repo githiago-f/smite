@@ -1,4 +1,4 @@
-import { serveNode } from "@smite/http";
+import { serveNode } from "@smitejs/http";
 import { app } from "./app.mjs";
 
 const PORT = Number(process.env.PORT ?? 4000);

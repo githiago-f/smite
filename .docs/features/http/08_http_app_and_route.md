@@ -2,7 +2,7 @@
 
 ## Goal
 
-Implement the first slice of the `@smite/http` DSL, matching the sketch
+Implement the first slice of the `@smitejs/http` DSL, matching the sketch
 (`packages/http/src/index.ts`):
 
 ```ts
@@ -27,7 +27,7 @@ class: `http.route(app)` is a function returning a small builder object.
   no decorators, no magic.
 - **DRY** — constants (`HttpMethod`, `HttpStatus`) are defined once; the route
   uses core's `defineDescriptor` + `relate` rather than re-implementing IR.
-- **SOLID** — `http` depends on `@smite/core` (Dependency Inversion); core
+- **SOLID** — `http` depends on `@smitejs/core` (Dependency Inversion); core
   never imports http (no cycles). The HTTP package owns HTTP vocabulary only.
 - **Clean** — the DSL reads top-to-bottom like the sketch; registration is
   explicit through core primitives, no hidden globals in `http`.
@@ -67,8 +67,8 @@ Usage stays identical to the sketch: `HttpMethod.GET`, `HttpStatus.BAD_REQUEST`.
 ### Route node
 
 ```ts
-import { createApp, defineDescriptor, relate } from "@smite/core";
-import type { AppDescriptor, Descriptor } from "@smite/core";
+import { createApp, defineDescriptor, relate } from "@smitejs/core";
+import type { AppDescriptor, Descriptor } from "@smitejs/core";
 
 export interface RouteInputConfig {
   readonly query?: import("zod").ZodType;
@@ -142,13 +142,13 @@ export function route(app: AppDescriptor): HttpRouteBuilder {
 
 ## Implementation steps
 
-1. Add `zod` as a dependency of `packages/http` (`yarn workspace @smite/http
+1. Add `zod` as a dependency of `packages/http` (`yarn workspace @smitejs/http
    add zod@^4`), since `RouteInputConfig` references its types.
 2. Create `packages/http/src/index.ts` with `HttpMethod`, `HttpStatus`,
    `RouteInputConfig`, `RouteDescriptor`, `HttpRouteBuilder`, `HttpAppBuilder`,
    `app`, and `route`.
 3. Add `{ "path": "../core" }` to `packages/http/tsconfig.json` references
-   (and `"@smite/core": "*"` to its dependencies).
+   (and `"@smitejs/core": "*"` to its dependencies).
 4. Stub `accept`/`serve` as exports in separate files
    (`endpoint.ts`, `serve.ts`) with minimal signatures — they are implemented
    in slices `10` and `11`. Keep `tsc -b` green.
@@ -173,7 +173,7 @@ yarn test
 Manual sanity (temporary, replaced by slice 12 tests):
 
 ```ts
-import { http } from "@smite/http";
+import { http } from "@smitejs/http";
 const app = http.app();
 const route = http.route(app);
 // childrenOf(app.descriptor, "http.route") has 1 entry
@@ -187,9 +187,9 @@ Definition of done:
 
 ## Dependencies / prerequisites
 
-- Slices `02`–`06` (`@smite/core` barrel: `createApp`, `defineDescriptor`,
+- Slices `02`–`06` (`@smitejs/core` barrel: `createApp`, `defineDescriptor`,
   `relate`, `refine`).
-- Slice `01` (workspace scaffolding for `@smite/http`).
+- Slice `01` (workspace scaffolding for `@smitejs/http`).
 
 ## Notes / open questions
 

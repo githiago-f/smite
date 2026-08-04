@@ -7,7 +7,7 @@ yarn create smite-app my-app
 ```
 
 This installs and runs the `create-smite-app` bin, which delegates to
-`@smite/cli`'s `createApp`. It writes a starter project into `./my-app/` and
+`@smitejs/cli`'s `createApp`. It writes a starter project into `./my-app/` and
 prints the next steps.
 
 The complete first-project path is documented in

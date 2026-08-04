@@ -38,7 +38,7 @@ semantics, but make the *default* explicit and safe.
 
 - **KISS** — one constant, one file, no configuration objects, no runtime
   switches.
-- **DRY** — the constant is defined once in `@smite/core` and imported by every
+- **DRY** — the constant is defined once in `@smitejs/core` and imported by every
   guarded module; no stringly-typed flags scattered around.
 - **SOLID** — the Open/Closed principle in practice: the collector behavior is
   *closed* to changes and *open* to being enabled/disabled by the bundler.
@@ -97,7 +97,7 @@ this pattern.
 1. Create `packages/core/src/constants.ts` with the exact content above.
 2. Create `packages/core/src/index.ts` placeholder `export {}` (if not already
    present from slice 01) and re-export the constant so later slices import it
-   from `@smite/core`:
+   from `@smitejs/core`:
 
    ```ts
    export { allowGlobalRegistry } from "./constants.js";
@@ -149,7 +149,7 @@ Expected output contains only the literal `false` — proving the branch folds.
 
 Definition of done:
 
-- `allowGlobalRegistry` is exported from `@smite/core`.
+- `allowGlobalRegistry` is exported from `@smitejs/core`.
 - With `define: false`, esbuild output contains the folded `false` and no
   `typeof` remnant.
 

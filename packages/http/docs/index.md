@@ -1,12 +1,12 @@
-# @smite/http
+# @smitejs/http
 
 The HTTP DSL and executor. Run the tests in `src/index.test.ts` and the
 runtime contract in `src/tree-shake.test.ts` for the executable examples.
 
 ## CLI workflow
 
-Install the HTTP package and CLI with `npm install @smite/http zod` and
-`npm install -D @smite/cli`. Put the app entry in `smite.config.ts`, then
+Install the HTTP package and CLI with `npm install @smitejs/http zod` and
+`npm install -D @smitejs/cli`. Put the app entry in `smite.config.ts`, then
 use `npx smite dev` to run it locally or `npx smite build` to bundle it for
 deployment. The HTTP package stays independent of the Node transport; the CLI
 supplies the local `node:http` server.
@@ -14,7 +14,7 @@ supplies the local `node:http` server.
 ## Usage
 
 ```ts
-import { http } from "@smite/http";
+import { http } from "@smitejs/http";
 import { z } from "zod";
 
 const app = http.app("my-api");

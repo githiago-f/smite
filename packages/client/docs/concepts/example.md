@@ -5,6 +5,6 @@ order: 99
 ---
 
 `examples/typed-client` is the codegen flow end to end: an app definition, a
-generated builder client from `@smite/client`, and a call-site that hits the
-live server. Start it with `yarn workspace @smite/example-typed-client build`,
+generated builder client from `@smitejs/client`, and a call-site that hits the
+live server. Start it with `yarn workspace @smitejs/example-typed-client build`,
 then `start:server` and `start:client`.

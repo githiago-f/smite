@@ -1,4 +1,4 @@
-# @smite/aws
+# @smitejs/aws
 
 AWS resource declarations for Smite applications.
 
@@ -27,4 +27,4 @@ test:floci`.
 The AWS integration suite uses Testcontainers to start `floci/floci:latest`,
 wait for readiness, and remove the container after the tests. With Docker
 available, run `yarn test:floci` from the repository root or
-`yarn workspace @smite/aws test:floci` from the package workspace.
+`yarn workspace @smitejs/aws test:floci` from the package workspace.

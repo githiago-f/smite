@@ -200,7 +200,7 @@ Definition of done:
 ## Dependencies / prerequisites
 
 - Slice `08_http_app_and_route` (route builder, app builder).
-- `zod@^4` dependency in `@smite/http`.
+- `zod@^4` dependency in `@smitejs/http`.
 
 ## Notes / open questions
 

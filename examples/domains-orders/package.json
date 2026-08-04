@@ -1,5 +1,5 @@
 {
-  "name": "@smite/example-domains-orders",
+  "name": "@smitejs/example-domains-orders",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -7,9 +7,9 @@
     "start": "node src/server.mjs"
   },
   "dependencies": {
-    "@smite/domain": "1.0.0",
-    "@smite/fp": "1.0.0",
-    "@smite/http": "1.0.0",
+    "@smitejs/domain": "1.0.0",
+    "@smitejs/fp": "1.0.0",
+    "@smitejs/http": "1.0.0",
     "zod": "^4.0.0"
   }
 }

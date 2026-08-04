@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createApp } from "@smite/cli";
+import { createApp } from "@smitejs/cli";
 import { afterEach, describe, expect, it } from "vitest";
 
 const baseDirs: string[] = [];
@@ -43,6 +43,6 @@ describe("create-smite-app", () => {
     expect(config).toContain("client({ outfile");
     expect(config).not.toContain("openapi");
     const pkg = await readFile(join(dir, "package.json"), "utf8");
-    expect(pkg).not.toContain("@smite/openapi");
+    expect(pkg).not.toContain("@smitejs/openapi");
   });
 });

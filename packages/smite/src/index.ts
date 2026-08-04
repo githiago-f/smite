@@ -1,1 +1,1 @@
-export * from "@smite/cli";
+export * from "@smitejs/cli";

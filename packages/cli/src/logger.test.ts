@@ -5,7 +5,7 @@ import { createLogger } from "./logger.js";
 const outputOf = (stream: PassThrough): string =>
   stream.read()?.toString() ?? "";
 
-describe("@smite/cli logger", () => {
+describe("@smitejs/cli logger", () => {
   it("writes newline-delimited JSON by default", () => {
     const output = new PassThrough();
     const logger = createLogger({ output });

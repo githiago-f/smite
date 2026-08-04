@@ -1,5 +1,5 @@
-import { childrenOf } from "@smite/core";
-import type { AppDescriptor } from "@smite/core";
+import { childrenOf } from "@smitejs/core";
+import type { AppDescriptor } from "@smitejs/core";
 import { extractPathParams } from "./path-params.js";
 
 /**
@@ -142,8 +142,8 @@ export function emitClient(endpoints: readonly CollectedEndpoint[]): string {
   checkCollisions(root, "");
   const tree = emitNode(root, "");
 
-  return `import { configure, request } from "@smite/client/runtime";
-import type { ClientConfig } from "@smite/client/runtime";
+  return `import { configure, request } from "@smitejs/client/runtime";
+import type { ClientConfig } from "@smitejs/client/runtime";
 
 export { configure };
 

@@ -1,13 +1,13 @@
-# @smite/client
+# @smitejs/client
 
 Typed client generation for Smite HTTP apps. Build your server entry, run it
 once at build time to discover the declared routes, and emit a TypeScript
-client that mirrors them. The `@smite/cli` plugin is the normal user-facing
+client that mirrors them. The `@smitejs/cli` plugin is the normal user-facing
 entry point.
 
 ## CLI workflow
 
-Install the generator with `npm install -D @smite/client`. Add
+Install the generator with `npm install -D @smitejs/client`. Add
 `client({ outfile: "./src/app.client.ts" })` to the `plugins` array in
 `smite.config.ts`, then run `npx smite generate client`. In a project created
 by `create-smite-app`, use `npm run generate` to run all configured
@@ -20,7 +20,7 @@ from "./app.client.js"`, configure its `baseUrl`, and call the route-shaped
 ## Usage
 
 ```ts
-import { generate } from "@smite/client";
+import { generate } from "@smitejs/client";
 
 const code = await generate({
   entry: "src/app.ts",
@@ -61,11 +61,11 @@ const user = await api.users.$id.$get({
 - Responses are `{ status, body, headers }` and never throw on non-2xx.
 - `configure({ baseUrl, fetch })` sets the runtime defaults; per-call
   `$config` overrides them. The generated module imports only
-  `@smite/client/runtime` — a small fetch layer, nothing else.
+  `@smitejs/client/runtime` — a small fetch layer, nothing else.
 
 ## Runtime
 
-`@smite/client/runtime` provides the fetch layer: path templating, query
+`@smitejs/client/runtime` provides the fetch layer: path templating, query
 serialization (arrays become repeated params), JSON bodies with
 `content-type: application/json`, and response parsing that falls back to raw
 text when the body is not JSON.

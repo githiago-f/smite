@@ -2,7 +2,7 @@
 
 ## Goal
 
-Ship the usecase builder — the heart of `@smite/domain`. A usecase is a named,
+Ship the usecase builder — the heart of `@smitejs/domain`. A usecase is a named,
 pure pipeline that returns `TaskResult<Output, E>`, receives its dependencies
 (ports) via injection, validates input with zod, and records a `domain.usecase`
 IR node. `command` and `query` are thin aliases that set the CQRS kind. Usescases
@@ -114,7 +114,7 @@ tooling and future OpenAPI generation.
 
 ## Dependencies / prerequisites
 
-- `domain/20`–`23` (skeleton, VOs, ports, specs), `@smite/fp` `Result`/
+- `domain/20`–`23` (skeleton, VOs, ports, specs), `@smitejs/fp` `Result`/
   `Task`/`TaskResult`/`flow`.
 
 ## Notes / open questions

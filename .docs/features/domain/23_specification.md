@@ -11,7 +11,7 @@ IR node.
 ## Context
 
 A predicate (`(t) => boolean`) loses the failure reason. In a domain you want:
-"this user can place an order — *or* rejection reason X". `@smite/fp` already
+"this user can place an order — *or* rejection reason X". `@smitejs/fp` already
 has boolean predicate combinators (`and`, `or`, `not`). DRY means we reuse them;
 we only lift the boolean result into a `Result` with an optional `Reason`.
 
@@ -95,7 +95,7 @@ inline `ALLOW_GLOBAL_REGISTRY` guard; folded out of production.
 ## Dependencies / prerequisites
 
 - `domain/20` (skeleton), `domain/21` (value objects/entities as the `T` input),
-  `@smite/fp` `and`/`or`/`not`/`Result`.
+  `@smitejs/fp` `and`/`or`/`not`/`Result`.
 
 ## Notes / open questions
 

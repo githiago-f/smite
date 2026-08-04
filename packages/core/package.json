@@ -1,5 +1,5 @@
 {
-  "name": "@smite/core",
+  "name": "@smitejs/core",
   "version": "1.0.0",
   "description": "Semantic registrar: descriptors (IR nodes), relationships (IR edges) and the global registry.",
   "license": "MIT",

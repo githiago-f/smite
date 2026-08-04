@@ -2,10 +2,10 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { compileApps, defineSmiteConfig, dispatch } from "@smite/cli";
-import { client } from "@smite/client";
-import { clear } from "@smite/core";
-import { openapi, swaggerUi } from "@smite/openapi";
+import { compileApps, defineSmiteConfig, dispatch } from "@smitejs/cli";
+import { client } from "@smitejs/client";
+import { clear } from "@smitejs/core";
+import { openapi, swaggerUi } from "@smitejs/openapi";
 import { afterEach, describe, expect, it } from "vitest";
 import { app } from "./app.mjs";
 
@@ -13,17 +13,17 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../../..");
 
 const alias = {
-  "@smite/core": join(root, "packages/core/src/index.ts"),
-  "@smite/fp": join(root, "packages/fp/src/index.ts"),
-  "@smite/http": join(root, "packages/http/src/index.ts"),
-  "@smite/cli": join(root, "packages/cli/src/index.ts"),
-  "@smite/client": join(root, "packages/client/src/index.ts"),
-  "@smite/openapi": join(root, "packages/openapi/src/index.ts"),
+  "@smitejs/core": join(root, "packages/core/src/index.ts"),
+  "@smitejs/fp": join(root, "packages/fp/src/index.ts"),
+  "@smitejs/http": join(root, "packages/http/src/index.ts"),
+  "@smitejs/cli": join(root, "packages/cli/src/index.ts"),
+  "@smitejs/client": join(root, "packages/client/src/index.ts"),
+  "@smitejs/openapi": join(root, "packages/openapi/src/index.ts"),
 };
 
 afterEach(() => clear());
 
-describe("@smite/example-cli-app", () => {
+describe("@smitejs/example-cli-app", () => {
   it("generates a typed client and an OpenAPI document from the config", async () => {
     const dir = await mkdtemp(join(tmpdir(), "smite-cli-app-"));
     const clientFile = join(dir, "app.client.ts");

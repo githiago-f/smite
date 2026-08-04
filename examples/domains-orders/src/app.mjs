@@ -1,6 +1,6 @@
-import { domain } from "@smite/domain";
-import { Result } from "@smite/fp";
-import { http } from "@smite/http";
+import { domain } from "@smitejs/domain";
+import { Result } from "@smitejs/fp";
+import { http } from "@smitejs/http";
 import { z } from "zod";
 import {
   Order,

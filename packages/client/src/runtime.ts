@@ -23,7 +23,7 @@ export interface ClientInput {
   readonly body?: unknown;
   readonly $config?: ClientConfig;
   // TODO: cookies/session buckets (roadmap) — the input is generic over
-  // buckets, so adding them means touching @smite/http + serve as well.
+  // buckets, so adding them means touching @smitejs/http + serve as well.
 }
 
 /**

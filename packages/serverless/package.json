@@ -1,5 +1,5 @@
 {
-  "name": "@smite/serverless",
+  "name": "@smitejs/serverless",
   "version": "1.0.0",
   "description": "Serverless runtime adapters for Smite apps.",
   "license": "MIT",
@@ -23,10 +23,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smite/aws": "^1.0.0",
-    "@smite/cli": "^1.0.0",
-    "@smite/core": "^1.0.0",
-    "@smite/http": "^1.0.0"
+    "@smitejs/aws": "^1.0.0",
+    "@smitejs/cli": "^1.0.0",
+    "@smitejs/core": "^1.0.0",
+    "@smitejs/http": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0"

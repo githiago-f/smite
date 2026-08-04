@@ -5,7 +5,7 @@ import * as esbuild from "esbuild";
 import { describe, expect, it } from "vitest";
 
 const source = `
-  import { http } from "@smite/http";
+  import { http } from "@smitejs/http";
 
   const app = http.app();
   const route = http.route(app);
@@ -32,8 +32,8 @@ describe("runtime bundle", () => {
       outfile,
       define: { ALLOW_GLOBAL_REGISTRY: "false" },
       alias: {
-        "@smite/core": join(process.cwd(), "packages/core/src/index.ts"),
-        "@smite/http": join(process.cwd(), "packages/http/src/index.ts"),
+        "@smitejs/core": join(process.cwd(), "packages/core/src/index.ts"),
+        "@smitejs/http": join(process.cwd(), "packages/http/src/index.ts"),
       },
     });
 

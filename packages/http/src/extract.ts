@@ -1,5 +1,9 @@
-import { Option, extractorMetadata } from "@smite/fp";
-import type { Extractor, ExtractorMetadata, ExtractorSource } from "@smite/fp";
+import { Option, extractorMetadata } from "@smitejs/fp";
+import type {
+  Extractor,
+  ExtractorMetadata,
+  ExtractorSource,
+} from "@smitejs/fp";
 import type { HttpRequest } from "./types.js";
 
 type ExtractSource = Exclude<ExtractorSource, "chain" | "custom">;

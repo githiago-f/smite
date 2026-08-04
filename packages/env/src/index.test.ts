@@ -1,4 +1,4 @@
-import { clear, lookupAll } from "@smite/core";
+import { clear, lookupAll } from "@smitejs/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { env } from "./index.js";
@@ -10,7 +10,7 @@ const from =
   async (key: string): Promise<unknown> =>
     values[key];
 
-describe("@smite/env", () => {
+describe("@smitejs/env", () => {
   it("resolves and parses a typed value through the provider", async () => {
     const instance = env
       .register({

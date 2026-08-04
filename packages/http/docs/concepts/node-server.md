@@ -5,7 +5,7 @@ order: 60
 ---
 
 `serveNode(app)` turns a declared app into a ready `node:http` server. It is
-the transport the `@smite/cli` dev server uses, and the same helper a
+the transport the `@smitejs/cli` dev server uses, and the same helper a
 scaffolded `src/server.ts` can call for production.
 
 ## What serveNode does
@@ -34,6 +34,6 @@ place.
 
 ## Where it lives
 
-`serveNode` is the only part of `@smite/http` that touches Node — `serve()`
+`serveNode` is the only part of `@smitejs/http` that touches Node — `serve()`
 itself stays platform-free. The adapter is intentionally small so it can be
 wrapped, substituted, or composed with other `node:http` handlers.

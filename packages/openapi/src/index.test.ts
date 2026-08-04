@@ -1,8 +1,8 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { compileApp, compileApps, defineSmiteConfig } from "@smite/cli";
-import { clear } from "@smite/core";
+import { compileApp, compileApps, defineSmiteConfig } from "@smitejs/cli";
+import { clear } from "@smitejs/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { openapi, swaggerUi } from "./index.js";
 
@@ -11,14 +11,14 @@ const cwd = process.cwd();
 const entry = join(cwd, "packages/openapi/test/app.ts");
 
 const sourceAliases = {
-  "@smite/core": join(cwd, "packages/core/src/index.ts"),
-  "@smite/fp": join(cwd, "packages/fp/src/index.ts"),
-  "@smite/http": join(cwd, "packages/http/src/index.ts"),
+  "@smitejs/core": join(cwd, "packages/core/src/index.ts"),
+  "@smitejs/fp": join(cwd, "packages/fp/src/index.ts"),
+  "@smitejs/http": join(cwd, "packages/http/src/index.ts"),
 };
 
 afterEach(() => clear());
 
-describe("@smite/openapi", () => {
+describe("@smitejs/openapi", () => {
   it("emits an OpenAPI 3.1 document for a multi-route app", async () => {
     const dir = await mkdtemp(join(tmpdir(), "smite-openapi-"));
     const outfile = join(dir, "openapi.json");

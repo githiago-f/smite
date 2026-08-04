@@ -7,7 +7,7 @@ import {
   collectTestSnippets,
 } from "../../../scripts/snippets.mjs";
 
-const packageName = "@smite/openapi";
+const packageName = "@smitejs/openapi";
 const rootDir = process.cwd();
 const srcDir = join(rootDir, "packages/openapi/src");
 

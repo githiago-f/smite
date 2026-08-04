@@ -1,5 +1,5 @@
-import { env } from "@smite/env";
-import { http, serveNode } from "@smite/http";
+import { env } from "@smitejs/env";
+import { http, serveNode } from "@smitejs/http";
 import { z } from "zod";
 
 const config = env

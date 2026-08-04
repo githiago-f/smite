@@ -2,8 +2,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { clear, lookupAll } from "@smite/core";
-import type { AppDescriptor, Descriptor } from "@smite/core";
+import { clear, lookupAll } from "@smitejs/core";
+import type { AppDescriptor, Descriptor } from "@smitejs/core";
 import * as esbuild from "esbuild";
 
 /**
@@ -78,7 +78,7 @@ const bundleAndExecute = async (
  * descriptors of its siblings), so the same app declared in several handler
  * entries collapses to a single node.
  *
- * Uses this package's own `@smite/core` copy to read the registry, which works
+ * Uses this package's own `@smitejs/core` copy to read the registry, which works
  * across module instances because the registry lives on `globalThis` and the
  * child index uses `Symbol.for`.
  *

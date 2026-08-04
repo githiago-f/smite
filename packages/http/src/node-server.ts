@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
-import type { AppDescriptor } from "@smite/core";
+import type { AppDescriptor } from "@smitejs/core";
 import { serve } from "./serve.js";
 import type { HttpRouter } from "./serve.js";
 import type { HttpRequest, HttpResponse } from "./types.js";

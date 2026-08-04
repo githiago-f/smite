@@ -4,7 +4,7 @@
 
 Provide the transport-agnostic **application junction**: a single root node
 (`kind: "app"`) under which routes, jobs, messaging consumers, and RPC
-endpoints hang. `@smite/http`'s `http.app()` is a thin wrapper over this core
+endpoints hang. `@smitejs/http`'s `http.app()` is a thin wrapper over this core
 primitive (slice `08_http_app_and_route`).
 
 ## Context

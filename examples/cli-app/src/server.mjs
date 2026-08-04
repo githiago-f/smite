@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { serveNode } from "@smite/http";
-import { swaggerUi } from "@smite/openapi";
+import { serveNode } from "@smitejs/http";
+import { swaggerUi } from "@smitejs/openapi";
 import { app } from "./app.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));

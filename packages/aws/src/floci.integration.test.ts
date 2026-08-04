@@ -30,7 +30,7 @@ import {
   PutParameterCommand,
   SSMClient,
 } from "@aws-sdk/client-ssm";
-import { clear } from "@smite/core";
+import { clear } from "@smitejs/core";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { flociEndpoint, startFloci } from "./floci.container.js";
 import { provider } from "./index.js";
@@ -45,7 +45,7 @@ let clientConfig = { endpoint: endpoint ?? "", region, credentials };
 afterEach(() => clear());
 
 describe.skipIf(!enabled)(
-  "@smite/aws against Floci",
+  "@smitejs/aws against Floci",
   { sequential: true },
   () => {
     let container: Awaited<ReturnType<typeof startFloci>>;

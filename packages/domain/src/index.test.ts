@@ -1,6 +1,6 @@
-import { clear, lookupAll, relationships } from "@smite/core";
-import { Result } from "@smite/fp";
-import { http } from "@smite/http";
+import { clear, lookupAll, relationships } from "@smitejs/core";
+import { Result } from "@smitejs/fp";
+import { http } from "@smitejs/http";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import {

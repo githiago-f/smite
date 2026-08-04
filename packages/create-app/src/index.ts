@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { createApp, listTemplates } from "@smite/cli";
-import type { CreateTemplate } from "@smite/cli";
+import { createApp, listTemplates } from "@smitejs/cli";
+import type { CreateTemplate } from "@smitejs/cli";
 import { Command } from "commander";
 
 const program = new Command();

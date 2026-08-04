@@ -15,7 +15,7 @@ const freeze = <Value extends object>(value: Value): Readonly<Value> =>
  * @group Composition
  */
 export const compositionMetadata: unique symbol = Symbol.for(
-  "@smite/fp/compositionMetadata",
+  "@smitejs/fp/compositionMetadata",
 );
 
 /**
@@ -746,7 +746,7 @@ export const isEmpty = (value: unknown): boolean => {
  * @group Extraction
  */
 export const extractorMetadata: unique symbol = Symbol.for(
-  "@smite/fp/extractorMetadata",
+  "@smitejs/fp/extractorMetadata",
 );
 
 /**

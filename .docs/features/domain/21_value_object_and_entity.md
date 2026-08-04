@@ -6,7 +6,7 @@ Ship the value-object and entity factories: immutable, zod-validated domain
 values with structural equality (`valueObject`) and identity equality
 (`entity`). Each factory registers a `domain.*` IR node so the collect-mode
 CLI can enumerate the domain vocabulary; each unit composes only
-`@smite/fp` + `@smite/core` + `zod`.
+`@smitejs/fp` + `@smitejs/core` + `zod`.
 
 ## Context
 
@@ -40,7 +40,7 @@ Money.create({ amount: 5, currency: "EUR" }).equals(m1);  // false
 
 - `create(input): Result<ValueObject<Shape>, E>` — zod parse → `Result.ok` /
   `Result.err`; on success deep-freezes the snapshot (mirrors
-  `@smite/core` freeze discipline) so the value is immutable.
+  `@smitejs/core` freeze discipline) so the value is immutable.
 - `parse(input): ValueObject<Shape>` — convenience that throws on invalid input
   (documented escape hatch for trusted inputs).
 - `equals(other): boolean` — structural compare on the frozen snapshot.
@@ -81,7 +81,7 @@ User.create({ id: "other", name: "A", email: "a@x.io" }).equals(u1); // false
   out in production).
 - `defineDescriptor("domain.entity", name, { name, idKey, schema })`.
 - Guards reference the raw `ALLOW_GLOBAL_REGISTRY` identifier inline. The
-  registry walkers in `@smite/client`/CLI can later enumerate these nodes; at
+  registry walkers in `@smitejs/client`/CLI can later enumerate these nodes; at
   runtime the factory is a plain immutable-value helper.
 
 ### File layout
@@ -97,7 +97,7 @@ User.create({ id: "other", name: "A", email: "a@x.io" }).equals(u1); // false
    `create`/`parse`/`equals`/`hash`; frozen snapshot; `Result`-returning
    `create` (map zod issues to `Result.err`).
 2. IR node `domain.valueObject` with the raw-identifier guard (add the helper
-   once — a local `registerDomainDescriptor` mirroring `@smite/core`'s usage
+   once — a local `registerDomainDescriptor` mirroring `@smitejs/core`'s usage
    stays DRY across `21`–`24`).
 3. `entity.ts`: reuse the kernel; id schema + identity `equals`/`hash`.
 4. `index.ts` barrel; `docs.test.ts` sections for two `@example` titles
@@ -135,7 +135,7 @@ User.create({ id: "other", name: "A", email: "a@x.io" }).equals(u1); // false
 ## Dependencies / prerequisites
 
 - `domain/20` (package skeleton).
-- `@smite/fp` `Result`, `@smite/core` descriptor/guard, `zod`.
+- `@smitejs/fp` `Result`, `@smitejs/core` descriptor/guard, `zod`.
 
 ## Notes / open questions
 

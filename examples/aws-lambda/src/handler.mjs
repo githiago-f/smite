@@ -1,4 +1,4 @@
-import { lambdaify } from "@smite/serverless/aws";
+import { lambdaify } from "@smitejs/serverless/aws";
 import { app } from "./app.mjs";
 
 export const handler = lambdaify(app);

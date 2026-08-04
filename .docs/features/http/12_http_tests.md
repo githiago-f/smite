@@ -2,7 +2,7 @@
 
 ## Goal
 
-Validate the `@smite/http` DSL end-to-end against the exact sketch in
+Validate the `@smitejs/http` DSL end-to-end against the exact sketch in
 `packages/http/src/index.ts` — declaration, IR wiring, inference, matching,
 validation, and response normalization — all through the public API.
 
@@ -18,7 +18,7 @@ The sketch's example becomes a compile-checked, runnable spec.
   is just a plain literal.
 - **DRY** — a `makeApp()` helper builds the fixture once; tests assert
   behaviors, not duplicated setup.
-- **SOLID** — tests exercise the public surface (`@smite/http`), so internals
+- **SOLID** — tests exercise the public surface (`@smitejs/http`), so internals
   (`validate.ts`, `matcher.ts`) can be refactored freely.
 - **Clean** — the sketch example itself is a test (source of truth), avoiding
   drift between docs and behavior.
@@ -30,7 +30,7 @@ The sketch's example becomes a compile-checked, runnable spec.
 ```ts
 import { describe, expect, it } from "vitest";
 import { afterEach } from "vitest";
-import { childrenOf, clear } from "@smite/core";
+import { childrenOf, clear } from "@smitejs/core";
 import { z } from "zod";
 import { HttpMethod, HttpStatus, http, json, status } from "./index.js";
 

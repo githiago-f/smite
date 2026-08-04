@@ -34,7 +34,7 @@ for (const workspaceDir of workspaceDirs) {
 }
 
 const shouldSync = (name) =>
-  name.startsWith("@smite/") || name === "create-smite-app";
+  name.startsWith("@smitejs/") || name === "create-smite-app";
 
 const syncRange = (range, nextVersion) =>
   range.startsWith("^") ? `^${nextVersion}` : nextVersion;

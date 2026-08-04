@@ -10,7 +10,7 @@ import type { Usecase } from "./usecase.js";
  * @group Internals
  */
 export const domainHandlerSymbol: unique symbol = Symbol.for(
-  "@smite/domain/handler",
+  "@smitejs/domain/handler",
 );
 
 /**

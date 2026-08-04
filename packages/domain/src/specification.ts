@@ -1,6 +1,6 @@
-import { defineDescriptor } from "@smite/core";
-import type { Descriptor } from "@smite/core";
-import { Result } from "@smite/fp";
+import { defineDescriptor } from "@smitejs/core";
+import type { Descriptor } from "@smitejs/core";
+import { Result } from "@smitejs/fp";
 
 /**
  * The default reason carried by a failed specification. Predicates build it

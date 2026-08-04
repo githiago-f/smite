@@ -1,13 +1,13 @@
-# @smite/openapi
+# @smitejs/openapi
 
-OpenAPI 3.1 artifact generator for Smite apps, delivered as an `@smite/cli`
+OpenAPI 3.1 artifact generator for Smite apps, delivered as an `@smitejs/cli`
 plugin. Given the compiled app node, it walks the `http.route`/`http.endpoint`
-graph via `@smite/http`'s `routesOf` and emits a JSON document whose operations
+graph via `@smitejs/http`'s `routesOf` and emits a JSON document whose operations
 are derived from each route's `req` zod schemas.
 
 ## CLI workflow
 
-Install it with `npm install -D @smite/openapi`. Add `openapi({ outfile:
+Install it with `npm install -D @smitejs/openapi`. Add `openapi({ outfile:
 "./openapi.json" })` to `smite.config.ts`, then run `npx smite generate
 openapi`. Run `npx smite dev` after generation when your server mounts
 `swaggerUi`; the raw document is available at `/openapi.json` and the
@@ -16,8 +16,8 @@ browser UI at `/docs`.
 ## Usage
 
 ```ts
-import { defineSmiteConfig } from "@smite/cli";
-import { openapi } from "@smite/openapi";
+import { defineSmiteConfig } from "@smitejs/cli";
+import { openapi } from "@smitejs/openapi";
 
 export default defineSmiteConfig({
   entries: ["./src/app.ts"],

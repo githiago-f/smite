@@ -73,9 +73,9 @@ Sections:
 3. **IR model** — `Descriptor` (node), `RelationshipDescriptor` (edge),
    composite keys, `relate`, child index (runtime view), global registry
    (compile-time view).
-4. **Packages** — `@smite/core` (registrar), `@smite/http` (http DSL +
-   executor), `@smite/fp` (functional primitives), `@smite/domain`,
-   `@smite/serverless`, `@smite/cli` (stubs; single responsibility each).
+4. **Packages** — `@smitejs/core` (registrar), `@smitejs/http` (http DSL +
+   executor), `@smitejs/fp` (functional primitives), `@smitejs/domain`,
+   `@smitejs/serverless`, `@smitejs/cli` (stubs; single responsibility each).
 5. **Compile-time constants** — the `ALLOW_GLOBAL_REGISTRY` table (true /
    false / undefined).
 6. **Tree-shaking** — what survives vs what is dropped.

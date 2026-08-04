@@ -11,9 +11,9 @@ code; and the next steps are clear.
 Slices `01`–`14` produce:
 
 - A green monorepo baseline.
-- `@smite/core` — the registrar (nodes, edges, global registry, compile-time
+- `@smitejs/core` — the registrar (nodes, edges, global registry, compile-time
   flag, junction, public API, immutability).
-- `@smite/http` — the minimal DSL (`app`, `route`, `req`, `accept`,
+- `@smitejs/http` — the minimal DSL (`app`, `route`, `req`, `accept`,
   `handler`, `serve`) with typed context and zod validation.
 - A tree-shaking bundle test proving the runtime-mode contract.
 - Foundational docs (`harness.md`, `architecture.md`, `AGENTS.md`) and feature
@@ -104,13 +104,13 @@ Definition of done:
 
 ## Notes / open questions — the roadmap after this iteration
 
-1. **`@smite/cli`** — the `bundle.js` mechanism: bundle the user app with
+1. **`@smitejs/cli`** — the `bundle.js` mechanism: bundle the user app with
    `ALLOW_GLOBAL_REGISTRY: "true"`, execute, traverse
    `globalThis.globalRegistry`, and emit artifacts (OpenAPI first).
-2. **`@smite/serverless`** — `lambdaify(app)` adapting `serve()`'s
+2. **`@smitejs/serverless`** — `lambdaify(app)` adapting `serve()`'s
    `HttpRouter` to AWS Lambda handlers (API Gateway v1/v2 event → request,
    response → result).
-3. **`@smite/domain`** — `usecase`, `aggregate`, `specification` builders
+3. **`@smitejs/domain`** — `usecase`, `aggregate`, `specification` builders
    registering nodes/edges under the same registrar.
 4. **More core build-time queries** — incoming edges, cycle detection,
    topological ordering, validation reports (for the CLI).

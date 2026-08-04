@@ -1,4 +1,4 @@
-import { childrenOf, clear } from "@smite/core";
+import { childrenOf, clear } from "@smitejs/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import {

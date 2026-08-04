@@ -1,7 +1,7 @@
-import { defineDescriptor } from "@smite/core";
-import type { Descriptor } from "@smite/core";
-import { TaskResult } from "@smite/fp";
-import type { Result } from "@smite/fp";
+import { defineDescriptor } from "@smitejs/core";
+import type { Descriptor } from "@smitejs/core";
+import { TaskResult } from "@smitejs/fp";
+import type { Result } from "@smitejs/fp";
 import type { z } from "zod";
 
 /**
@@ -64,7 +64,7 @@ export interface UsecaseConfig<Deps, Input, Output, ErrorValue = unknown> {
  * @group Internals
  */
 export const usecaseDescriptorSymbol: unique symbol = Symbol.for(
-  "@smite/domain/usecaseDescriptor",
+  "@smitejs/domain/usecaseDescriptor",
 );
 
 /**

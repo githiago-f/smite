@@ -6,15 +6,15 @@ import {
   logicalIdOf,
   permissionReferenceOf,
   referenceOf,
-} from "@smite/aws";
+} from "@smitejs/aws";
 import type {
   AwsPermissionDescriptor,
   AwsResourceDescriptor,
-} from "@smite/aws";
-import type { SmitePlugin } from "@smite/cli";
-import type { CompiledEntry } from "@smite/cli";
-import type { AppDescriptor } from "@smite/core";
-import { routesOf } from "@smite/http";
+} from "@smitejs/aws";
+import type { SmitePlugin } from "@smitejs/cli";
+import type { CompiledEntry } from "@smitejs/cli";
+import type { AppDescriptor } from "@smitejs/core";
+import { routesOf } from "@smitejs/http";
 
 /** A Serverless Framework HTTP API event. */
 export interface ServerlessHttpEvent {

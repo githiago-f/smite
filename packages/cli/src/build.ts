@@ -1,6 +1,6 @@
 import { mkdir } from "node:fs/promises";
 import { dirname, extname, join, relative, resolve } from "node:path";
-import { clear } from "@smite/core";
+import { clear } from "@smitejs/core";
 import * as esbuild from "esbuild";
 import { appsOf, compileAppEntries } from "./compile.js";
 import { buildEntriesOf, entriesOf, loadConfig } from "./config.js";

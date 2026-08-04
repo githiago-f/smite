@@ -8,8 +8,8 @@ import { describe, expect, it } from "vitest";
 const rootDir = fileURLToPath(new URL("../../../", import.meta.url));
 
 const source = `
-  import { specification, usecase, handler } from "@smite/domain";
-  import { Result } from "@smite/fp";
+  import { specification, usecase, handler } from "@smitejs/domain";
+  import { Result } from "@smitejs/fp";
 
   const active = specification({
     name: "active",
@@ -48,9 +48,9 @@ describe("runtime bundle", () => {
       outfile,
       define: { ALLOW_GLOBAL_REGISTRY: "false" },
       alias: {
-        "@smite/core": join(rootDir, "packages/core/src/index.ts"),
-        "@smite/fp": join(rootDir, "packages/fp/src/index.ts"),
-        "@smite/domain": join(rootDir, "packages/domain/src/index.ts"),
+        "@smitejs/core": join(rootDir, "packages/core/src/index.ts"),
+        "@smitejs/fp": join(rootDir, "packages/fp/src/index.ts"),
+        "@smitejs/domain": join(rootDir, "packages/domain/src/index.ts"),
       },
     });
 

@@ -1,5 +1,5 @@
-import { defineDescriptor } from "@smite/core";
-import type { Descriptor } from "@smite/core";
+import { defineDescriptor } from "@smitejs/core";
+import type { Descriptor } from "@smitejs/core";
 
 /** AWS services supported by the first resource provider layer. */
 export type AwsProviderName = "s3" | "ssm" | "dynamodb" | "sqs" | "eventbridge";

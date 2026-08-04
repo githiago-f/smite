@@ -8,9 +8,9 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { client } from "@smite/client";
-import { childrenOf, clear } from "@smite/core";
-import { http } from "@smite/http";
+import { client } from "@smitejs/client";
+import { childrenOf, clear } from "@smitejs/core";
+import { http } from "@smitejs/http";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { build, bundleBuildEntries } from "./build.js";
@@ -32,28 +32,28 @@ const cwd = process.cwd().endsWith("/packages/cli")
 const entry = join(cwd, "packages/cli/test/app.ts");
 
 const sourceAliases = {
-  "@smite/core": join(cwd, "packages/core/src/index.ts"),
-  "@smite/http": join(cwd, "packages/http/src/index.ts"),
+  "@smitejs/core": join(cwd, "packages/core/src/index.ts"),
+  "@smitejs/http": join(cwd, "packages/http/src/index.ts"),
   zod: join(cwd, "node_modules/zod/index.cjs"),
 };
 
 const configAliases = {
-  "@smite/core": join(cwd, "packages/core/src/index.ts"),
-  "@smite/cli": join(cwd, "packages/cli/src/index.ts"),
-  "@smite/client": join(cwd, "packages/client/src/index.ts"),
-  "@smite/http": join(cwd, "packages/http/src/index.ts"),
-  "@smite/openapi": join(cwd, "packages/openapi/src/index.ts"),
+  "@smitejs/core": join(cwd, "packages/core/src/index.ts"),
+  "@smitejs/cli": join(cwd, "packages/cli/src/index.ts"),
+  "@smitejs/client": join(cwd, "packages/client/src/index.ts"),
+  "@smitejs/http": join(cwd, "packages/http/src/index.ts"),
+  "@smitejs/openapi": join(cwd, "packages/openapi/src/index.ts"),
 };
 
 const buildAliases = {
   ...configAliases,
-  "@smite/cli": join(cwd, "packages/cli/src/config.ts"),
+  "@smitejs/cli": join(cwd, "packages/cli/src/config.ts"),
   zod: join(cwd, "node_modules/zod/index.cjs"),
 };
 
 afterEach(() => clear());
 
-describe("@smite/cli", () => {
+describe("@smitejs/cli", () => {
   it("defines a first HTTP app", () => {
     // #section - Define a first HTTP app
     const app = http.app("hello");
@@ -143,8 +143,8 @@ describe("@smite/cli", () => {
   it("loads a config and reads its default export", async () => {
     const dir = await mkdtemp(join(tmpdir(), "smite-cli-config-"));
     const configPath = join(dir, "smite.config.ts");
-    const configSource = `import { defineSmiteConfig } from "@smite/cli";
-import { client } from "@smite/client";
+    const configSource = `import { defineSmiteConfig } from "@smitejs/cli";
+import { client } from "@smitejs/client";
 
 export default defineSmiteConfig({
   entry: ${JSON.stringify(entry)},
@@ -195,8 +195,8 @@ export default defineSmiteConfig({
     const dir = await mkdtemp(join(tmpdir(), "smite-cli-e2e-"));
     const configPath = join(dir, "smite.config.ts");
     const outfile = join(dir, "app.client.ts");
-    const configSource = `import { defineSmiteConfig } from "@smite/cli";
-import { client } from "@smite/client";
+    const configSource = `import { defineSmiteConfig } from "@smitejs/cli";
+import { client } from "@smitejs/client";
 
 export default defineSmiteConfig({
   entry: ${JSON.stringify(entry)},

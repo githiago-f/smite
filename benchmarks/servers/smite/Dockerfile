@@ -3,7 +3,7 @@ FROM node:${NODE_VERSION}-alpine AS build
 
 WORKDIR /repo
 
-# The full monorepo is needed so @smite/http resolves from the workspace.
+# The full monorepo is needed so @smitejs/http resolves from the workspace.
 COPY package.json yarn.lock tsconfig.json tsconfig.build.json ./
 COPY packages ./packages
 COPY benchmarks/servers/smite/server.mjs ./bench-servers/smite-server.mjs

@@ -2,31 +2,31 @@
 
 ## Goal
 
-Wire `@smite/domain` usecases into the collect-mode IR graph so the CLI can
+Wire `@smitejs/domain` usecases into the collect-mode IR graph so the CLI can
 traverse `app → http.route → http.endpoint → domain.usecase`, *without* making
-`@smite/domain` depend on `@smite/http` (preserving the one-way wall). Provide
-`domain.handler(usecase, deps)` — an `HttpHandler` adapter the `@smite/http`
+`@smitejs/domain` depend on `@smitejs/http` (preserving the one-way wall). Provide
+`domain.handler(usecase, deps)` — an `HttpHandler` adapter the `@smitejs/http`
 `handler()` builders can recognize and relate. Prove with a bundle test that the
 production build drops every registry/IR reference yet the usecase runs.
 
 ## Context
 
-`@smite/http` already stores endpoint handlers as `http.handler` nodes under
+`@smitejs/http` already stores endpoint handlers as `http.handler` nodes under
 `route → endpoint → handler`. To make a usecase a real "operation", the user
 writes `route.accept("POST", "/orders").handler(domain.handler(placeOrder, deps))`
 and the IR should note that `http.handler` *implements* a `domain.usecase`. The
-constraint: `@smite/domain` cannot import `@smite/http`. So `@smite/http` must
-depend on a tiny surface from `@smite/domain` (metadata symbol), not vice-versa.
+constraint: `@smitejs/domain` cannot import `@smitejs/http`. So `@smitejs/http` must
+depend on a tiny surface from `@smitejs/domain` (metadata symbol), not vice-versa.
 
 ## Design
 
-### A non-enumerable usecase marker (like `@smite/fp` extractors)
+### A non-enumerable usecase marker (like `@smitejs/fp` extractors)
 
 `usecase(...)` and `domain.handler(...)` carry a non-enumerable symbol that
-`@smite/http` reads without importing logic:
+`@smitejs/http` reads without importing logic:
 
 ```ts
-export const domainHandlerSymbol: unique symbol = Symbol.for("@smite/domain/handler");
+export const domainHandlerSymbol: unique symbol = Symbol.for("@smitejs/domain/handler");
 export type DomainHandler<T> = HttpHandler<T> & {
   readonly [domainHandlerSymbol]?: {
     usecaseNode: Descriptor<string, unknown>; // carried directly — no lookup import
@@ -39,17 +39,17 @@ export type DomainHandler<T> = HttpHandler<T> & {
 this way, and runs `usecase.with(deps)(ctx.body)` mapping `Result.ok → HttpResponse`
 (200) and `Result.err → configurable error status/message).
 
-### `@smite/http` recognizes it (not a hard dep)
+### `@smitejs/http` recognizes it (not a hard dep)
 
 In `endpoint.ts`, `handler(fn)` exposes a detection hook: if `fn` carries
 `domainHandlerSymbol`, it relates `http.handler` → `domain.usecase` edges. The
 implementation reads the metadata via `Symbol.for` with the same string — an
-inline accessor in `endpoint.ts`, so `@smite/http` keeps **zero dependency** on
-`@smite/domain`. The carried `usecaseNode` is used directly; no `lookup`/registry
+inline accessor in `endpoint.ts`, so `@smitejs/http` keeps **zero dependency** on
+`@smitejs/domain`. The carried `usecaseNode` is used directly; no `lookup`/registry
 import is added, so the production bundle tree-shakes exactly as before.
 
 ```ts
-const DOMAIN_HANDLER = Symbol.for("@smite/domain/handler");
+const DOMAIN_HANDLER = Symbol.for("@smitejs/domain/handler");
 // in handler(fn): relate(handler, "domain.usecase", meta.usecaseNode) — guarded
 ```
 
@@ -76,7 +76,7 @@ A `packages/domain/src/tree-shake.test.ts` (pattern-copy of
 3. Add a tiny optional detection to `packages/http/src/endpoint.ts` `handler`
    that, when the symbol is present, `relate`s the `http.handler` node to the
    `domain.usecase` node. Use a **weak optional linkage** (import a helper from
-   `@smite/domain` only inside the guarded collect-mode branch — see DIP note).
+   `@smitejs/domain` only inside the guarded collect-mode branch — see DIP note).
 4. `domain/tree-shake.test.ts` bundle test (production behavior + string proxy).
 5. `docs/concepts/` note explaining the runtime/build split (collect mode).
 
@@ -93,29 +93,29 @@ A `packages/domain/src/tree-shake.test.ts` (pattern-copy of
 
 ## Definition of done
 
-- `domain.handler(usecase, deps)` is usable as an `@smite/http` handler and the
+- `domain.handler(usecase, deps)` is usable as an `@smitejs/http` handler and the
   http executor walks it; the relation `http.handler → domain.usecase` appears
   in collect mode.
 - `packages/domain/src/tree-shake.test.ts` passes: no `globalRegistry`, usecase
   runs.
-- `@smite/domain` still imports only `fp` + `core` (+ `zod`) — no new reverse
+- `@smitejs/domain` still imports only `fp` + `core` (+ `zod`) — no new reverse
   edge.
 - No new Biome violations; `docs.test.ts` green.
 
 ## Dependencies / prerequisites
 
-- `domain/20`–`24`; `@smite/http/src/endpoint.ts` (read-only), `esbuild` in
+- `domain/20`–`24`; `@smitejs/http/src/endpoint.ts` (read-only), `esbuild` in
   devDeps.
 
 ## Notes / open questions
 
-- **Weak coupling**: `@smite/http` reaching into `@smite/domain` is the _only_
+- **Weak coupling**: `@smitejs/http` reaching into `@smitejs/domain` is the _only_
   crossing we allow (the framework's glue). If unacceptable, the alternative is
   a `registry`-hosted "handler → usecase" resolver the CLI inspects; document
   the chosen option. Prefer the symbol-marker — it keeps a
   `sideEffects: false`-safe, framework-agnostic boundary.
 - Surface-name decision: `domain.handler(...)` vs `handler` re-export. Keep
-  `domain.` namespacing to avoid clobbering `@smite/http`/`@smite/fp`'s
+  `domain.` namespacing to avoid clobbering `@smitejs/http`/`@smitejs/fp`'s
   `handler`.
-- The metadata/relation mechanism mirrors `@smite/fp`'s `compositionMetadata`/
+- The metadata/relation mechanism mirrors `@smitejs/fp`'s `compositionMetadata`/
   `extractorMetadata` — DRY the symbol-identification pattern, not the data.

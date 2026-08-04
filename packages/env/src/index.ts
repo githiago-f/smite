@@ -1,4 +1,4 @@
-import { defineDescriptor, lookup } from "@smite/core";
+import { defineDescriptor, lookup } from "@smitejs/core";
 import type { z } from "zod";
 
 declare const ALLOW_GLOBAL_REGISTRY: boolean;
@@ -98,7 +98,7 @@ export function register<Specs extends EnvSpecs>(
     if (typeof ALLOW_GLOBAL_REGISTRY === "boolean" && ALLOW_GLOBAL_REGISTRY) {
       const existing = lookup(name);
       if (existing === undefined || existing.__kind !== "env.var") {
-        // TODO: the future @smite/cli consumes these nodes to scaffold
+        // TODO: the future @smitejs/cli consumes these nodes to scaffold
         // .env.example files and validate required vars at compile time.
         defineDescriptor("env.var", name, { spec });
       }

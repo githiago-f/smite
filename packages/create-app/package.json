@@ -22,7 +22,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smite/cli": "^1.0.0",
+    "@smitejs/cli": "^1.0.0",
     "commander": "^15.0.0"
   },
   "devDependencies": {

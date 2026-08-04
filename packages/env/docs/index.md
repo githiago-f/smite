@@ -1,4 +1,4 @@
-# @smite/env
+# @smitejs/env
 
 Declarative environment variables for Smite. Declare which variables a scope
 needs, where they come from (a provider), and how they are validated (zod).
@@ -6,7 +6,7 @@ Run the tests in `src/index.test.ts` for the executable contract.
 
 ## CLI workflow
 
-Install it with `npm install @smite/env zod`, declare the environment in your
+Install it with `npm install @smitejs/env zod`, declare the environment in your
 app entry, and run `npx smite dev` or `npx smite build` from the project that
 contains `smite.config.ts`. The CLI compiles the declaration with the rest of
 the app; values are still resolved by the provider at runtime.
@@ -14,7 +14,7 @@ the app; values are still resolved by the provider at runtime.
 ## Usage
 
 ```ts
-import { env } from "@smite/env";
+import { env } from "@smitejs/env";
 import { z } from "zod";
 
 const appEnv = env

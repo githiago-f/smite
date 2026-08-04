@@ -14,7 +14,7 @@
     "bench:clean": "rm -rf benchmarks/results",
     "format": "biome format --write .",
     "test": "vitest run",
-    "test:floci": "yarn workspace @smite/aws test:floci",
+    "test:floci": "yarn workspace @smitejs/aws test:floci",
     "version:sync": "node scripts/sync-versions.mjs",
     "release:verify": "node scripts/verify-release-tag.mjs",
     "release:prepare": "node scripts/inject-jsdoc-examples.mjs",

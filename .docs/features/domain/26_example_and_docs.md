@@ -1,8 +1,8 @@
-# 26. `@smite/domain` example app and docs
+# 26. `@smitejs/domain` example app and docs
 
 ## Goal
 
-Close `@smite/domain` with a runnable example workspace and its concept docs:
+Close `@smitejs/domain` with a runnable example workspace and its concept docs:
 `examples/domain-orders` demonstrates the full "operation" end-to-end
 (`http.app` routes → `domain.handler` → usecases → specifications → ports →
 in-memory repository), runnable with one `yarn workspace` command. Docs:
@@ -20,11 +20,11 @@ order-management API that reads like product intent.
 
 ## Design
 
-### Example app: `examples/domains-orders` (`@smite/example-domains-orders`)
+### Example app: `examples/domains-orders` (`@smitejs/example-domains-orders`)
 
 A single `.mjs` (`src/server.mjs` + `src/app.mjs` to mirror
-`examples/http-rest-server`), importing `@smite/http`, `@smite/domain`,
-`@smite/fp` and `zod`:
+`examples/http-rest-server`), importing `@smitejs/http`, `@smitejs/domain`,
+`@smitejs/fp` and `zod`:
 
 - **Domain**: `OrderId` (value object), `Order` (entity), `PlaceOrder` (command),
   `OrderStatus` specification, `ActiveCustomer` spec.
@@ -34,7 +34,7 @@ A single `.mjs` (`src/server.mjs` + `src/app.mjs` to mirror
   → `domain.handler(getOrder, deps)`.
 - `app.serve()` drives a real `node:http` server; same bootstrap/pattern as the
   existing `examples/http-rest-server`.
-- Runnable: `yarn workspace @smite/example-domains-orders start` (and the server
+- Runnable: `yarn workspace @smitejs/example-domains-orders start` (and the server
   prints the `curl` lines like the sibling example).
 
 The loop proves: route → `domain.handler` → usecase → port (in-memory) → value
@@ -53,13 +53,13 @@ object/entity/spec — a complete "domain operation" wired through the framework
 
 ## Implementation steps
 
-1. `examples/domains-orders/package.json` (`@smite/example-domains-orders`,
-   `private`, deps `@smite/http`, `@smite/domain`, `@smite/fp`, `zod`; `start`
+1. `examples/domains-orders/package.json` (`@smitejs/example-domains-orders`,
+   `private`, deps `@smitejs/http`, `@smitejs/domain`, `@smitejs/fp`, `zod`; `start`
    script) + `.mjs` sources.
 2. Write `src/domain.mjs` (VOs, entity, spec, port) and `src/app.mjs` (usecases +
    routes) and `src/server.mjs` (bootstrap). Biome-clean (`examples` are linted).
 3. Prove runnable: `yarn build` then `yarn workspace
-   @smite/example-domains-orders start` and `curl` two routes.
+   @smitejs/example-domains-orders start` and `curl` two routes.
 4. Write the concept docs + `docs/index.md`; align `order` frontmatter + its
    inline `@example`.
 5. Add `#snippet` + `docs.test.ts` sections for every `@example` (driven by
@@ -88,12 +88,12 @@ object/entity/spec — a complete "domain operation" wired through the framework
 
 ## Dependencies / prerequisites
 
-- `domain/20`–`25` (all implemented); `@smite/http` `serve` (from http/11).
+- `domain/20`–`25` (all implemented); `@smitejs/http` `serve` (from http/11).
 
 ## Notes / open questions
 
 - **Example naming**: `domains-orders` (matched to `fp-utils`/`typed-client`
-  plural scheme). Confirmed prefix `@smite/example-domains-orders`.
+  plural scheme). Confirmed prefix `@smitejs/example-domains-orders`.
 - **Event/aggregate**: remains the deliberately deferred follow-up (aggregate).
   The example's command uses a simple save, not an event log.
 - Thin state model keeps the example short and KISS; persistence port is ready

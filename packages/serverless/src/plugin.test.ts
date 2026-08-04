@@ -1,15 +1,15 @@
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { provider } from "@smite/aws";
-import { clear, lookupAll } from "@smite/core";
-import { http } from "@smite/http";
+import { provider } from "@smitejs/aws";
+import { clear, lookupAll } from "@smitejs/core";
+import { http } from "@smitejs/http";
 import { afterEach, describe, expect, it } from "vitest";
 import { serverless } from "./plugin.js";
 
 afterEach(() => clear());
 
-describe("@smite/serverless plugin", () => {
+describe("@smitejs/serverless plugin", () => {
   it("generates a Serverless Framework config from app routes", async () => {
     const app = http.app("orders");
     const routes = http.route(app);

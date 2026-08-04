@@ -44,7 +44,7 @@ import { describe, expect, it } from "vitest";
 import * as esbuild from "esbuild";
 
 const source = `
-  import { http } from "@smite/http";
+  import { http } from "@smitejs/http";
 
   const app = http.app();
   const route = http.route(app).req({ query: { parse: (v) => v } });
@@ -71,8 +71,8 @@ describe("runtime bundle", () => {
       outfile,
       define: { ALLOW_GLOBAL_REGISTRY: "false" },
       alias: {
-        "@smite/core": join(process.cwd(), "packages/core/src/index.ts"),
-        "@smite/http": join(process.cwd(), "packages/http/src/index.ts"),
+        "@smitejs/core": join(process.cwd(), "packages/core/src/index.ts"),
+        "@smitejs/http": join(process.cwd(), "packages/http/src/index.ts"),
       },
     });
 
@@ -106,7 +106,7 @@ describe("runtime bundle", () => {
   dispatches.
 
 > **Child-index nuance**: the runtime *child refs* use the
-> `Symbol.for("@smite/core/children")` symbol and the `relate` calls that wire
+> `Symbol.for("@smitejs/core/children")` symbol and the `relate` calls that wire
 > the edges — they must survive. Only the *edge registration* (the guarded
 > `register(...)` calls) and the registry module must disappear. That is why the
 > test asserts the absence of `globalRegistry` plus observable behavior, and
@@ -170,4 +170,4 @@ Definition of done:
   are proven here; the CLI adds the artifact generation.
 - Later, an esbuild **plugin** may encapsulate the `define` + `alias` wiring
   so users write `smite build` instead of raw esbuild flags. That belongs to
-  the `@smite/cli` slice, not this one.
+  the `@smitejs/cli` slice, not this one.

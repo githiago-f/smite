@@ -1,5 +1,5 @@
 {
-  "name": "@smite/bench-fastify",
+  "name": "@smitejs/bench-fastify",
   "version": "0.0.0",
   "private": true,
   "type": "module",
