@@ -1,6 +1,6 @@
 {
   "name": "@smite/http",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "HTTP semantics for Smite: apps, routes, endpoints and the serve executor.",
   "license": "MIT",
   "type": "module",
@@ -10,14 +10,27 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
-  "publishConfig": { "access": "public" },
-  "scripts": { "build": "tsc -b", "test": "vitest run" },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/.tsbuildinfo"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "prepack": "yarn build",
+    "test": "vitest run"
+  },
   "dependencies": {
     "@smite/core": "*",
     "@smite/fp": "*",
     "path-to-regexp": "^8.2.0",
     "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0"
   },
   "sideEffects": false
 }
