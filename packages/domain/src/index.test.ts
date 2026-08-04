@@ -4,11 +4,13 @@ import { http } from "@smite/http";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  aggregate,
   command,
   entity,
   handler,
   mergeSpecifications,
   port,
+  projection,
   query,
   specification,
   usecase,
@@ -169,6 +171,118 @@ describe("entities", () => {
     // #endsection
 
     expect(same).toBe(true);
+  });
+});
+
+describe("aggregates", () => {
+  const buildAccount = () =>
+    aggregate({
+      name: "Account",
+      eventSchema: z.object({
+        type: z.literal("credited"),
+        amount: z.number().positive(),
+      }),
+      initial: () => ({ balance: 0 }),
+      apply: (state, event) => ({ balance: state.balance + event.amount }),
+    });
+
+  it("records immutable events and folds state", () => {
+    const Account = buildAccount();
+    const account = Account.create("account-1")
+      .record({ type: "credited", amount: 10 })
+      .unwrapOrElse(() => null);
+
+    expect(account?.state).toEqual({ balance: 10 });
+    expect(account?.events).toEqual([{ type: "credited", amount: 10 }]);
+    expect(account?.uncommitted).toEqual(account?.events);
+  });
+
+  it("replays history and commits only new events", () => {
+    // #section - Record an event on an aggregate
+    const Account = aggregate({
+      name: "Account",
+      initial: () => ({ balance: 0 }),
+      apply: (state, event: { readonly amount: number }) => ({
+        balance: state.balance + event.amount,
+      }),
+    });
+    const account = Account.create("account-1")
+      .record({ amount: 10 })
+      .unwrapOrElse(() => null);
+    // #endsection
+
+    expect(account?.state.balance).toBe(10);
+
+    // #section - Replay a history into an aggregate
+    const restored = Account.load("account-1", [{ amount: 10 }]);
+    // #endsection
+
+    expect(restored.state.balance).toBe(10);
+    expect(restored.uncommitted).toEqual([]);
+
+    // #section - Commit an aggregate projection
+    const committed = account?.commit();
+    // #endsection
+
+    expect(committed).toEqual({
+      projection: { balance: 10 },
+      version: 1,
+      events: [{ amount: 10 }],
+    });
+  });
+
+  it("rejects invalid events without changing the instance", () => {
+    const Account = buildAccount();
+    const account = Account.create("account-1");
+    const result = account.record({ type: "credited", amount: -1 });
+
+    expect(result.isErr()).toBe(true);
+    expect(account.events).toEqual([]);
+  });
+
+  it("registers an aggregate node", () => {
+    buildAccount();
+    expect(lookupAll("domain.aggregate").map((node) => node.__key)).toEqual([
+      "Account",
+    ]);
+  });
+});
+
+describe("projections", () => {
+  it("folds aggregate commits into a read model", () => {
+    const Account = aggregate({
+      name: "ProjectionAccount",
+      initial: () => ({ balance: 0 }),
+      apply: (state, event: { readonly amount: number }) => ({
+        balance: state.balance + event.amount,
+      }),
+    });
+    const account = Account.create("account-1")
+      .record({ amount: 10 })
+      .unwrapOrElse(() => null);
+    const Balances = projection({
+      name: "Balances",
+      aggregate: Account,
+      initial: () => ({ total: 0 }),
+      reduce: (view, commit) => ({
+        total: view.total + commit.projection.balance,
+      }),
+    });
+
+    // #section - Build a read-side projection
+    const view = Balances.build([
+      account?.commit() ?? {
+        projection: { balance: 0 },
+        version: 0,
+        events: [],
+      },
+    ]);
+    // #endsection
+
+    expect(view).toEqual({ total: 10 });
+    expect(
+      relationships().some((edge) => edge.data.to === "ProjectionAccount"),
+    ).toBe(true);
   });
 });
 

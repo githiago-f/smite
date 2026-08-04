@@ -11,7 +11,9 @@ import {
   json,
   params,
   query,
+  routesOf,
   serve,
+  serveNode,
   status,
 } from "./index.js";
 import type { HttpRequest } from "./types.js";
@@ -61,6 +63,10 @@ const makeApp = () => {
 };
 
 describe("http DSL", () => {
+  it("exposes the node server adapter on the http namespace", () => {
+    expect(http.serveNode).toBe(serveNode);
+  });
+
   describe("IR wiring", () => {
     it("wires exactly one route to the app", () => {
       const { app, route } = makeApp();
@@ -298,6 +304,22 @@ describe("http DSL", () => {
       // #endsection
 
       expect(response).toEqual({ status: 200, body: { ok: true } });
+    });
+
+    it("collects an app's routes", () => {
+      // #section - Collect an app's routes
+      const app = http.app("store");
+      const route = http.route(app).req({
+        query: z.object({ q: z.string().optional() }).partial(),
+      });
+      route
+        .accept("GET", "/users/:id")
+        .handler((ctx) => json({ id: ctx.params.id }));
+      const collected = routesOf(app);
+      // #endsection
+
+      expect(collected).toHaveLength(1);
+      expect(collected[0]?.endpoints[0]?.pathParams).toEqual(["id"]);
     });
 
     it("chains extractors over a request", () => {

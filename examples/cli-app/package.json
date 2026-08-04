@@ -1,0 +1,17 @@
+{
+  "name": "@smite/example-cli-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node src/generate.mjs",
+    "start": "node src/server.mjs"
+  },
+  "dependencies": {
+    "@smite/cli": "*",
+    "@smite/client": "*",
+    "@smite/http": "*",
+    "@smite/openapi": "*",
+    "zod": "^4.0.0"
+  }
+}

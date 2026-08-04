@@ -4,3 +4,7 @@ dist/
 .vite/
 benchmarks/results/
 examples/typed-client/src/generated-client.ts
+examples/cli-app/src/app.client.ts
+examples/cli-app/openapi.json
+/app.client.ts
+/src/app.client.ts

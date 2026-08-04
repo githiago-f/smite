@@ -10,11 +10,25 @@ export default defineConfig({
         import.meta.dirname,
         "packages/domain/src/index.ts",
       ),
+      "@smite/aws": resolve(import.meta.dirname, "packages/aws/src/index.ts"),
       "@smite/http": resolve(import.meta.dirname, "packages/http/src/index.ts"),
       "@smite/env": resolve(import.meta.dirname, "packages/env/src/index.ts"),
+      "@smite/serverless": resolve(
+        import.meta.dirname,
+        "packages/serverless/src/index.ts",
+      ),
+      "@smite/serverless/aws": resolve(
+        import.meta.dirname,
+        "packages/serverless/src/aws.ts",
+      ),
       "@smite/client": resolve(
         import.meta.dirname,
         "packages/client/src/index.ts",
+      ),
+      "@smite/cli": resolve(import.meta.dirname, "packages/cli/src/index.ts"),
+      "@smite/openapi": resolve(
+        import.meta.dirname,
+        "packages/openapi/src/index.ts",
       ),
     },
   },

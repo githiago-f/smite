@@ -38,14 +38,21 @@ Application DSL (builders)          @smite/http: app, route, req, accept, handle
 | Package           | Responsibility                    |
 | ----------------- | --------------------------------- |
 | `@smite/core`     | Registrar: nodes, edges, registry, compile-time flag, junction, freeze/refine |
-| `@smite/http`     | HTTP DSL (`app`, `route`, `req`, `accept`, `handler`) + `serve()` executor |
+| `@smite/http`     | HTTP DSL (`app`, `route`, `req`, `accept`, `handler`) + `serve()` executor + `routesOf` collector |
 | `@smite/fp`       | Functional primitives             |
 | `@smite/domain`   | (stub) domain builders            |
 | `@smite/serverless`| (stub) serverless adapters       |
-| `@smite/cli`      | (stub) collect-mode compiler      |
+| `@smite/cli`      | Collect-mode compiler: `compileApp`, `smite.config.ts`, plugin dispatch, `smite` bin, `createApp` scaffolder |
+| `@smite/client`   | Typed client codegen (`generate`, `client` plugin), imports `compileApp` from `@smite/cli` |
+| `@smite/openapi`  | OpenAPI 3.1 generator (`openapi` plugin) + `swaggerUi` router |
+| `create-smite-app`| Starter app scaffolder (`yarn create smite-app`, `--template`) |
 
 Dependencies flow one way, no cycles: `fp`/`core` base → `http` →
-`serverless`/`cli`. Packages import from the `@smite/*` public API only.
+`serverless`/`cli`, with `@smite/client` and `@smite/openapi` importing
+`@smite/cli` for the plugin contract and shared `compileApp`. The CLI imports
+**no** `@smite/*` beyond `@smite/core`; generators are contributed by packages
+installed in the user project and loaded through `smite.config.ts`. Packages
+import from the `@smite/*` public API only.
 
 ## Compile-time constants
 

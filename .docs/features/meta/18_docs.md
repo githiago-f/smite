@@ -91,7 +91,11 @@ that package's suite. Keep these in sync when touching examples.
    against the tested snippets.
 3. Concept docs are rendered from `packages/*/docs/concepts/*.md` (frontmatter
    `order`/`title`/`summary`, inline `@example`/`@benchmark`); benchmarks render
-   from `benchmarks/results/*.summary.json` when present.
+   from `benchmarks/results/*.summary.json` when present. The renderer supports
+   `@example` and `@benchmark` directives, headings, lists, and paragraphs —
+   it does **not** render raw code fences. A raw ` ```ts ` fence throws at
+   build time with a hint to use `@example <Title>` backed by a tested
+   `#section` snippet; shell commands belong in inline backticks.
 4. Shiki highlights every snippet with the Catppuccin theme; snippets that carry
    an expected result render a Code/Result tab pair.
 5. Renders into `dist/docs/`: `index.html`, `styles.css`, `manifest.json`, and

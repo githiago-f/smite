@@ -61,7 +61,7 @@ import { client } from "@smite/client";     // from the user's node_modules
 import { openapi } from "@smite/openapi";   // from the user's node_modules
 
 export default defineSmiteConfig({
-  entry: "./src/app.ts",
+  entries: ["./src/app.ts"],
   plugins: [
     client({ outfile: "./src/app.client.ts" }),
     openapi({ outfile: "./openapi.json" }),
@@ -69,50 +69,58 @@ export default defineSmiteConfig({
 });
 ```
 
-`defineSmiteConfig` is a type-only helper (and a runtime no-op returning its
-argument) so the config's shape is checked without runtime cost. `alias` (a
-`Record<string, string>`) is an optional field for monorepo development so the
-entry bundle resolves `@smite/*` to source; in a user project esbuild resolves
-from `node_modules` and `alias` is omitted.
+`entries` lists the app entry points to compile in collect mode; serverless apps
+declare one entry per handler (Lambda, GCP function, …). `entry` is shorthand
+for a single entry and equals `entries: [entry]`. `defineSmiteConfig` is a
+type-only helper (and a runtime no-op returning its argument) so the config's
+shape is checked without runtime cost. `alias` (a `Record<string, string>`) is
+an optional field for monorepo development so the entry bundle resolves
+`@smite/*` to source; in a user project esbuild resolves from `node_modules`
+and `alias` is omitted.
 
 ### Plugin contract
 
 ```ts
+interface PluginContext {
+  apps: AppDescriptor[];   // union of apps across all compiled entries
+}
+
 interface SmitePlugin {
   name: string;
-  run(ctx: { app: AppDescriptor }): void | Promise<void>;
+  run(ctx: PluginContext): void | Promise<void>;
 }
 ```
 
 Plugins are plain objects returned by factory functions (`client(options)`,
-`openapi(options)`). `run` receives the app node and traverses the IR with
-`childrenOf` for the kinds it knows; the CLI has no knowledge of `http.*` kinds.
+`openapi(options)`). `run` receives the union of app nodes and traverses the IR
+with `childrenOf` for the kinds it knows; the CLI has no knowledge of `http.*`
+kinds.
 
-### `compileApp` shared engine
+### `compileApps` shared engine
 
-`@smite/cli` exports `compileApp(options)`:
+`@smite/cli` exports `compileApps({ entries, alias? })`:
 
-1. Resolve `entry` from `process.cwd()`.
-2. esbuild-bundle into a temp dir: `platform: "node"`, `format: "cjs"`,
-   `target: "es2022"`, `bundle: true`, `define: { ALLOW_GLOBAL_REGISTRY:
-   "true" }`, `absWorkingDir: cwd`, optional `alias`.
-3. `clear()` then dynamically import the bundle, populating
-   `globalThis.globalRegistry`.
-4. `lookupAll("app")`; error on none, disambiguate with `appName` on several.
-5. Return the app node.
+1. Resolve each entry from `process.cwd()`.
+2. For each entry, esbuild-bundle into a temp dir: `platform: "node"`,
+   `format: "cjs"`, `target: "es2022"`, `bundle: true`, `define: {
+   ALLOW_GLOBAL_REGISTRY: "true" }`, `absWorkingDir: cwd`, optional `alias`.
+3. Per entry, `clear()` then dynamically import the bundle, populating
+   `globalThis.globalRegistry`; collect every `app` node.
+4. Return the union of apps deduplicated by `__key`.
 
-This is the exact pipeline currently in `@smite/client/generate()` (slice 17).
-`@smite/client`'s `generate()` is refactored to call `compileApp` and keep its
-emit step; public API and behavior are unchanged (existing client tests stay
-green).
+Each entry compiles in its own registry session, so a serverless handler does
+not see its siblings' descriptors — the same app declared in several handler
+entries collapses to a single node. `compileApp({ entry, appName?, alias? })`
+wraps `compileApps` for the single-entry case.
 
 ### CLI surface (commander)
 
 `smite` binary:
 
 - `smite generate <plugin> [--app-name <name>] [--config <path>]` — loads the
-  config, runs `compileApp`, then dispatches to the matching `cfg.plugins`
-  entry's `run({ app })`. `--config` defaults to `./smite.config.ts`.
+  config, runs `compileApps` over `entriesOf(config)`, optionally filters apps
+  by `--app-name`, then dispatches to the matching `cfg.plugins` entry's
+  `run({ apps })`. `--config` defaults to `./smite.config.ts`.
 - `smite list` — prints plugin names from the config.
 - `smite --help` — commander's generated help.
 
@@ -122,8 +130,9 @@ config, so `smite generate client` works iff a `client()` plugin is listed.
 ### `client()` plugin factory (in `@smite/client`)
 
 `@smite/client` exports a `client(options)` factory returning a `SmitePlugin`
-whose `run` reuses the existing emit logic (build tree → collision-check →
-emit). The standalone `generate()` and the plugin share the same emit module.
+whose `run` collects endpoints across every app in `ctx.apps` and reuses the
+existing emit logic (build tree → collision-check → emit). The standalone
+`generate()` and the plugin share the same emit module.
 
 ## Implementation steps
 
@@ -138,7 +147,8 @@ emit). The standalone `generate()` and the plugin share the same emit module.
    `core`/`client`.
 4. `vitest.config.ts` — add `@smite/cli` alias →
    `packages/cli/src/index.ts`.
-5. `src/compile.ts` — `compileApp` (bundles, executes, locates app).
+5. `src/compile.ts` — `compileApps` (bundles each entry, executes, unions apps)
+   + `compileApp` (single-entry wrapper).
 6. `src/config.ts` — `defineSmiteConfig` (type-only) + `loadConfig` (bundles
    `smite.config.ts`, imports, returns default export).
 7. `src/plugins.ts` — `SmitePlugin` type + dispatch helper.
@@ -164,9 +174,9 @@ emit). The standalone `generate()` and the plugin share the same emit module.
 - **No app / several apps** in the registry → same messages as
   `generate()` (slice 17): no app found, or pass `--app-name`.
 - **Duplicate plugin names** → error on dispatch.
-- **Temp-dir leak** → `compileApp` removes the temp dir after import (best
-  effort; the import must stay alive during dispatch, so deletion happens in a
-  `finally` after `run`).
+- **Temp-dir leak** → `compileApps` removes each temp dir after its entry
+  imports (best effort; the import must stay alive during dispatch, so deletion
+  happens in a `finally` after `run`).
 - **Monorepo dev**: tests pass `alias` so the bundled app resolves
   `@smite/*` to `src`; the alias field is optional in user projects.
 

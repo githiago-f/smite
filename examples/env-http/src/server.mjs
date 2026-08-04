@@ -1,6 +1,5 @@
-import { createServer } from "node:http";
 import { env } from "@smite/env";
-import { http } from "@smite/http";
+import { http, serveNode } from "@smite/http";
 import { z } from "zod";
 
 const config = env
@@ -28,22 +27,7 @@ const bootstrap = async () => {
     body: { greeting },
   }));
 
-  const router = app.serve();
-  const server = createServer(async (req, res) => {
-    const url = new URL(req.url ?? "/", "http://localhost");
-    const response = await router({
-      method: req.method ?? "GET",
-      path: url.pathname,
-      query: Object.fromEntries(url.searchParams),
-      headers: req.headers,
-      cookies: {},
-      params: {},
-      body: undefined,
-    });
-    res.writeHead(response.status, { "content-type": "application/json" });
-    res.end(JSON.stringify(response.body ?? null));
-  });
-
+  const server = serveNode(app);
   server.listen(port, () => {
     console.log(`env+http example listening on http://127.0.0.1:${port}`);
   });

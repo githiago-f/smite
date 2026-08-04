@@ -1,0 +1,30 @@
+{
+  "name": "smite",
+  "version": "1.0.0",
+  "description": "Command-line entrypoint for the Smite framework.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "smite": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "!dist/.tsbuildinfo"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@smite/cli": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0"
+  },
+  "sideEffects": false
+}

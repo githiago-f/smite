@@ -1,0 +1,35 @@
+{
+  "name": "@smite/serverless",
+  "version": "1.0.0",
+  "description": "Serverless runtime adapters for Smite apps.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./aws": {
+      "types": "./dist/aws.d.ts",
+      "default": "./dist/aws.js"
+    }
+  },
+  "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@smite/aws": "^1.0.0",
+    "@smite/cli": "^1.0.0",
+    "@smite/core": "^1.0.0",
+    "@smite/http": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0"
+  },
+  "sideEffects": false
+}

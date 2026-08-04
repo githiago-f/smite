@@ -4,6 +4,13 @@ A functional DDD toolkit for Smite applications. It gives you the building
 blocks to model a domain as immutable values and named operations, without
 enforcing a framework or a container.
 
+## CLI workflow
+
+Install it with `npm install @smite/domain @smite/http zod` and use
+`npx smite dev` to run an HTTP app whose handlers delegate to domain usecases.
+For the complete in-memory orders example, run `yarn workspace
+@smite/example-domains-orders start` and call it with `curl`.
+
 ## When to reach for it
 
 Reach for `@smite/domain` as soon as a route starts to smuggle business logic

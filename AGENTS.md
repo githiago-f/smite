@@ -8,13 +8,19 @@ architecture.
 
 - **The plan of record is `.docs/features/{package}/{NN}_*.md`** (ordered
   slices, grouped by package: `core` 01–07, `http` 08–13, `meta` 14/15/18/19,
-  `env` 16, `client` 17, `domain` 20–26). Slices **01–26 are implemented**:
-  `@smite/core` (registrar), `@smite/http` (DSL + executor), `@smite/env`
-  (declarative env vars), `@smite/client` (build-time typed-client codegen)
-  and `@smite/domain` (functional DDD toolkit) are green, 18/19 close the
+  `env` 16, `client` 17, `domain` 20–26, `cli` 27–29). Slices **01–29 are
+  implemented**: `@smite/core` (registrar), `@smite/http` (DSL + executor +
+  `serveNode` node:http adapter), `@smite/env` (declarative env vars),
+  `@smite/client` (build-time typed-client codegen), `@smite/domain`
+  (functional DDD toolkit), `@smite/cli` (config-driven plugin-host compiler:
+  `compileApp`, `smite.config.ts`, `smite` bin, `smite dev` auto-reload local
+  server), `@smite/openapi` (OpenAPI 3.1 generator plugin) and `create-smite-app`
+  (scaffolder: `yarn create smite-app`, always-TypeScript templates) are green,
+  18/19 close the
   docs flow (tested `#section` snippets → `@example` JSDoc → injected `dist`
   declarations → static site, Internals taxonomy). The next work is the
-  roadmap (CLI, serverless) documented at the end of `client/17_client.md`.
+  roadmap (serverless, `smite build`, zod-inferred client buckets) documented
+  at the end of `client/17_client.md`.
 - **Examples and benchmarks live outside the packages**: `examples/*`
   (runnable apps, also yarn workspaces: `http-rest-server`, `env-http`,
   `typed-client`, `fp-utils`) and `benchmarks/` (docker + k6 routing
@@ -25,6 +31,12 @@ architecture.
   asserts each `@example` in `src/**/*.ts` resolves to a tested `#section`
   snippet and renders as a ```ts fence. Keep `docs.test.ts` in sync when
   adding or renaming examples.
+- **Concept docs must never contain raw ` ```ts ` fences** — the site renderer
+  escapes them into plain text. Every code example in `packages/*/docs/concepts/*.md`
+  must be an `@example <Title>` line backed by a tested `#section` snippet in
+  that package's `src/*.test.ts`. `yarn docs:build` throws on a raw fence, so
+  this is enforced at build time. Shell commands in concept docs go in inline
+  backticks, not fences.
 - Root `package.json` and `tsconfig.build.json` reference the live workspaces
   (`fp`, `core`, `http`, `env`, `client`). Package build tsconfigs **exclude
   `*.test.ts`** (tests are run by Vitest, not `tsc`).
@@ -96,10 +108,12 @@ architecture.
   `enum` (enums can't be tree-shaken by esbuild).
 - Validation is **zod-only**.
 - Dependency direction (one-way, no cycles): `fp`/`core` base →
-  `http`/`env` → `client` → `serverless`/`cli`. Packages import from the
-  `@smite/*` public API only, never each other's internals. `@smite/client`
-  depends on `@smite/core` only (not `@smite/http`); its generated output and
-  `@smite/client/runtime` never reference the registry or `@smite/http`.
+  `http`/`env` → `client` → `serverless`/`cli`, and `openapi` →
+  `http`/`core`/`cli`. Packages import from the `@smite/*` public API only,
+  never each other's internals. `@smite/cli` imports **no** `@smite/*` beyond
+  `@smite/core`; `@smite/client` depends on `@smite/core` + `@smite/cli` (not
+  `@smite/http`); `@smite/client/runtime` never references the registry or
+  `@smite/http`.
 
 ## TypeScript conventions (configured, easy to violate)
 
@@ -116,7 +130,7 @@ architecture.
   removes it — don't copy the pattern into new packages.
 - Keep `.docs/features/{package}/*` filenames ordered (global slice numbers)
   and slices in sync with code; the next session picks up at the first
-  unimplemented slice. `cli/27` (CLI foundation, config-driven plugins, shared
-  `compileApp`) and `cli/28` (`@smite/openapi`) are planned (docs written) but
-  not yet implemented — they land next, after `domain/20–26` (implemented).
+  unimplemented slice. All slices `01`–`29` are implemented (core, http, meta,
+  env, client, domain, cli, openapi); the roadmap items after them are
+  documented at the end of `client/17_client.md`.
 - Only commit when explicitly asked.

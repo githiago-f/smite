@@ -1,0 +1,14 @@
+{
+  "name": "@smite/example-aws-lambda",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/invoke.mjs"
+  },
+  "dependencies": {
+    "@smite/http": "*",
+    "@smite/serverless": "*",
+    "zod": "^4.0.0"
+  }
+}

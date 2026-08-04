@@ -11,12 +11,7 @@ implementation.
 
 `domain.port({ name, methods })` declares a contract:
 
-```ts
-const orderRepo = domain.port({
-  name: "OrderRepository",
-  methods: ["findById", "save"],
-});
-```
+@example Declare a repository port
 
 A working store implements that shape and is injected at the edge:
 
@@ -31,5 +26,4 @@ A working store implements that shape and is injected at the edge:
 when your aggregate fits the default: `findById`, `save`, `add`, `update`,
 `remove`. For anything richer, declare a custom port.
 
-@example Declare a repository port
 @example Bind dependencies to a usecase

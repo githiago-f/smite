@@ -6,5 +6,11 @@
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "include": ["src/**/*.ts"],
-  "references": []
+  "exclude": ["src/**/*.test.ts"],
+  "references": [
+    { "path": "../aws" },
+    { "path": "../core" },
+    { "path": "../http" },
+    { "path": "../cli" }
+  ]
 }

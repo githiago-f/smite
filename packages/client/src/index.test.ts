@@ -1,7 +1,19 @@
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { generate } from "@smite/client";
+import {
+  compileApp,
+  compileApps,
+  defineSmiteConfig,
+  dispatch,
+  entriesOf,
+} from "@smite/cli";
+import {
+  client,
+  collectEndpointsFromApps,
+  emitClient,
+  generate,
+} from "@smite/client";
 import { clear } from "@smite/core";
 import * as esbuild from "esbuild";
 import { afterEach, describe, expect, it } from "vitest";
@@ -63,9 +75,11 @@ describe("@smite/client", () => {
 
   it("generated client executes against a stubbed fetch and mirrors the response", async () => {
     const mod = await buildClient();
+    const { api, configure } = mod;
 
     const calls: Array<{ url: string; method?: string }> = [];
-    mod.configure({
+    // #section - Call the generated client
+    configure({
       baseUrl: "https://api.example.com",
       fetch: async (url: string, init: RequestInit) => {
         calls.push({ url, method: init.method });
@@ -73,11 +87,28 @@ describe("@smite/client", () => {
       },
     });
 
-    const response = await mod.api.users.$id.$get({ params: { id: "42" } });
+    const response = await api.users.$id.$get({ params: { id: "42" } });
+    // #endsection
     expect(calls[0]?.url).toBe("https://api.example.com/users/42");
     expect(calls[0]?.method).toBe("GET");
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ id: "42" });
+  });
+
+  it("configures the client plugin in a Smite config", () => {
+    // #section - Configure the client plugin
+    const config = defineSmiteConfig({
+      entries: ["./src/app.ts", "./src/handlers/events.ts"],
+      plugins: [client({ outfile: "./src/app.client.ts" })],
+    });
+    // #endsection
+
+    expect(config.entry).toBeUndefined();
+    expect(entriesOf(config)).toEqual([
+      "./src/app.ts",
+      "./src/handlers/events.ts",
+    ]);
+    expect(config.plugins[0]?.name).toBe("client");
   });
 
   it("serializes query, body, and per-call config", async () => {
@@ -166,5 +197,56 @@ describe("@smite/client", () => {
         alias: sourceAliases,
       }),
     ).rejects.toThrow(/No app found/);
+  });
+
+  it("client() returns a CLI plugin that emits the same client", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "smite-client-plugin-"));
+    const outfile = join(dir, "app.client.ts");
+    const plugin = client({ outfile });
+    // #section - Register the client plugin
+    const pluginApp = await compileApp({
+      entry,
+      alias: sourceAliases,
+    });
+    await plugin.run({ apps: [pluginApp] });
+    // #endsection
+
+    const code = await readFile(outfile, "utf8");
+    expect(code).toContain("users");
+    expect(code).not.toContain("globalRegistry");
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("creates a client through the CLI config + dispatch flow", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "smite-client-cli-"));
+    const outfile = join(dir, "app.client.ts");
+    const config = defineSmiteConfig({
+      entries: [entry],
+      plugins: [client({ outfile })],
+    });
+    const apps = await compileApps({
+      entries: entriesOf(config),
+      alias: sourceAliases,
+    });
+    // #section - Create a client with the CLI
+    await dispatch(config.plugins, "client", { apps });
+    // #endsection
+
+    const code = await readFile(outfile, "utf8");
+    expect(code).toContain("users");
+    expect(code).toContain('request("GET", "/users/:id"');
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("merges routes across multiple handler entries", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "smite-client-entries-"));
+    const apps = await compileApps({
+      entries: [entry, join(cwd, "packages/cli/test/admin.ts")],
+      alias: sourceAliases,
+    });
+    const code = emitClient(collectEndpointsFromApps(apps));
+    expect(code).toContain("users");
+    expect(code).toContain("admin");
+    await rm(dir, { recursive: true, force: true });
   });
 });

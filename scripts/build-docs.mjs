@@ -317,6 +317,12 @@ const renderConceptMarkdown = async (
   };
 
   for (const line of lines) {
+    if (/^\s*```\s*tsx?\s*$/u.test(line)) {
+      throw new Error(
+        `Raw TypeScript code fence in ${filePath} (${packageName}). Concept docs must use '@example <Title>' with a tested '#section' snippet.`,
+      );
+    }
+
     const example = line.match(/^\s*@example\s+(.+?)\s*$/u);
 
     if (example) {
@@ -437,6 +443,17 @@ const renderHome = (packageDocs) =>
       "<p>Describe your application as intent — routes, inputs, responses, environment. Smite turns that description into a validated, typed server, and generates a client that matches it exactly. At runtime only what your app needs survives.</p>",
       "</section>",
       "<section>",
+      "<h2>Start here</h2>",
+      '<div class="grid">',
+      `<a class="card" href="./create-smite-app/concepts/create-your-first-project.html">
+        <span class="eyebrow">First command</span>
+        <strong>Create a Smite app</strong>
+        <span>Scaffold a project, start the development server, and call your first route.</span>
+        <code>yarn create smite-app hello-api</code>
+      </a>`,
+      "</div>",
+      "</section>",
+      "<section>",
       "<h2>What makes Smite unique</h2>",
       '<div class="grid">',
       ...[
@@ -463,6 +480,12 @@ const renderHome = (packageDocs) =>
           title: "Env vars are declared, not scattered",
           text: "Declare what your app needs and how to validate it with zod. Providers resolve at runtime; missing or invalid values fail loudly, defaults and optionals are first-class.",
           href: "./smite-env/concepts/registration.html",
+        },
+        {
+          eyebrow: "Local AWS",
+          title: "Develop against Floci",
+          text: "Use the AWS SDK against a local Floci endpoint, declare resources and permissions once, then run the same declarations through Serverless deployment.",
+          href: "./smite-aws/concepts/use-aws-locally-with-floci.html",
         },
         {
           eyebrow: "Functional primitives",

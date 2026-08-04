@@ -43,10 +43,28 @@ export type {
 } from "./handler.js";
 export { domainHandlerSymbol } from "./handler.js";
 
+export { aggregate, aggregateDescriptorSymbol } from "./aggregate.js";
+export type {
+  Aggregate,
+  AggregateDescriptor,
+  AggregateEvent,
+  AggregateInstance,
+  Commit,
+} from "./aggregate.js";
+
+export { projection } from "./projection.js";
+export type {
+  Projection,
+  ProjectionConfig,
+  ProjectionDescriptor,
+} from "./projection.js";
+
+import { aggregate } from "./aggregate.js";
 import { command, query } from "./cqrs.js";
 import { entity } from "./entity.js";
 import { handler } from "./handler.js";
 import { port } from "./port.js";
+import { projection } from "./projection.js";
 import { mergeSpecifications, specification } from "./specification.js";
 import { usecase } from "./usecase.js";
 import { valueObject } from "./value-object.js";
@@ -58,10 +76,12 @@ import { valueObject } from "./value-object.js";
  */
 export const domain = {
   command,
+  aggregate,
   entity,
   handler,
   mergeSpecifications,
   port,
+  projection,
   query,
   specification,
   usecase,

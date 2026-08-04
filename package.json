@@ -13,7 +13,11 @@
     "bench:http": "node benchmarks/run.mjs",
     "bench:clean": "rm -rf benchmarks/results",
     "format": "biome format --write .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:floci": "yarn workspace @smite/aws test:floci",
+    "release:verify": "node scripts/verify-release-tag.mjs",
+    "release:prepare": "node scripts/inject-jsdoc-examples.mjs",
+    "release:publish": "node scripts/publish-packages.mjs"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +28,7 @@
     "@shikijs/themes": "^4.3.1",
     "esbuild": "^0.24.2",
     "jsdoc": "^4.0.5",
+    "semver": "^7.6.3",
     "shiki": "^4.3.1",
     "typescript": "^5.5.4",
     "vitest": "^2.1.1"

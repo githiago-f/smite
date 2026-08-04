@@ -4,6 +4,7 @@ import { chain, getExtractorMetadata } from "@smite/fp";
 import { accept } from "./endpoint.js";
 import type { HttpEndpointBuilder } from "./endpoint.js";
 import { cookies, headers, params, query } from "./extract.js";
+import { serveNode } from "./node-server.js";
 import { json, status } from "./response.js";
 import { serve } from "./serve.js";
 import type { HttpRouter } from "./serve.js";
@@ -109,6 +110,12 @@ export { json, status } from "./response.js";
 export { serve } from "./serve.js";
 export type { HttpRouter } from "./serve.js";
 
+export { serveNode } from "./node-server.js";
+export type { NodeServerDocs, NodeServerOptions } from "./node-server.js";
+
+export { routesOf } from "./routes.js";
+export type { CollectedEndpoint, CollectedRoute } from "./routes.js";
+
 export { cookies, headers, params, query } from "./extract.js";
 export { chain, getExtractorMetadata } from "@smite/fp";
 export type { Extractor, ExtractorMetadata } from "@smite/fp";
@@ -124,6 +131,7 @@ export const http = {
   route,
   json,
   status,
+  serveNode,
   cookies,
   headers,
   params,

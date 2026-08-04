@@ -40,9 +40,11 @@ export function lookup(key: string): Descriptor<string, unknown> | undefined {
  * @example Query and clear the registry
  */
 export function lookupAll(
-  kind: string,
+  kind?: string,
 ): readonly Descriptor<string, unknown>[] {
-  return [...getRegistry().values()].filter((d) => d.__kind === kind);
+  return [...getRegistry().values()].filter(
+    (d) => kind === undefined || d.__kind === kind,
+  );
 }
 
 /**

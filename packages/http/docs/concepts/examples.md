@@ -31,6 +31,13 @@ handler. Start it with `yarn workspace @smite/example-env-http start`.
 `yarn workspace @smite/example-typed-client build`, start the server with
 `start:server`, then run the client with `start:client`.
 
+## CLI-driven codegen + Swagger UI
+
+`examples/cli-app` is the full CLI flow: a `smite.config.ts` declares the
+`client()` and `openapi()` plugins, `yarn workspace @smite/example-cli-app
+generate` runs both generators, and `start` serves the app plus an interactive
+Swagger UI (`/docs`) and the raw spec (`/openapi.json`).
+
 ## Functional utilities
 
 `examples/fp-utils` exercises `@smite/fp` — `Option`, `Result`, `Task`,
