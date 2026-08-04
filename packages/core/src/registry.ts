@@ -4,7 +4,10 @@ type RegistryMap = Map<string, Descriptor<string, unknown>>;
 
 const getRegistry = (): RegistryMap => {
   const g = globalThis as typeof globalThis & { globalRegistry?: RegistryMap };
-  return (g.globalRegistry ??= new Map());
+  if (g.globalRegistry === undefined) {
+    g.globalRegistry = new Map();
+  }
+  return g.globalRegistry;
 };
 
 /**

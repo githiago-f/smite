@@ -353,8 +353,11 @@ export class Result<Value, ErrorValue = Error> {
     data: Data,
   ): Result<never, { readonly tag: Tag; readonly data: Data }>;
 
-  static err(errorOrTag: unknown, data?: unknown): Result<unknown, unknown> {
-    if (arguments.length === 1) {
+  static err(
+    ...args: [unknown] | [unknown, unknown]
+  ): Result<unknown, unknown> {
+    const [errorOrTag, data] = args;
+    if (args.length === 1) {
       return new Result(freeze({ error: errorOrTag, tag: "err" }));
     }
 
