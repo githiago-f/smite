@@ -1,6 +1,6 @@
 {
   "name": "@smite/example-typed-client",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,8 +9,8 @@
     "start:client": "node src/client.mjs"
   },
   "dependencies": {
-    "@smite/client": "*",
-    "@smite/http": "*",
+    "@smite/client": "1.0.0",
+    "@smite/http": "1.0.0",
     "zod": "^4.0.0"
   }
 }
