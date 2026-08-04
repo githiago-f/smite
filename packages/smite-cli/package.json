@@ -1,5 +1,5 @@
 {
-  "name": "smite",
+  "name": "smite-cli",
   "version": "1.0.0",
   "description": "Command-line entrypoint for the Smite framework.",
   "license": "MIT",

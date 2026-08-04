@@ -8,7 +8,7 @@
     { "path": "./packages/http" },
     { "path": "./packages/env" },
     { "path": "./packages/cli" },
-    { "path": "./packages/smite" },
+    { "path": "./packages/smite-cli" },
     { "path": "./packages/serverless" },
     { "path": "./packages/client" },
     { "path": "./packages/openapi" },
