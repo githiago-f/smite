@@ -30,5 +30,11 @@ const workspaces = await collectPublishableWorkspaces();
 for (const workspace of workspaces) {
   console.log(`Publishing ${workspace.packageJson.name}@${version}`);
 
-  await run("npm", ["publish", workspace.relativeDir, "--access", "public"]);
+  await run("yarn", [
+    "workspace",
+    workspace.packageJson.name,
+    "publish",
+    "--access",
+    "public",
+  ]);
 }
