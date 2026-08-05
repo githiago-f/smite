@@ -9,3 +9,4 @@ examples/cli-app/openapi.json
 /app.client.ts
 /src/app.client.ts
 .npmrc
+.npmrc*

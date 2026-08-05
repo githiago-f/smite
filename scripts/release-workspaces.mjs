@@ -6,10 +6,14 @@ const rootDir = process.cwd();
 const packagesDir = path.join(rootDir, "packages");
 
 export const getReleaseVersion = () => {
+  const positionalArg = process.argv
+    .slice(2)
+    .find((arg) => !arg.startsWith("--"));
+
   const refName =
     process.env.RELEASE_VERSION ??
     process.env.GITHUB_REF_NAME ??
-    process.argv[2] ??
+    positionalArg ??
     "";
 
   return refName.startsWith("v") ? refName.slice(1) : refName;
