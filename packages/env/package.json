@@ -3,6 +3,14 @@
   "version": "1.2.1",
   "description": "Declarative environment variables for Smite: provider, zod validation, collect-mode manifest.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/githiago-f/smite.git"
+  },
+  "homepage": "https://github.com/githiago-f/smite#readme",
+  "bugs": {
+    "url": "https://github.com/githiago-f/smite/issues"
+  },
   "type": "module",
   "exports": {
     ".": {

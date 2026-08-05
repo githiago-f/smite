@@ -3,6 +3,14 @@
   "version": "1.2.1",
   "description": "Command-line entrypoint for the Smite framework.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/githiago-f/smite.git"
+  },
+  "homepage": "https://github.com/githiago-f/smite#readme",
+  "bugs": {
+    "url": "https://github.com/githiago-f/smite/issues"
+  },
   "type": "module",
   "bin": {
     "smite": "./dist/cli.js"

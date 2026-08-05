@@ -3,6 +3,14 @@
   "version": "1.2.1",
   "description": "Generates a typed, builder-style HTTP client from a Smite app definition.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/githiago-f/smite.git"
+  },
+  "homepage": "https://github.com/githiago-f/smite#readme",
+  "bugs": {
+    "url": "https://github.com/githiago-f/smite/issues"
+  },
   "type": "module",
   "exports": {
     ".": {

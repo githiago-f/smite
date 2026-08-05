@@ -12,7 +12,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -55,4 +55,10 @@ jobs:
         run: yarn release:publish --npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}
+
+      - name: Create GitHub Release
+        run: yarn release:github
+        env:
+          GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}

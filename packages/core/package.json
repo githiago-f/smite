@@ -3,6 +3,14 @@
   "version": "1.2.1",
   "description": "Semantic registrar: descriptors (IR nodes), relationships (IR edges) and the global registry.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/githiago-f/smite.git"
+  },
+  "homepage": "https://github.com/githiago-f/smite#readme",
+  "bugs": {
+    "url": "https://github.com/githiago-f/smite/issues"
+  },
   "type": "module",
   "exports": {
     ".": {

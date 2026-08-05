@@ -3,6 +3,14 @@
   "version": "1.2.1",
   "description": "OpenAPI 3.1 artifact generator for Smite apps, delivered as an @smitejs/cli plugin.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/githiago-f/smite.git"
+  },
+  "homepage": "https://github.com/githiago-f/smite#readme",
+  "bugs": {
+    "url": "https://github.com/githiago-f/smite/issues"
+  },
   "type": "module",
   "exports": {
     ".": {
