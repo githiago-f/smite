@@ -39,7 +39,9 @@ const versionArgs =
 
 for (const workspace of workspaces) {
   const target = version === "" ? workspace.packageJson.version : version;
-  console.log(`Publishing ${workspace.packageJson.name}@${target} -> ${registry}`);
+  console.log(
+    `Publishing ${workspace.packageJson.name}@${target} -> ${registry}`,
+  );
 
   await run("yarn", [
     "workspace",

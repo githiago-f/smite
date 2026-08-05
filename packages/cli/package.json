@@ -17,11 +17,7 @@
       "default": "./dist/cli.js"
     }
   },
-  "files": [
-    "dist",
-    "!dist/**/*.test.*",
-    "!dist/.tsbuildinfo"
-  ],
+  "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
   "publishConfig": {
     "access": "public"
   },
