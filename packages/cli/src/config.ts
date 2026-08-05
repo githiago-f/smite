@@ -28,6 +28,10 @@ export interface SmiteConfig {
 /**
  * Runtime bundle settings for `smite build`.
  *
+ * Shared esbuild options (minify, sourcemap, target, …) go under `esbuild`,
+ * straight through to `esbuild.build`, so they reuse esbuild's own typings
+ * instead of duplicating fields that drift with esbuild releases.
+ *
  * @group Config
  */
 export interface SmiteBuildConfig {
@@ -37,12 +41,8 @@ export interface SmiteBuildConfig {
   readonly entries?: readonly string[];
   /** Output directory for runtime bundles. Defaults to `dist`. */
   readonly outdir?: string;
-  /** Emit sourcemaps for runtime bundles. Defaults to `false`. */
-  readonly sourcemap?: boolean;
-  /** Minify runtime bundles. Defaults to `false`. */
-  readonly minify?: boolean;
-  /** esbuild target for runtime bundles. Defaults to `es2022`. */
-  readonly target?: string;
+  /** Shared options passed to `esbuild.build` for each runtime bundle. */
+  readonly esbuild?: esbuild.BuildOptions;
 }
 
 /**

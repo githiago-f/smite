@@ -54,7 +54,6 @@ export async function bundleBuildEntries(
   options: BundleBuildEntriesOptions,
 ): Promise<readonly string[]> {
   const outdir = options.outdir ?? "dist";
-  const target = options.target ?? "es2022";
   const outfiles: string[] = [];
 
   for (const entry of options.entries) {
@@ -63,15 +62,17 @@ export async function bundleBuildEntries(
     await esbuild.build({
       entryPoints: [resolve(options.cwd, entry)],
       outfile,
-      bundle: true,
       platform: "node",
       format: "esm",
-      target,
-      define: { ALLOW_GLOBAL_REGISTRY: "false" },
-      absWorkingDir: options.cwd,
-      minify: options.minify ?? false,
-      sourcemap: options.sourcemap ?? false,
+      ...options.esbuild,
       ...(options.alias === undefined ? {} : { alias: options.alias }),
+      bundle: options.esbuild?.bundle ?? true,
+      minify: options.esbuild?.minify ?? true,
+      define: {
+        ...(options.esbuild?.define ?? {}),
+        ALLOW_GLOBAL_REGISTRY: "false",
+      },
+      absWorkingDir: options.cwd,
     });
     outfiles.push(outfile);
   }
