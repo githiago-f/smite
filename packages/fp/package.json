@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/fp",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Small functional programming primitives for Smite applications and framework code.",
   "license": "MIT",
   "type": "module",

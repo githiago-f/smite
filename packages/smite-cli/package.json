@@ -1,6 +1,6 @@
 {
   "name": "smite-cli",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Command-line entrypoint for the Smite framework.",
   "license": "MIT",
   "type": "module",
@@ -21,7 +21,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@smitejs/cli": "^1.2.0"
+    "@smitejs/cli": "^1.2.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0"

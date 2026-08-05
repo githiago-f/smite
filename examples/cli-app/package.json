@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/example-cli-app",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,10 +8,10 @@
     "start": "node src/server.mjs"
   },
   "dependencies": {
-    "@smitejs/cli": "1.2.0",
-    "@smitejs/client": "1.2.0",
-    "@smitejs/http": "1.2.0",
-    "@smitejs/openapi": "1.2.0",
+    "@smitejs/cli": "1.2.1",
+    "@smitejs/client": "1.2.1",
+    "@smitejs/http": "1.2.1",
+    "@smitejs/openapi": "1.2.1",
     "zod": "^4.0.0"
   }
 }
