@@ -52,7 +52,7 @@ jobs:
         run: yarn release:prepare
 
       - name: Publish packages
-        run: yarn release:publish
+        run: yarn release:publish --npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}
