@@ -1,4 +1,10 @@
-import { createApp, defineDescriptor, refine, relate } from "@smitejs/core";
+import {
+  childrenOf,
+  createApp,
+  defineDescriptor,
+  refine,
+  relate,
+} from "@smitejs/core";
 import type { AppDescriptor, Descriptor } from "@smitejs/core";
 import { chain, getExtractorMetadata } from "@smitejs/fp";
 import { accept } from "./endpoint.js";
@@ -8,19 +14,30 @@ import { serveNode } from "./node-server.js";
 import { json, status } from "./response.js";
 import { serve } from "./serve.js";
 import type { HttpRouter } from "./serve.js";
-import type { HttpMethod, RouteInputConfig } from "./types.js";
+import type { HttpMethod, RouteConfig, RouteInputConfig } from "./types.js";
 import { withMethods } from "./withMethods.js";
 
 export { HttpMethod, HttpStatus } from "./types.js";
+export type { RouteConfig } from "./types.js";
 
 /**
- * A route node in the IR, holding its optional `req` input config.
+ * A route node in the IR, holding its optional descriptive `config` fields and
+ * `req` input config. The key is scoped to its app, so routes are unique
+ * within one app, not across the whole application.
  *
  * @group DSL
  */
 export interface RouteDescriptor<
   Config extends RouteInputConfig = RouteInputConfig,
-> extends Descriptor<"http.route", { readonly req?: Config }> {}
+> extends Descriptor<
+    "http.route",
+    {
+      readonly name?: string;
+      readonly summary?: string;
+      readonly description?: string;
+      readonly req?: Config;
+    }
+  > {}
 
 /**
  * A route reference: the `http.route` IR node carrying its `req` and `accept`
@@ -47,13 +64,15 @@ export interface HttpRouteBuilder<
  * @group DSL
  */
 export interface HttpAppBuilder extends AppDescriptor {
-  readonly route: (config?: RouteInputConfig) => HttpRouteBuilder;
+  readonly route: (config?: RouteConfig) => HttpRouteBuilder;
   readonly serve: () => HttpRouter;
 }
 
 /**
  * Creates an HTTP app junction. The returned reference is the app descriptor
  * with the DSL attached, so `route(app)` and `serve(app)` take it directly.
+ * An app holds any number of routes (`app -has n-> route`), each unique within
+ * the app.
  *
  * @group DSL
  * @example Define an app with routes
@@ -61,26 +80,38 @@ export interface HttpAppBuilder extends AppDescriptor {
 export function app(name?: string): HttpAppBuilder {
   const descriptor = createApp(name);
   const builder = withMethods(descriptor, {
-    route: () => route(builder),
+    route: (config?: RouteConfig) => route(builder, config),
     serve: () => serve(builder),
   });
   return builder;
 }
 
 /**
- * Attaches a route builder to an app (one route per app).
+ * Attaches a route builder to an app. Routes are unique within their app and
+ * may repeat across apps; give each route a `name` in the config to key it, or
+ * omit it to auto-number it. The config (`name`, `summary`, `description`) is
+ * stored on the route IR node for artifact generators to consume.
  *
  * @group DSL
  * @example Declare validated inputs
  */
 export function route<Config extends RouteInputConfig = RouteInputConfig>(
   app: HttpAppBuilder | AppDescriptor,
+  config?: RouteConfig,
 ): HttpRouteBuilder<Config> {
   const descriptor = app as AppDescriptor;
+  const routeName =
+    config?.name ?? String(childrenOf(descriptor, "http.route").length);
   const routeDescriptor = defineDescriptor(
     "http.route",
-    "http.route",
-    {},
+    `${descriptor.__key}:http.route:${routeName}`,
+    {
+      ...(config?.name === undefined ? {} : { name: config.name }),
+      ...(config?.summary === undefined ? {} : { summary: config.summary }),
+      ...(config?.description === undefined
+        ? {}
+        : { description: config.description }),
+    },
   ) as RouteDescriptor<Config>;
   relate(descriptor, "http.route", routeDescriptor);
 
@@ -90,8 +121,6 @@ export function route<Config extends RouteInputConfig = RouteInputConfig>(
       return builder as unknown as HttpRouteBuilder<Next>;
     },
     accept: (method: HttpMethod, path: string) => {
-      const key = `${method} ${path}`;
-      (routeDescriptor as { __key: string }).__key = key;
       return accept(builder, method, path);
     },
   });

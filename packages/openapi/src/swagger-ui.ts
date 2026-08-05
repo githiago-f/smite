@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import type { HttpRequest, HttpResponse, HttpRouter } from "@smitejs/http";
 
 /**
@@ -16,6 +17,16 @@ export interface SwaggerUiOptions {
   readonly specPath?: string;
   /** Base URL for the Swagger UI assets. Defaults to the unpkg CDN. */
   readonly cdn?: string;
+}
+
+/**
+ * Options for {@link swaggerUiFromFile}.
+ *
+ * @group Swagger UI
+ */
+export interface SwaggerUiFileOptions extends Omit<SwaggerUiOptions, "doc"> {
+  /** Path to the OpenAPI JSON document to read and serve. */
+  readonly file: string;
 }
 
 const escapeHtml = (value: string): string =>
@@ -88,5 +99,28 @@ export function swaggerUi(options: SwaggerUiOptions): HttpRouter {
       };
     }
     return json(404, { error: "Not Found" });
+  };
+}
+
+/**
+ * Builds an {@link HttpRouter} that reads the OpenAPI document from `file` and
+ * serves it alongside a Swagger UI page: `specPath` returns the doc as JSON and
+ * `uiPath` returns the HTML page. The file is re-read on each request so a
+ * regenerated document is reflected without restarting the server. Returns
+ * `404` when the file is missing or unparseable.
+ *
+ * @group Swagger UI
+ * @example Serve the OpenAPI document from a file
+ */
+export function swaggerUiFromFile(options: SwaggerUiFileOptions): HttpRouter {
+  const { file, ...ui } = options;
+  return async (request: HttpRequest): Promise<HttpResponse> => {
+    let doc: unknown;
+    try {
+      doc = JSON.parse(await readFile(file, "utf8")) as unknown;
+    } catch {
+      return json(404, { error: "Not Found" });
+    }
+    return swaggerUi({ ...ui, doc })(request);
   };
 }

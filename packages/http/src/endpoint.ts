@@ -66,10 +66,14 @@ export function accept<Config extends RouteInputConfig>(
   method: HttpMethod,
   path: string,
 ): HttpEndpointBuilder<Config> {
-  const descriptor = defineDescriptor("http.endpoint", `${method} ${path}`, {
-    method,
-    path,
-  });
+  const descriptor = defineDescriptor(
+    "http.endpoint",
+    `${route.__key}:endpoint:${method} ${path}`,
+    {
+      method,
+      path,
+    },
+  );
 
   relate(route, "http.endpoint", descriptor);
 

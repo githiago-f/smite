@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/cli",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Compile-time toolchain for Smite: compile apps in collect mode and run generator plugins.",
   "license": "MIT",
   "type": "module",
@@ -17,7 +17,11 @@
       "default": "./dist/cli.js"
     }
   },
-  "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/.tsbuildinfo"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -26,7 +30,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smitejs/core": "^1.1.0",
+    "@smitejs/core": "^1.2.0",
     "commander": "^15.0.0",
     "esbuild": "^0.24.2"
   },

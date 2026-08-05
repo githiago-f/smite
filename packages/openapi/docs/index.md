@@ -42,10 +42,19 @@ smite generate openapi
 
 ## API
 
-- `openapi({ outfile, title?, version? })` — CLI plugin factory. `run({ apps })`
-  writes `JSON.stringify(doc, null, 2)` to `outfile` (resolved from `cwd`),
-  merging paths across every app in `apps`.
+- `openapi({ outfile, title?, version?, servers?, security?,
+  securitySchemes?, tags?, externalDocs?, additional? })` — CLI plugin factory.
+  `run({ apps })` writes `JSON.stringify(doc, null, 2)` to `outfile` (resolved
+  from `cwd`), merging paths across every app in `apps`. Root-level
+  configuration (`servers`, `security`, `securitySchemes`, `tags`,
+  `externalDocs`) is emitted verbatim into the document; `additional` merges
+  arbitrary extra top-level fields.
 - `swaggerUi({ doc, title?, uiPath?, specPath?, cdn? })` — builds an
-  `HttpRouter` that serves the document as JSON (`/openapi.json`) and an
-  interactive Swagger UI page (`/docs`). Compose it alongside your app's
+  `HttpRouter` that serves a document held in memory as JSON (`/openapi.json`)
+  and an interactive Swagger UI page (`/docs`). Compose it alongside your app's
   `serve()` router in the dev server.
+- `swaggerUiFromFile({ file, title?, uiPath?, specPath?, cdn? })` — like
+  `swaggerUi`, but reads the document from `file` on each request, so a
+  regenerated spec is served without a server restart. Returns `404` when the
+  file is missing or unparseable. This is what `smite dev` mounts when
+  `@smitejs/openapi` is installed.

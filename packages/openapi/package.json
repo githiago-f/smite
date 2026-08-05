@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/openapi",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "OpenAPI 3.1 artifact generator for Smite apps, delivered as an @smitejs/cli plugin.",
   "license": "MIT",
   "type": "module",
@@ -10,7 +10,11 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/.tsbuildinfo"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -19,9 +23,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smitejs/cli": "^1.1.0",
-    "@smitejs/core": "^1.1.0",
-    "@smitejs/http": "^1.1.0"
+    "@smitejs/cli": "^1.2.0",
+    "@smitejs/core": "^1.2.0",
+    "@smitejs/http": "^1.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0"

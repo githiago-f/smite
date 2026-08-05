@@ -78,6 +78,35 @@ describe("http DSL", () => {
       expect(childrenOf(route, "http.endpoint")).toHaveLength(3);
     });
 
+    it("wires many routes to an app, each scoped to its own key", () => {
+      const app = http.app("shop");
+      const users = http.route(app, { name: "users" });
+      const orders = app.route();
+      expect(childrenOf(app, "http.route")).toEqual([users, orders]);
+      expect(users.__key).toContain("users");
+      expect(orders.__key).not.toEqual(users.__key);
+    });
+
+    it("keeps route keys unique within an app", () => {
+      const app = http.app("catalog");
+      http.route(app, { name: "items" });
+      expect(() => http.route(app, { name: "items" })).toThrow(/Duplicate/);
+    });
+
+    it("stores route config on the route node for generators", () => {
+      const app = http.app("docs");
+      const route = http.route(app, {
+        name: "pages",
+        summary: "Get pages",
+        description: "Fetch and manage page resources.",
+      });
+      expect(route.data).toMatchObject({
+        name: "pages",
+        summary: "Get pages",
+        description: "Fetch and manage page resources.",
+      });
+    });
+
     it("gives each endpoint exactly one handler child", () => {
       const { route } = makeApp();
       for (const endpoint of childrenOf(route, "http.endpoint")) {

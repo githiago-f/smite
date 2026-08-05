@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import semver from "semver";
 import {
   collectPublishableWorkspaces,
   getReleaseVersion,
@@ -27,14 +28,27 @@ const run = (command, args) =>
 const version = getReleaseVersion();
 const workspaces = await collectPublishableWorkspaces();
 
+const registry = process.argv.includes("--npm")
+  ? "https://registry.npmjs.org"
+  : "http://localhost:4873";
+
+const versionArgs =
+  version === "" && !semver.valid(version)
+    ? []
+    : ["--new-version", version, "--no-git-tag-version"];
+
 for (const workspace of workspaces) {
-  console.log(`Publishing ${workspace.packageJson.name}@${version}`);
+  const target = version === "" ? workspace.packageJson.version : version;
+  console.log(`Publishing ${workspace.packageJson.name}@${target} -> ${registry}`);
 
   await run("yarn", [
     "workspace",
     workspace.packageJson.name,
     "publish",
+    "--registry",
+    registry,
     "--access",
     "public",
+    ...versionArgs,
   ]);
 }

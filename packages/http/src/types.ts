@@ -38,6 +38,22 @@ export interface RouteInputConfig {
   readonly body?: z.ZodType;
 }
 
+/**
+ * Declarative configuration attached to a route and stored on its IR node.
+ * Purely descriptive; consumed by artifact generators such as the OpenAPI
+ * plugin.
+ *
+ * @group Types
+ */
+export interface RouteConfig {
+  /** Route name; also used as the route's IR key when unique within its app. */
+  readonly name?: string;
+  /** Short description shown as each endpoint's OpenAPI `summary`. */
+  readonly summary?: string;
+  /** Long description shown as each endpoint's OpenAPI `description`. */
+  readonly description?: string;
+}
+
 export type InferBucket<
   Config,
   Key extends keyof RouteInputConfig,

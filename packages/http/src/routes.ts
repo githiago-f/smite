@@ -15,17 +15,29 @@ export interface CollectedEndpoint {
 }
 
 /**
- * A route as seen by artifact generators: its optional `req` schemas plus the
- * endpoints declared on it.
+ * A route as seen by artifact generators: its descriptive config (`name`,
+ * `summary`, `description`), optional `req` schemas, plus the endpoints
+ * declared on it.
  *
  * @group Routes
  */
 export interface CollectedRoute {
+  readonly name?: string;
+  readonly summary?: string;
+  readonly description?: string;
   readonly req?: RouteInputConfig;
   readonly endpoints: readonly CollectedEndpoint[];
 }
 
-type RouteNode = Descriptor<"http.route", { req?: RouteInputConfig }>;
+type RouteNode = Descriptor<
+  "http.route",
+  {
+    name?: string;
+    summary?: string;
+    description?: string;
+    req?: RouteInputConfig;
+  }
+>;
 type EndpointNode = Descriptor<
   "http.endpoint",
   { method: HttpMethod; path: string }
@@ -51,10 +63,13 @@ const extractPathParams = (path: string): string[] => {
  */
 export function routesOf(app: AppDescriptor): readonly CollectedRoute[] {
   return childrenOf(app, "http.route").map((route) => {
-    const routeNode = route as RouteNode;
+    const { name, summary, description, req } = (route as RouteNode).data;
     return {
-      ...(routeNode.data.req === undefined ? {} : { req: routeNode.data.req }),
-      endpoints: childrenOf(routeNode, "http.endpoint").map((endpoint) => {
+      ...(name === undefined ? {} : { name }),
+      ...(summary === undefined ? {} : { summary }),
+      ...(description === undefined ? {} : { description }),
+      ...(req === undefined ? {} : { req }),
+      endpoints: childrenOf(route, "http.endpoint").map((endpoint) => {
         const endpointNode = endpoint as EndpointNode;
         return {
           method: endpointNode.data.method,

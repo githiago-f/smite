@@ -53,26 +53,15 @@ const generatedServerEntry = (options: {
 }): string => `
 import { serveNode } from "@smitejs/http";
 import * as mod from ${JSON.stringify(options.entry)};
-${
-  options.docs
-    ? `import { readFile } from "node:fs/promises";
-import { swaggerUi } from "@smitejs/openapi";`
-    : ""
-}
+${options.docs ? `import { swaggerUiFromFile } from "@smitejs/openapi";` : ""}
 
 const app = mod.app ?? mod["default"];
 
 ${
   options.docs
     ? `
-let doc;
-try {
-  doc = JSON.parse(await readFile(${JSON.stringify(options.openapiJson)}, "utf8"));
-} catch {
-  doc = undefined;
-}
-const docs = doc === undefined ? undefined : {
-  router: swaggerUi({ doc, title: ${JSON.stringify(options.title)} }),
+const docs = {
+  router: swaggerUiFromFile({ file: ${JSON.stringify(options.openapiJson)}, title: ${JSON.stringify(options.title)} }),
   paths: ["/docs", "/openapi.json"],
 };`
     : "const docs = undefined;"

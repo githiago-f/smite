@@ -3,7 +3,19 @@ import { dirname, resolve } from "node:path";
 import type { SmitePlugin } from "@smitejs/cli";
 import type { AppDescriptor } from "@smitejs/core";
 import { routesOf } from "@smitejs/http";
-import type { CollectedEndpoint, RouteInputConfig } from "@smitejs/http";
+import type { CollectedEndpoint, CollectedRoute } from "@smitejs/http";
+
+/**
+ * A single {@link https://swagger.io/specification/#server-object | Server}
+ * object emitted under the document's `servers` array.
+ *
+ * @group Generator
+ */
+export interface OpenApiServer {
+  readonly url: string;
+  readonly description?: string;
+  readonly variables?: Readonly<Record<string, unknown>>;
+}
 
 /**
  * Options for the {@link openapi} CLI plugin.
@@ -14,6 +26,18 @@ export interface OpenApiOptions {
   readonly outfile: string;
   readonly title?: string;
   readonly version?: string;
+  /** {@link https://swagger.io/specification/#server-object | Server} objects emitted at the document root. */
+  readonly servers?: readonly OpenApiServer[];
+  /** Array of {@link https://swagger.io/specification/#security-requirement-object | Security Requirement} objects emitted at the document root. */
+  readonly security?: readonly unknown[];
+  /** Security schemes emitted under `components.securitySchemes`. */
+  readonly securitySchemes?: Readonly<Record<string, unknown>>;
+  /** Array of {@link https://swagger.io/specification/#tag-object | Tag} objects emitted at the document root. */
+  readonly tags?: readonly unknown[];
+  /** {@link https://swagger.io/specification/#external-documentation-object | External Documentation} object emitted at the document root. */
+  readonly externalDocs?: unknown;
+  /** Extra top-level fields merged verbatim into the emitted document. */
+  readonly additional?: Readonly<Record<string, unknown>>;
 }
 
 type JsonSchemaLike = { readonly toJSONSchema?: () => unknown };
@@ -77,31 +101,42 @@ const ensurePathParams = (
 };
 
 const buildParameters = (
-  req: RouteInputConfig | undefined,
+  route: CollectedRoute,
   endpoint: CollectedEndpoint,
 ): readonly Parameter[] => {
   const parameters = [
-    ...bucketParameters(req?.query, "query", false),
-    ...bucketParameters(req?.params, "path", true),
-    ...bucketParameters(req?.headers, "header", false),
+    ...bucketParameters(route.req?.query, "query", false),
+    ...bucketParameters(route.req?.params, "path", true),
+    ...bucketParameters(route.req?.headers, "header", false),
   ];
   return ensurePathParams(parameters, endpoint);
 };
 
 const buildOperation = (
-  req: RouteInputConfig | undefined,
+  route: CollectedRoute,
   endpoint: CollectedEndpoint,
 ): Record<string, unknown> => {
   const operation: Record<string, unknown> = {
     responses: { "200": { description: "OK" } },
   };
-  const parameters = buildParameters(req, endpoint);
+  if (route.summary !== undefined) {
+    operation.summary = route.summary;
+  }
+  if (route.description !== undefined) {
+    operation.description = route.description;
+  }
+  if (route.name !== undefined) {
+    operation.tags = [route.name];
+  }
+  const parameters = buildParameters(route, endpoint);
   if (parameters.length > 0) {
     operation.parameters = parameters;
   }
-  if (req?.body !== undefined) {
+  if (route.req?.body !== undefined) {
     operation.requestBody = {
-      content: { "application/json": { schema: toJsonSchema(req.body) } },
+      content: {
+        "application/json": { schema: toJsonSchema(route.req.body) },
+      },
     };
   }
   return operation;
@@ -122,7 +157,7 @@ const buildDocument = (
         const oasPath = toOasPath(endpoint.path);
         paths[oasPath] = {
           ...(paths[oasPath] ?? {}),
-          [endpoint.method.toLowerCase()]: buildOperation(route.req, endpoint),
+          [endpoint.method.toLowerCase()]: buildOperation(route, endpoint),
         };
       }
     }
@@ -133,6 +168,16 @@ const buildDocument = (
       title: options.title ?? "Smite API",
       version: options.version ?? "0.1.0",
     },
+    ...(options.servers === undefined ? {} : { servers: options.servers }),
+    ...(options.security === undefined ? {} : { security: options.security }),
+    ...(options.securitySchemes === undefined
+      ? {}
+      : { components: { securitySchemes: options.securitySchemes } }),
+    ...(options.tags === undefined ? {} : { tags: options.tags }),
+    ...(options.externalDocs === undefined
+      ? {}
+      : { externalDocs: options.externalDocs }),
+    ...(options.additional ?? {}),
     paths,
   };
 };

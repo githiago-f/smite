@@ -1,10 +1,11 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { compileApp, compileApps, defineSmiteConfig } from "@smitejs/cli";
 import { clear } from "@smitejs/core";
+import { http } from "@smitejs/http";
 import { afterEach, describe, expect, it } from "vitest";
-import { openapi, swaggerUi } from "./index.js";
+import { openapi, swaggerUi, swaggerUiFromFile } from "./index.js";
 
 const cwd = process.cwd();
 
@@ -90,6 +91,75 @@ describe("@smitejs/openapi", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
+  it("emits root-level configuration passed to openapi()", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "smite-openapi-"));
+    const outfile = join(dir, "openapi.json");
+    const app = await compileApp({ entry, alias: sourceAliases });
+
+    // #section - Configure root-level OpenAPI options
+    await openapi({
+      outfile,
+      title: "Fixture API",
+      servers: [{ url: "https://api.example.com" }],
+      security: [{ apiKey: [] }],
+      securitySchemes: {
+        apiKey: { type: "apiKey", in: "header", name: "X-Api-Key" },
+      },
+      tags: [{ name: "users", description: "User management" }],
+      externalDocs: { url: "https://example.com/docs" },
+      additional: { "x-custom": { enabled: true } },
+    }).run({ apps: [app] });
+    // #endsection
+
+    const doc = JSON.parse(await readFile(outfile, "utf8")) as {
+      servers: unknown[];
+      security: unknown[];
+      components: { securitySchemes: unknown };
+      tags: unknown[];
+      externalDocs: unknown;
+      "x-custom": unknown;
+    };
+    expect(doc.servers).toEqual([{ url: "https://api.example.com" }]);
+    expect(doc.security).toEqual([{ apiKey: [] }]);
+    expect(doc.components.securitySchemes).toEqual({
+      apiKey: { type: "apiKey", in: "header", name: "X-Api-Key" },
+    });
+    expect(doc.tags).toEqual([
+      { name: "users", description: "User management" },
+    ]);
+    expect(doc.externalDocs).toEqual({ url: "https://example.com/docs" });
+    expect(doc["x-custom"]).toEqual({ enabled: true });
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("emits route summary, description, and name tag into operations", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "smite-openapi-"));
+    const outfile = join(dir, "openapi.json");
+
+    const app = http.app("docs-api");
+    const page = http.route(app, {
+      name: "pages",
+      summary: "Fetch pages",
+      description: "Manage page resources.",
+    });
+    page.accept("GET", "/pages/:id").handler(() => ({ status: 200, body: {} }));
+
+    await openapi({ outfile }).run({ apps: [app] });
+    const doc = JSON.parse(await readFile(outfile, "utf8")) as Record<
+      string,
+      unknown
+    >;
+    const paths = doc.paths as Record<
+      string,
+      Record<string, Record<string, unknown>>
+    >;
+    const operation = paths["/pages/{id}"]?.get;
+    expect(operation?.summary).toBe("Fetch pages");
+    expect(operation?.description).toBe("Manage page resources.");
+    expect(operation?.tags).toEqual(["pages"]);
+    await rm(dir, { recursive: true, force: true });
+  });
+
   it("serves the document and a Swagger UI page from a router", async () => {
     const doc = {
       openapi: "3.1.0",
@@ -148,6 +218,59 @@ describe("@smitejs/openapi", () => {
 
     expect(config.entry).toBeUndefined();
     expect(config.plugins[0]?.name).toBe("openapi");
+  });
+
+  it("serves a document read from a file path", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "smite-openapi-"));
+    const file = join(dir, "openapi.json");
+    const doc = {
+      openapi: "3.1.0",
+      info: { title: "Pets API", version: "1.0.0" },
+      paths: {},
+    };
+    await writeFile(file, JSON.stringify(doc), "utf8");
+    // #section - Serve the OpenAPI document from a file
+    const router = swaggerUiFromFile({ file, title: "Pets API" });
+    const spec = await router({
+      method: "GET",
+      path: "/openapi.json",
+      query: {},
+      headers: {},
+      cookies: {},
+      params: {},
+      body: undefined,
+    });
+    // #endsection
+
+    expect(spec.status).toBe(200);
+    expect(spec.body).toEqual(doc);
+    const missing = await router({
+      method: "GET",
+      path: "/missing.json",
+      query: {},
+      headers: {},
+      cookies: {},
+      params: {},
+      body: undefined,
+    });
+    expect(missing.status).toBe(404);
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("returns 404 from a file router when the document is missing", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "smite-openapi-"));
+    const router = swaggerUiFromFile({ file: join(dir, "nope.json") });
+    const spec = await router({
+      method: "GET",
+      path: "/openapi.json",
+      query: {},
+      headers: {},
+      cookies: {},
+      params: {},
+      body: undefined,
+    });
+    expect(spec.status).toBe(404);
+    await rm(dir, { recursive: true, force: true });
   });
 
   it("composes the swagger router next to an app's serve router", async () => {

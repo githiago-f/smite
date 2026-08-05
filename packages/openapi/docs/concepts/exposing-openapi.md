@@ -24,6 +24,16 @@ This writes a JSON document with one `paths` entry per endpoint. `:param`
 segments become `{param}` templates, bucket schemas become `parameters` /
 `requestBody`, and `ANY` endpoints are skipped with a warning.
 
+Beyond the routes, pass root-level OpenAPI configuration to `openapi()` — for
+example `servers` to point the document at a deployed host, or
+`securitySchemes` plus `security` to declare API-key auth:
+
+@example Configure root-level OpenAPI options
+
+Any of `servers`, `security`, `securitySchemes` (emitted under
+`components.securitySchemes`), `tags`, `externalDocs`, or the catch-all
+`additional` object is merged verbatim into the emitted document.
+
 @example Generate an OpenAPI document
 
 ## Browse it with Swagger UI
