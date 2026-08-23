@@ -101,16 +101,18 @@ import { z } from "zod";
 
 export const app = http.app("greeter");
 
-const route = http.route(app).req({
+const routes = http.router().input({
   query: z.object({ name: z.string().optional() }).partial(),
 });
 
-route
+routes
   .accept("GET", "/hello")
   .handler((ctx) => ({
     status: 200,
     body: { message: `Hello, ${ctx.query.name ?? "world"}!` },
   }));
+
+app.use(routes);
 ```
 
 Serve it over `node:http`:
@@ -142,23 +144,25 @@ rejected with a `400` before your handler runs.
 ### HTTP apps and routes
 
 Everything hangs off one reference: `http.app(name?)` returns an app carrying
-`route()` and `serve()`.
+`use()` (inject routers and aspects) and `serve()`.
 
 ```ts
 import { http } from "@smitejs/http";
 
 const app = http.app("store");
-const route = http.route(app, {
+const routes = http.router({
   name: "users",              // route key (defaults to an auto-number)
   summary: "User resources",  // → OpenAPI summary
   description: "…",           // → OpenAPI description
 });
 
-route.accept("GET", "/users").handler((ctx) => ({ status: 200, body: [] }));
-route.accept("GET", "/users/:id").handler((ctx) => ({
+routes.accept("GET", "/users").handler((ctx) => ({ status: 200, body: [] }));
+routes.accept("GET", "/users/:id").handler((ctx) => ({
   status: 200,
   body: { id: ctx.params.id },
 }));
+
+app.use(routes);
 ```
 
 - Routes are unique within an app; the same route name can repeat across apps.
@@ -170,7 +174,7 @@ See also the docs: [Apps and routes](https://githiago-f.github.io/smite/).
 
 ### Declared inputs (validation)
 
-`http.route(app).req(config)` declares zod schemas per bucket — `query`,
+`http.router().input(config)` declares zod schemas per bucket — `query`,
 `params`, `headers`, `body`. Declare a bucket and it is validated at serve time
 (400 on failure) and inferred into the handler context:
 
@@ -178,18 +182,20 @@ See also the docs: [Apps and routes](https://githiago-f.github.io/smite/).
 import { http } from "@smitejs/http";
 import { z } from "zod";
 
-const route = http.route(app).req({
+const routes = http.router().input({
   query: z.object({ q: z.string().optional() }).partial(),
   params: z.object({ id: z.coerce.number(), postId: z.coerce.number() }).partial(),
   body: z.object({ name: z.string().min(1) }).optional(),
 });
 
-route.accept("POST", "/users/:id/posts/:postId").handler((ctx) => {
+routes.accept("POST", "/users/:id/posts/:postId").handler((ctx) => {
   ctx.query.q;       // string | undefined  (typed from the schema)
   ctx.params.id;     // number | undefined
   ctx.body?.name;    // string | undefined
   return { status: 201, body: { ok: true } };
 });
+
+app.use(routes);
 ```
 
 Undeclared buckets degrade to sensible loose types. Undeclared schemas are not
@@ -204,12 +210,15 @@ value becomes `{ status: 200, body: value }`.
 ```ts
 import { http, json, status } from "@smitejs/http";
 
-const route = http.route(app);
+const app = http.app("responses");
+const routes = http.router();
 
-route.accept("GET", "/").handler(() => ({ ok: true }));           // 200 { ok: true }
-route.accept("GET", "/a").handler(() => ({ status: 201, body: { created: true } }));
-route.accept("GET", "/b").handler(() => json({ ok: true }));      // 200
-route.accept("GET", "/c").handler(() => status(201).json({ ok: true }));
+routes.accept("GET", "/").handler(() => ({ ok: true }));           // 200 { ok: true }
+routes.accept("GET", "/a").handler(() => ({ status: 201, body: { created: true } }));
+routes.accept("GET", "/b").handler(() => json({ ok: true }));      // 200
+routes.accept("GET", "/c").handler(() => status(201).json({ ok: true }));
+
+app.use(routes);
 ```
 
 ### Extractors (cookies, headers, params, query)
@@ -451,7 +460,11 @@ import { domain } from "@smitejs/domain";
 import { http } from "@smitejs/http";
 
 const deps = { [OrderRepository.name]: makeStore() };
-http.route(app).accept("POST", "/orders").handler(domain.handler(placeOrder, deps));
+const routes = http.router();
+routes
+  .accept("POST", "/orders")
+  .handler(domain.handler(placeOrder, deps));
+app.use(routes);
 ```
 
 ### Serverless and AWS

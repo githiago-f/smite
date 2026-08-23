@@ -1,6 +1,7 @@
 node_modules/
 dist/
 **/dist/
+packages/cli/templates-built/
 .vite/
 benchmarks/results/
 examples/typed-client/src/generated-client.ts
@@ -10,3 +11,4 @@ examples/cli-app/openapi.json
 /src/app.client.ts
 .npmrc
 .npmrc*
+.opencode/
