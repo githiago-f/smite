@@ -19,6 +19,12 @@ export interface SmiteConfig {
   readonly entry?: string;
   /** The app entries to compile in collect mode, one per handler/app. */
   readonly entries?: readonly string[];
+  /**
+   * Local command entries compiled by `smite run` to find `cli.exe`
+   * registrations. Defaults to `entries`. Keep commands in a dedicated entry
+   * so they never become serverless functions.
+   */
+  readonly cliEntries?: readonly string[];
   readonly plugins: readonly SmitePlugin[];
   readonly appName?: string;
   readonly alias?: Readonly<Record<string, string>>;
@@ -52,6 +58,15 @@ export interface SmiteBuildConfig {
  */
 export const entriesOf = (config: SmiteConfig): readonly string[] =>
   config.entries ?? (config.entry !== undefined ? [config.entry] : []);
+
+/**
+ * Resolves the local command entries for `smite run`: `cliEntries`, else the
+ * app entries.
+ *
+ * @group Config
+ */
+export const cliEntriesOf = (config: SmiteConfig): readonly string[] =>
+  config.cliEntries ?? entriesOf(config);
 
 /**
  * Resolves the runtime entries for `smite build`: `build.entries`, else the
@@ -117,14 +132,15 @@ export async function loadConfig(
   const dir = await mkdtemp(
     join(modulesRoot, "node_modules", ".smite-config-"),
   );
-  const bundlePath = join(dir, "config.mjs");
+  const bundlePath = join(dir, "config.cjs");
   try {
     await esbuild.build({
       entryPoints: [configFile],
       outfile: bundlePath,
       bundle: true,
       platform: "node",
-      format: "esm",
+      format: "cjs",
+      mainFields: ["module", "main"],
       target: "es2022",
       absWorkingDir: cwd,
       external: ["esbuild", "commander"],
@@ -132,8 +148,16 @@ export async function loadConfig(
     });
 
     const mod = await import(pathToFileURL(bundlePath).href);
-    const config = (mod as { default?: SmiteConfig }).default;
-    if (config === undefined || config === null) {
+    const root = mod as { default?: SmiteConfig | { default?: SmiteConfig } };
+    const unwrapped = root.default;
+    const config =
+      unwrapped !== undefined &&
+      typeof unwrapped === "object" &&
+      "default" in unwrapped &&
+      (unwrapped as { default?: SmiteConfig }).default !== undefined
+        ? (unwrapped as { default?: SmiteConfig }).default
+        : (unwrapped as SmiteConfig | undefined);
+    if (config === undefined) {
       throw new Error(
         `Config '${configPath}' must export a default config object.`,
       );

@@ -8,7 +8,6 @@ import { clear } from "@smitejs/core";
 import * as esbuild from "esbuild";
 import { appsOf, compileAppEntries } from "./compile.js";
 import { buildEntriesOf, entriesOf, loadConfig } from "./config.js";
-import type { Logger } from "./logger.js";
 import { runAll } from "./plugins.js";
 
 /**
@@ -29,8 +28,6 @@ export interface DevOptions {
   readonly alias?: Readonly<Record<string, string>>;
   /** Abort the running dev server when signalled (used by tests). */
   readonly signal?: AbortSignal;
-  /** Structured logger used by the CLI boundary. */
-  readonly logger?: Logger;
 }
 
 const canResolve = (id: string, fromDir: string): boolean => {
@@ -43,7 +40,7 @@ const canResolve = (id: string, fromDir: string): boolean => {
 };
 
 const DEV_DIR = join("node_modules", ".smite");
-const DEV_OUTFILE = join(DEV_DIR, "dev-server.mjs");
+const DEV_OUTFILE = join(DEV_DIR, "dev-server.cjs");
 
 const generatedServerEntry = (options: {
   readonly entry: string;
@@ -133,12 +130,14 @@ export async function bundleDevServer(
     },
     bundle: true,
     platform: "node",
-    format: "esm",
+    format: "cjs",
+    mainFields: ["module", "main"],
     target: "es2022",
     define: { ALLOW_GLOBAL_REGISTRY: "false" },
     outfile,
     absWorkingDir: cwd,
     logOverride: { "import-is-undefined": "silent" },
+    external: ["esbuild", "commander"],
     ...(alias === undefined ? {} : { alias }),
   });
   return outfile;
@@ -201,15 +200,10 @@ const red = paint(process.stderr, 31);
 const cyan = paint(process.stdout, 36);
 
 const report = (
-  logger: Logger | undefined,
   level: "info" | "error",
   message: string,
   data?: Readonly<Record<string, unknown>>,
 ): void => {
-  if (logger !== undefined) {
-    logger[level](message, data);
-    return;
-  }
   const formattedMessage =
     level === "error"
       ? red(message)
@@ -417,29 +411,17 @@ export async function dev(options: DevOptions = {}): Promise<void> {
           title,
           outfile,
         });
-        child?.kill("SIGTERM");
-        child = spawnServer(outfile, {
-          cwd,
-          port,
-          host,
-          ...(options.logger === undefined ? {} : { stdio: "pipe" as const }),
-        });
-        if (options.logger !== undefined) {
-          if (child.stdout !== null)
-            options.logger.attach(child.stdout, "info");
-          if (child.stderr !== null)
-            options.logger.attach(child.stderr, "error");
+        if (child !== undefined) child.kill("SIGTERM");
+        if (child !== undefined && process.stdout.isTTY === true) {
+          process.stdout.write("\u001b[2J\u001b[3J\u001b[H");
         }
+        child = spawnServer(outfile, { cwd, port, host });
       }
-      report(options.logger, "info", "Generated application", {
+      report("info", "Generated application", {
         plugins: config.plugins.map((plugin) => plugin.name),
       });
     } catch (error) {
-      report(
-        options.logger,
-        "error",
-        error instanceof Error ? error.message : String(error),
-      );
+      report("error", error instanceof Error ? error.message : String(error));
     } finally {
       building = false;
       if (rebuildRequested) {
@@ -448,8 +430,6 @@ export async function dev(options: DevOptions = {}): Promise<void> {
       }
     }
   };
-
-  await buildOnce();
 
   await buildOnce();
 
@@ -483,7 +463,6 @@ export async function dev(options: DevOptions = {}): Promise<void> {
             config = await loadConfig(configPath, alias);
           } catch (error) {
             report(
-              options.logger,
               "error",
               error instanceof Error ? error.message : String(error),
             );

@@ -1,9 +1,16 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { build } from "./build.js";
+import { collectCommands, runCommand } from "./commands.js";
 import { appsOf, compileAppEntries } from "./compile.js";
-import { buildEntriesOf, entriesOf, loadConfig } from "./config.js";
+import {
+  buildEntriesOf,
+  cliEntriesOf,
+  entriesOf,
+  loadConfig,
+} from "./config.js";
 import { createApp } from "./create.js";
+import type { CreateTemplate } from "./create.js";
 import { dev } from "./dev.js";
 import { deploy, dispatch, runAll } from "./plugins.js";
 
@@ -29,17 +36,17 @@ program
   .description("Scaffold a new Smite application into ./<name>")
   .option(
     "--template <template>",
-    "starter template (default | minimal)",
-    "default",
+    "starter template (http | serverless)",
+    "http",
   )
   .option("--force", "overwrite an existing directory")
   .action(
     async (name: string, options: { template?: string; force?: boolean }) => {
       const dir = await createApp({
         name,
-        ...(options.template !== undefined && options.template !== "default"
-          ? { template: options.template as "minimal" }
-          : {}),
+        ...(options.template === undefined
+          ? {}
+          : { template: options.template as CreateTemplate }),
         ...(options.force === true ? { force: true } : {}),
       });
       console.log(`${green("Scaffolded")} ${cyan(dir)}`);
@@ -156,6 +163,23 @@ program
       });
     },
   );
+
+program
+  .command("run <command>")
+  .description("Run a local command registered with cli.exe")
+  .option("--config <path>", "path to the config file", "smite.config.ts")
+  .action(async (command: string, options: { config: string }) => {
+    const config = await loadConfig(options.config);
+    const entries = cliEntriesOf(config);
+    const compiledEntries = await compileAppEntries({
+      entries,
+      ...(config.alias === undefined ? {} : { alias: config.alias }),
+    });
+    const apps = appsOf(compiledEntries);
+    const commands = collectCommands(compiledEntries);
+    await runCommand(commands, command, { apps, entries, compiledEntries });
+    console.log(`${green("Ran")} ${cyan(command)}`);
+  });
 
 try {
   await program.parseAsync(process.argv);

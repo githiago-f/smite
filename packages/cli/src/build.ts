@@ -64,6 +64,7 @@ export async function bundleBuildEntries(
       outfile,
       platform: "node",
       format: "esm",
+      mainFields: ["module", "main"],
       ...options.esbuild,
       ...(options.alias === undefined ? {} : { alias: options.alias }),
       bundle: options.esbuild?.bundle ?? true,

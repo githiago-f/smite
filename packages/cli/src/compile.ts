@@ -62,6 +62,7 @@ const bundleAndExecute = async (
       target: "es2022",
       define: { ALLOW_GLOBAL_REGISTRY: "true" },
       absWorkingDir: cwd,
+      logOverride: { "require-resolve-not-external": "silent" },
       ...(alias === undefined ? {} : { alias }),
     });
     clear();

@@ -10,8 +10,10 @@ export type {
   CompiledEntry,
 } from "./compile.js";
 export { defineSmiteConfig, entriesOf, loadConfig } from "./config.js";
-export { buildEntriesOf } from "./config.js";
+export { buildEntriesOf, cliEntriesOf } from "./config.js";
 export type { SmiteBuildConfig, SmiteConfig } from "./config.js";
+export { cli, collectCommands, exe, runCommand } from "./commands.js";
+export type { CliCommandDescriptor, CliRunContext } from "./commands.js";
 export { build, bundleBuildEntries } from "./build.js";
 export type { BuildOptions, BundleBuildEntriesOptions } from "./build.js";
 export { createApp, listTemplates } from "./create.js";
@@ -32,5 +34,3 @@ export type {
   DevWatcherOptions,
   SpawnServerOptions,
 } from "./dev.js";
-export { createLogger, Logger } from "./logger.js";
-export type { LogEvent, LogLevel, LoggerOptions } from "./logger.js";
