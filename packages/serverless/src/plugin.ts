@@ -3,9 +3,11 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 import {
   cloudFormationResourceOf,
+  getProviderConfig,
   logicalIdOf,
   permissionReferenceOf,
   referenceOf,
+  runWithProviderConfig,
 } from "@smitejs/aws";
 import type {
   AwsPermissionDescriptor,
@@ -15,6 +17,7 @@ import type { SmitePlugin } from "@smitejs/cli";
 import type { CompiledEntry } from "@smitejs/cli";
 import type { AppDescriptor } from "@smitejs/core";
 import { routesOf } from "@smitejs/http";
+import { stringify } from "yaml";
 
 /** A Serverless Framework HTTP API event. */
 export interface ServerlessHttpEvent {
@@ -32,6 +35,19 @@ export interface ServerlessFunction {
   readonly events?: readonly ServerlessHttpEvent[];
 }
 
+/** A Serverless Framework plugin reference: an installed name or local path. */
+export interface ServerlessPluginReference {
+  /** Package name of an installed Serverless Framework plugin. */
+  readonly name?: string;
+  /** Local path to a project plugin, for example `./plugins/custom.js`. */
+  readonly localPath?: string;
+  /** Configuration passed to the plugin. */
+  readonly config?: Readonly<Record<string, unknown>>;
+}
+
+/** A Serverless Framework plugin declaration for the emitted `plugins` block. */
+export type ServerlessPluginEntry = string | ServerlessPluginReference;
+
 /** Options for the {@link serverless} deployment plugin. */
 export interface ServerlessOptions {
   readonly service: string;
@@ -47,6 +63,20 @@ export interface ServerlessOptions {
   readonly stage?: string;
   /** Serverless Framework executable. Defaults to `serverless`. */
   readonly command?: string;
+  /** Serverless Framework plugins activated for this service. */
+  readonly plugins?: readonly ServerlessPluginEntry[];
+  /**
+   * Raw CloudFormation template sections merged into the generated
+   * `resources` block. Entries under `Resources` are added alongside the
+   * resources derived from `@smitejs/aws`, so resources of any service
+   * (`AWS::CloudFront::Distribution`, `AWS::Cognito::UserPool`, and so on)
+   * can be declared without a managed provider.
+   */
+  readonly resources?: Readonly<Record<string, unknown>>;
+  /** The `custom` block, typically used to configure plugins. */
+  readonly custom?: Readonly<Record<string, unknown>>;
+  /** Arbitrary top-level `serverless.yml` keys merged last, for example `provider` extensions or `configValidationMode`. */
+  readonly extend?: Readonly<Record<string, unknown>>;
 }
 
 type ServerlessPluginContext = {
@@ -55,11 +85,6 @@ type ServerlessPluginContext = {
   readonly build?: { readonly outdir?: string };
   readonly compiledEntries?: readonly CompiledEntry[];
 };
-
-const scalar = (value: string): string =>
-  /^[A-Za-z0-9_./:@+{}-]+$/.test(value)
-    ? value
-    : `'${value.replaceAll("'", "''")}'`;
 
 const eventPath = (path: string): string =>
   path.replace(/:([A-Za-z0-9_]+)/g, "{$1}");
@@ -92,12 +117,18 @@ const appFor = (
   return apps.length === 1 ? apps[0] : undefined;
 };
 
+const routerNamesOf = (app: AppDescriptor): readonly string[] =>
+  routesOf(app)
+    .map((route) => route.name)
+    .filter((name): name is string => name !== undefined);
+
 const eventsFor = (
   apps: readonly AppDescriptor[],
   functionConfig: ServerlessFunction,
+  entryApp: AppDescriptor | undefined,
 ): readonly ServerlessHttpEvent[] => {
   if (functionConfig.events !== undefined) return functionConfig.events;
-  const app = appFor(apps, functionConfig.app);
+  const app = entryApp ?? appFor(apps, functionConfig.app);
   if (app === undefined) return [];
   return routesOf(app).flatMap((route) =>
     route.endpoints.map((endpoint) => ({
@@ -105,55 +136,6 @@ const eventsFor = (
       method: endpoint.method.toLowerCase(),
     })),
   );
-};
-
-const yamlKey = (key: string): string =>
-  /^[A-Za-z0-9_.-]+$/.test(key) ? key : scalar(key);
-
-const yamlLines = (value: unknown, indent = 0): string[] => {
-  const prefix = " ".repeat(indent);
-  if (value === null || value === undefined) return [`${prefix}null`];
-  if (typeof value !== "object") return [`${prefix}${scalar(String(value))}`];
-  if (Array.isArray(value)) {
-    return value.flatMap((item) => {
-      if (item !== null && typeof item === "object") {
-        const entries = Object.entries(item);
-        const first = entries[0];
-        if (first === undefined) return [`${prefix}- {}`];
-        const [key, nested] = first;
-        const rest = entries.slice(1);
-        const firstLines = yamlLines(nested, indent + 4);
-        const firstSuffix =
-          firstLines.length === 1 ? `: ${firstLines[0]?.trim()}` : ":";
-        const lines = [`${prefix}- ${yamlKey(key)}${firstSuffix}`];
-        if (firstLines.length > 1) lines.push(...firstLines);
-        for (const [restKey, restValue] of rest) {
-          const nestedLines = yamlLines(restValue, indent + 2);
-          lines.push(
-            `${" ".repeat(indent + 2)}${yamlKey(restKey)}${
-              nestedLines.length === 1
-                ? `: ${nestedLines[0]?.trim()}`
-                : `:\n${nestedLines.join("\n")}`
-            }`,
-          );
-        }
-        return lines;
-      }
-      return [`${prefix}- ${scalar(String(item))}`];
-    });
-  }
-  const entries = Object.entries(value);
-  if (entries.length === 0) return [`${prefix}{}`];
-  return entries.flatMap(([key, nested]) => {
-    const nestedLines = yamlLines(nested, indent + 2);
-    return [
-      `${prefix}${yamlKey(key)}${
-        nestedLines.length === 1
-          ? `: ${nestedLines[0]?.trim()}`
-          : `:\n${nestedLines.join("\n")}`
-      }`,
-    ];
-  });
 };
 
 const resourceDescriptorsOf = (
@@ -199,6 +181,27 @@ const logicalFunctionId = (name: string): string =>
     .map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`)
     .join("");
 
+const isPlainObject = (
+  value: unknown,
+): value is Readonly<Record<string, unknown>> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const deepMerge = (
+  target: Record<string, unknown>,
+  source: Readonly<Record<string, unknown>>,
+): Record<string, unknown> => {
+  for (const [key, value] of Object.entries(source)) {
+    if (value === undefined) continue;
+    const existing = target[key];
+    if (isPlainObject(existing) && isPlainObject(value)) {
+      target[key] = deepMerge({ ...existing }, value);
+    } else {
+      target[key] = value;
+    }
+  }
+  return target;
+};
+
 const yamlFor = (
   apps: readonly AppDescriptor[],
   options: ServerlessOptions,
@@ -234,6 +237,12 @@ const yamlFor = (
         : compiledEntries.find((candidate) =>
             candidate.apps.some((app) => app.__key === functionConfig.app),
           );
+    const entryApp =
+      entry === undefined
+        ? undefined
+        : functionConfig.app === undefined
+          ? entry.apps[0]
+          : entry.apps.find((app) => app.__key === functionConfig.app);
     const statements = permissionDescriptorsOf(entry).flatMap((permission) =>
       permission.data.actions.map((action) => ({
         Effect: "Allow",
@@ -273,7 +282,7 @@ const yamlFor = (
             }),
       },
     };
-    const events = eventsFor(apps, functionConfig);
+    const events = eventsFor(apps, functionConfig, entryApp);
     functionNodes[name] = {
       handler: functionConfig.handler,
       role: { "Fn::GetAtt": [roleId, "Arn"] },
@@ -287,7 +296,14 @@ const yamlFor = (
     };
   }
 
-  const document = {
+  const resourcesNode: Record<string, unknown> = {
+    Resources: { ...cloudResources, ...roleResources },
+    ...(Object.keys(outputs).length === 0 ? {} : { Outputs: outputs }),
+  };
+  if (options.resources !== undefined) {
+    deepMerge(resourcesNode, options.resources);
+  }
+  const document: Record<string, unknown> = {
     service: options.service,
     provider: {
       name: "aws",
@@ -296,12 +312,18 @@ const yamlFor = (
       ...(options.stage === undefined ? {} : { stage: options.stage }),
     },
     functions: functionNodes,
-    resources: {
-      Resources: { ...cloudResources, ...roleResources },
-      ...(Object.keys(outputs).length === 0 ? {} : { Outputs: outputs }),
-    },
+    resources: resourcesNode,
   };
-  return `${yamlLines(document).join("\n")}\n`;
+  if (options.plugins !== undefined && options.plugins.length > 0) {
+    document.plugins = options.plugins;
+  }
+  if (options.custom !== undefined) {
+    document.custom = options.custom;
+  }
+  if (options.extend !== undefined) {
+    deepMerge(document, options.extend);
+  }
+  return `${stringify(document)}\n`;
 };
 
 /** Writes a Serverless Framework configuration for compiled Smite apps. */
@@ -318,17 +340,16 @@ export async function writeServerlessConfig(
     Object.fromEntries(
       entries.map((entry, index) => {
         const app = compiledEntries[index]?.apps[0] ?? apps[index];
-        return [
-          functionName(entry),
-          {
-            handler: handlerPath(
-              entry,
-              options.outdir ?? context.build?.outdir ?? "dist",
-              options.handlerExport ?? "handler",
-            ),
-            ...(app === undefined ? {} : { app: app.__key }),
-          },
-        ];
+        const handler = handlerPath(
+          entry,
+          options.outdir ?? context.build?.outdir ?? "dist",
+          options.handlerExport ?? "handler",
+        );
+        if (app === undefined) return [functionName(entry), { handler }];
+        const routerNames = routerNamesOf(app);
+        const name =
+          routerNames.length === 1 ? routerNames[0] : functionName(entry);
+        return [name, { handler, app: app.__key }];
       }),
     );
   await mkdir(dirname(outfile), { recursive: true });
@@ -360,7 +381,10 @@ const runServerless = (command: string, outfile: string): Promise<void> =>
 /**
  * Creates a CLI plugin that emits `serverless.yml` and deploys it with the
  * Serverless Framework. Other infrastructure tools can implement the same
- * optional deployment hook without changing the Smite app or CLI.
+ * optional deployment hook without changing the Smite app or CLI. Pass
+ * `plugins`, `resources`, `custom`, or `extend` to declare Serverless
+ * Framework plugins and raw CloudFormation resources of any service without
+ * touching the generated document.
  *
  * @group Deployment
  * @example Configure the Serverless Framework plugin
@@ -370,7 +394,16 @@ export function serverless(options: ServerlessOptions): SmitePlugin {
   return {
     name: "serverless",
     async run(context) {
-      await writeServerlessConfig(context.apps, options, context);
+      const region = options.region ?? getProviderConfig().region;
+      await runWithProviderConfig(
+        {
+          region,
+          ...(options.service === undefined
+            ? {}
+            : { service: options.service }),
+        },
+        () => writeServerlessConfig(context.apps, options, context),
+      );
     },
     deploy: () =>
       runServerless(

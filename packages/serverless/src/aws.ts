@@ -124,13 +124,32 @@ const responseFrom = (response: HttpResponse): ApiGatewayResponse => ({
 });
 
 /**
- * Adapts a Smite app to an AWS API Gateway v2 Lambda handler.
+ * Options for {@link lambdaify}: scope the handler to a single named router.
+ *
+ * @group AWS
+ */
+export interface LambdaifyOptions {
+  /** Serve only this named router; other routes return 404. */
+  readonly router: string;
+}
+
+/**
+ * Adapts a Smite app (or a single named router) to an AWS API Gateway v2 Lambda
+ * handler. When `router` is given, the handler only dispatches that router's
+ * routes, so each router becomes a genuinely separate Lambda. The returned
+ * handler closes over the scoped app; requests for other routers return 404.
  *
  * @group AWS
  * @example Lambdaify an app
  */
-export function lambdaify(app: AppDescriptor): ApiGatewayHandler {
-  const router = serve(app);
+export function lambdaify(
+  app: AppDescriptor,
+  options?: LambdaifyOptions,
+): ApiGatewayHandler {
+  const router = serve(
+    app,
+    options === undefined ? {} : { routers: [options.router] },
+  );
   return async (event) => {
     try {
       return responseFrom(await router(requestFrom(event)));

@@ -9,4 +9,6 @@ export type {
   ServerlessFunction,
   ServerlessHttpEvent,
   ServerlessOptions,
+  ServerlessPluginEntry,
+  ServerlessPluginReference,
 } from "./plugin.js";

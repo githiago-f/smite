@@ -39,6 +39,40 @@ export interface RouteInputConfig {
 }
 
 /**
+ * The explicit-inheritance request config of an endpoint: for each bucket,
+ * the endpoint's `req` wins when present and the router-level `req` is the
+ * fallback. Buckets the endpoint does not declare stay inherited from the
+ * router.
+ *
+ * @group Types
+ */
+export type MergeRequestConfig<
+  Base extends RouteInputConfig,
+  Next extends RouteInputConfig,
+> = Partial<{
+  readonly query: [Next["query"]] extends [z.ZodType]
+    ? Next["query"]
+    : [Base["query"]] extends [z.ZodType]
+      ? Base["query"]
+      : never;
+  readonly params: [Next["params"]] extends [z.ZodType]
+    ? Next["params"]
+    : [Base["params"]] extends [z.ZodType]
+      ? Base["params"]
+      : never;
+  readonly headers: [Next["headers"]] extends [z.ZodType]
+    ? Next["headers"]
+    : [Base["headers"]] extends [z.ZodType]
+      ? Base["headers"]
+      : never;
+  readonly body: [Next["body"]] extends [z.ZodType]
+    ? Next["body"]
+    : [Base["body"]] extends [z.ZodType]
+      ? Base["body"]
+      : never;
+}>;
+
+/**
  * Declarative configuration attached to a route and stored on its IR node.
  * Purely descriptive; consumed by artifact generators such as the OpenAPI
  * plugin.
@@ -46,7 +80,7 @@ export interface RouteInputConfig {
  * @group Types
  */
 export interface RouteConfig {
-  /** Route name; also used as the route's IR key when unique within its app. */
+  /** Route name; also used as the route's IR key when unique within its app. Must contain only letters. */
   readonly name?: string;
   /** Short description shown as each endpoint's OpenAPI `summary`. */
   readonly summary?: string;
@@ -83,19 +117,31 @@ export type HttpHandler<Config extends RouteInputConfig = RouteInputConfig> = (
   ctx: HttpHandlerContext<Config>,
 ) => unknown | Promise<unknown>;
 
+type RequestBucket<
+  Config extends RouteInputConfig,
+  Key extends keyof RouteInputConfig,
+  Fallback,
+> = [Exclude<Config[Key], undefined>] extends [z.ZodType]
+  ? z.infer<Exclude<Config[Key], undefined>>
+  : Fallback;
+
 export type HttpHandlerContext<Config extends RouteInputConfig> = {
   readonly request: HttpRequest;
 } & {
-  readonly query: [Config["query"]] extends [z.ZodType]
-    ? z.infer<Config["query"]>
-    : Readonly<Record<string, unknown>>;
-  readonly params: [Config["params"]] extends [z.ZodType]
-    ? z.infer<Config["params"]>
-    : Readonly<Record<string, string>>;
-  readonly headers: [Config["headers"]] extends [z.ZodType]
-    ? z.infer<Config["headers"]>
-    : Readonly<Record<string, string | readonly string[] | undefined>>;
-  readonly body: [Config["body"]] extends [z.ZodType]
-    ? z.infer<Config["body"]>
-    : unknown;
+  readonly query: RequestBucket<
+    Config,
+    "query",
+    Readonly<Record<string, unknown>>
+  >;
+  readonly params: RequestBucket<
+    Config,
+    "params",
+    Readonly<Record<string, string>>
+  >;
+  readonly headers: RequestBucket<
+    Config,
+    "headers",
+    Readonly<Record<string, string | readonly string[] | undefined>>
+  >;
+  readonly body: RequestBucket<Config, "body", unknown>;
 };

@@ -23,8 +23,9 @@ describe("serveNode", () => {
   it("serves routes over node:http", async () => {
     // #section - Serve an app over node:http
     const app = http.app("store");
-    const route = http.route(app);
+    const route = http.router();
     route.accept("GET", "/health").handler(() => json({ ok: true }));
+    app.use(route);
     const server = serveNode(app);
     // #endsection
 
@@ -35,9 +36,24 @@ describe("serveNode", () => {
     await close(server);
   });
 
+  it("exposes an app over a node server", async () => {
+    const app = http.app("store");
+    const route = http.router();
+    route.accept("GET", "/health").handler(() => json({ ok: true }));
+    app.use(route);
+    // #section - Expose a node server
+    const server = serveNode(app);
+    // #endsection
+
+    const base = await listenOn(server);
+    const response = await fetch(`${base}/health`);
+    expect(response.status).toBe(200);
+    await close(server);
+  });
+
   it("parses query, cookies, and a JSON body", async () => {
     const app = http.app("form");
-    const route = http.route(app).req({
+    const route = http.router().input({
       body: z.object({ name: z.string() }),
     });
     route.accept("POST", "/items").handler((ctx) =>
@@ -46,6 +62,7 @@ describe("serveNode", () => {
         cookie: ctx.request.cookies.session,
       }),
     );
+    app.use(route);
 
     const server = serveNode(app);
     const base = await listenOn(server);
@@ -65,8 +82,9 @@ describe("serveNode", () => {
 
   it("mounts a docs router ahead of the app routes", async () => {
     const app = http.app("api");
-    const route = http.route(app);
+    const route = http.router();
     route.accept("GET", "/ping").handler(() => json({ pong: true }));
+    app.use(route);
 
     const docs = {
       router: async (request: { path: string }) =>
@@ -91,8 +109,9 @@ describe("serveNode", () => {
 
   it("lets transformRequest override the parsed request", async () => {
     const app = http.app("virtual");
-    const route = http.route(app);
+    const route = http.router();
     route.accept("GET", "/virtual").handler(() => json({ ok: true }));
+    app.use(route);
 
     const server = serveNode(app, {
       transformRequest: () => ({ path: "/virtual" }),

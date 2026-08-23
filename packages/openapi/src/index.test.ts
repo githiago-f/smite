@@ -137,12 +137,13 @@ describe("@smitejs/openapi", () => {
     const outfile = join(dir, "openapi.json");
 
     const app = http.app("docs-api");
-    const page = http.route(app, {
+    const page = http.router({
       name: "pages",
       summary: "Fetch pages",
       description: "Manage page resources.",
     });
     page.accept("GET", "/pages/:id").handler(() => ({ status: 200, body: {} }));
+    app.use(page);
 
     await openapi({ outfile }).run({ apps: [app] });
     const doc = JSON.parse(await readFile(outfile, "utf8")) as Record<

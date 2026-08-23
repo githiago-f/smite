@@ -1,91 +1,73 @@
-import { defineDescriptor, relate } from "@smitejs/core";
-import type { Descriptor } from "@smitejs/core";
-import type { HttpHandler, HttpMethod, RouteInputConfig } from "./types.js";
-import { withMethods } from "./withMethods.js";
-
-declare const ALLOW_GLOBAL_REGISTRY: boolean;
+import type { HttpRouteBuilder } from "./router.js";
+import type {
+  HttpHandler,
+  HttpMethod,
+  MergeRequestConfig,
+  RouteInputConfig,
+} from "./types.js";
 
 /**
- * An endpoint node: a `method` + `path` pair on a route.
+ * A deferred endpoint declaration on a router plan: its method + path pair,
+ * an optional per-endpoint `req` override, and its handler. Materialized into
+ * an `http.endpoint` node (plus an `http.handler` child) when the router is
+ * injected into an app.
  *
  * @group DSL
  */
-export interface EndpointDescriptor
-  extends Descriptor<
-    "http.endpoint",
-    { readonly method: HttpMethod; readonly path: string }
-  > {}
+export interface EndpointPlan {
+  readonly method: HttpMethod;
+  readonly path: string;
+  req?: RouteInputConfig;
+  handler?: HttpHandler;
+}
 
 /**
- * A node wrapping the handler function for an endpoint.
- *
- * @group DSL
- */
-export interface HandlerDescriptor
-  extends Descriptor<"http.handler", { readonly fn: HttpHandler }> {}
-
-/**
- * An endpoint reference: the endpoint IR node carrying its `handler` method.
+ * An endpoint reference: the plan carrying its `input` (the explicit
+ * inheritance of {@link MergeRequestConfig}) and `handler` methods. `handler`
+ * wires the function and returns the owning router, so declarations chain.
  *
  * @group DSL
  */
 export interface HttpEndpointBuilder<
-  Config extends RouteInputConfig = RouteInputConfig,
-> extends EndpointDescriptor {
-  readonly handler: (fn: HttpHandler<Config>) => void;
+  Base extends RouteInputConfig = RouteInputConfig,
+  Config extends RouteInputConfig = MergeRequestConfig<Base, Base>,
+> {
+  readonly input: <Next extends RouteInputConfig>(
+    config: Next,
+  ) => HttpEndpointBuilder<Base, MergeRequestConfig<Base, Next>>;
+  readonly handler: (fn: HttpHandler<Config>) => HttpRouteBuilder<Base>;
 }
 
-const DOMAIN_HANDLER = Symbol.for("@smitejs/domain/handler");
-
-type DomainHandlerRef = { readonly usecaseNode: Descriptor<string, unknown> };
-
-const relateDomainUsecase = <Config extends RouteInputConfig>(
-  handler: HandlerDescriptor,
-  fn: HttpHandler<Config>,
-): void => {
-  if (typeof ALLOW_GLOBAL_REGISTRY !== "boolean" || !ALLOW_GLOBAL_REGISTRY)
-    return;
-  const ref = (fn as unknown as Record<PropertyKey, unknown>)[DOMAIN_HANDLER] as
-    | DomainHandlerRef
-    | undefined;
-  const usecase = ref?.usecaseNode;
-  if (usecase !== undefined) {
-    relate(handler, "domain.usecase", usecase);
-  }
-};
-
 /**
- * Declares an endpoint (method + path) on a route and returns a builder for
- * its handler.
+ * Declares an endpoint (method + path) on a router plan and returns a builder
+ * for its optional per-endpoint `input` and its handler. `input` resolves per
+ * bucket against the router's `input` (endpoint wins, router inherits).
  *
  * @group DSL
  * @example Add endpoints and handlers
  */
-export function accept<Config extends RouteInputConfig>(
-  route: Descriptor<"http.route", { req?: RouteInputConfig }>,
+export function accept<Base extends RouteInputConfig>(
+  plan: { readonly endpoints: EndpointPlan[] },
+  route: HttpRouteBuilder<Base>,
   method: HttpMethod,
   path: string,
-): HttpEndpointBuilder<Config> {
-  const descriptor = defineDescriptor(
-    "http.endpoint",
-    `${route.__key}:endpoint:${method} ${path}`,
-    {
-      method,
-      path,
-    },
-  );
+): HttpEndpointBuilder<Base> {
+  const endpoint: EndpointPlan = { method, path };
+  (plan.endpoints as EndpointPlan[]).push(endpoint);
 
-  relate(route, "http.endpoint", descriptor);
-
-  return withMethods(descriptor, {
-    handler: (fn: HttpHandler<Config>) => {
-      const handler = defineDescriptor(
-        "http.handler",
-        `http.handler:${descriptor.__key}`,
-        { fn },
-      );
-      relate(descriptor, "http.handler", handler);
-      relateDomainUsecase(handler, fn);
+  const builder = {
+    input: <Next extends RouteInputConfig>(config: Next) => {
+      endpoint.req = config;
+      return builder as unknown as HttpEndpointBuilder<
+        Base,
+        MergeRequestConfig<Base, Next>
+      >;
     },
-  });
+    handler: (fn: HttpHandler<MergeRequestConfig<Base, Base>>) => {
+      endpoint.handler = fn;
+      return route;
+    },
+  };
+
+  return builder;
 }

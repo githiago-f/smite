@@ -3,6 +3,9 @@ export type { AppDescriptor } from "./app.js";
 
 export { allowGlobalRegistry } from "./constants.js";
 
+export { registerLogger, runWithScope, currentScope } from "./scope.js";
+export type { ScopeContext } from "./scope.js";
+
 export {
   children,
   childrenOf,

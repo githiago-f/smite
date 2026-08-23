@@ -8,8 +8,9 @@ const source = `
   import { http } from "@smitejs/http";
 
   const app = http.app();
-  const route = http.route(app);
+  const route = http.router();
   route.accept("GET", "/ping").handler(() => ({ status: 200, body: "pong" }));
+  app.use(route);
   export const router = app.serve();
 `;
 

@@ -1,166 +1,126 @@
-import {
-  childrenOf,
-  createApp,
-  defineDescriptor,
-  refine,
-  relate,
-} from "@smitejs/core";
-import type { AppDescriptor, Descriptor } from "@smitejs/core";
+import { createApp } from "@smitejs/core";
+import type { AppDescriptor } from "@smitejs/core";
 import { chain, getExtractorMetadata } from "@smitejs/fp";
-import { accept } from "./endpoint.js";
-import type { HttpEndpointBuilder } from "./endpoint.js";
+import { addAspect, aspect } from "./aspects.js";
+import type { HttpAspect } from "./aspects.js";
 import { cookies, headers, params, query } from "./extract.js";
+import { currentLogger, requestLogger } from "./middleware.js";
 import { serveNode } from "./node-server.js";
 import { json, status } from "./response.js";
+import { materializeRoute, methods, router } from "./router.js";
+import type { HttpRouterBuilder } from "./router.js";
 import { serve } from "./serve.js";
 import type { HttpRouter } from "./serve.js";
-import type { HttpMethod, RouteConfig, RouteInputConfig } from "./types.js";
 import { withMethods } from "./withMethods.js";
 
 export { HttpMethod, HttpStatus } from "./types.js";
 export type { RouteConfig } from "./types.js";
 
-/**
- * A route node in the IR, holding its optional descriptive `config` fields and
- * `req` input config. The key is scoped to its app, so routes are unique
- * within one app, not across the whole application.
- *
- * @group DSL
- */
-export interface RouteDescriptor<
-  Config extends RouteInputConfig = RouteInputConfig,
-> extends Descriptor<
-    "http.route",
-    {
-      readonly name?: string;
-      readonly summary?: string;
-      readonly description?: string;
-      readonly req?: Config;
-    }
-  > {}
-
-/**
- * A route reference: the `http.route` IR node carrying its `req` and `accept`
- * methods. Pass the reference around; never reach into descriptor internals.
- *
- * @group DSL
- */
-export interface HttpRouteBuilder<
-  Config extends RouteInputConfig = RouteInputConfig,
-> extends RouteDescriptor<Config> {
-  readonly req: <Next extends RouteInputConfig>(
-    config: Next,
-  ) => HttpRouteBuilder<Next>;
-  readonly accept: (
-    method: HttpMethod,
-    path: string,
-  ) => HttpEndpointBuilder<Config>;
-}
-
-/**
- * An app reference: the `app` IR node carrying its `route` and `serve` methods.
- * Pass the reference around; never reach into descriptor internals.
- *
- * @group DSL
- */
-export interface HttpAppBuilder extends AppDescriptor {
-  readonly route: (config?: RouteConfig) => HttpRouteBuilder;
-  readonly serve: () => HttpRouter;
-}
-
-/**
- * Creates an HTTP app junction. The returned reference is the app descriptor
- * with the DSL attached, so `route(app)` and `serve(app)` take it directly.
- * An app holds any number of routes (`app -has n-> route`), each unique within
- * the app.
- *
- * @group DSL
- * @example Define an app with routes
- */
-export function app(name?: string): HttpAppBuilder {
-  const descriptor = createApp(name);
-  const builder = withMethods(descriptor, {
-    route: (config?: RouteConfig) => route(builder, config),
-    serve: () => serve(builder),
-  });
-  return builder;
-}
-
-/**
- * Attaches a route builder to an app. Routes are unique within their app and
- * may repeat across apps; give each route a `name` in the config to key it, or
- * omit it to auto-number it. The config (`name`, `summary`, `description`) is
- * stored on the route IR node for artifact generators to consume.
- *
- * @group DSL
- * @example Declare validated inputs
- */
-export function route<Config extends RouteInputConfig = RouteInputConfig>(
-  app: HttpAppBuilder | AppDescriptor,
-  config?: RouteConfig,
-): HttpRouteBuilder<Config> {
-  const descriptor = app as AppDescriptor;
-  const routeName =
-    config?.name ?? String(childrenOf(descriptor, "http.route").length);
-  const routeDescriptor = defineDescriptor(
-    "http.route",
-    `${descriptor.__key}:http.route:${routeName}`,
-    {
-      ...(config?.name === undefined ? {} : { name: config.name }),
-      ...(config?.summary === undefined ? {} : { summary: config.summary }),
-      ...(config?.description === undefined
-        ? {}
-        : { description: config.description }),
-    },
-  ) as RouteDescriptor<Config>;
-  relate(descriptor, "http.route", routeDescriptor);
-
-  const builder = withMethods(routeDescriptor, {
-    req: <Next extends RouteInputConfig>(config: Next) => {
-      refine(routeDescriptor, { req: config });
-      return builder as unknown as HttpRouteBuilder<Next>;
-    },
-    accept: (method: HttpMethod, path: string) => {
-      return accept(builder, method, path);
-    },
-  });
-
-  return builder;
-}
+export type {
+  HttpRouteBuilder,
+  HttpRouterBuilder,
+  RouteDescriptor,
+} from "./router.js";
+export { router, methods } from "./router.js";
 
 export { accept } from "./endpoint.js";
 export type {
-  EndpointDescriptor,
-  HandlerDescriptor,
+  EndpointPlan,
   HttpEndpointBuilder,
 } from "./endpoint.js";
 
+export { aspect } from "./aspects.js";
+export type {
+  HttpAspect,
+  HttpAspectKind,
+  HttpFilter,
+  HttpGuard,
+  HttpInterceptor,
+  HttpMiddleware,
+  HttpMiddlewareContext,
+} from "./aspects.js";
+
+export { compose, currentLogger, requestLogger } from "./middleware.js";
+export type { RequestLogger, RequestLoggerOptions } from "./middleware.js";
+
 export { json, status } from "./response.js";
 export { serve } from "./serve.js";
-export type { HttpRouter } from "./serve.js";
+export type { HttpRouter, ServeOptions } from "./serve.js";
 
 export { serveNode } from "./node-server.js";
 export type { NodeServerDocs, NodeServerOptions } from "./node-server.js";
 
 export { routesOf } from "./routes.js";
 export type { CollectedEndpoint, CollectedRoute } from "./routes.js";
+export { mergeRequestConfig } from "./request-config.js";
+export type { MergeRequestConfig } from "./types.js";
 
 export { cookies, headers, params, query } from "./extract.js";
 export { chain, getExtractorMetadata } from "@smitejs/fp";
 export type { Extractor, ExtractorMetadata } from "@smitejs/fp";
 
 /**
- * The HTTP DSL surface: `app`, `route`, `json`, `status`.
+ * An app reference: the `app` IR node carrying its `use` and `serve` methods.
+ * `use` injects router builders and AOP aspects; pass the reference around,
+ * never reach into descriptor internals.
+ *
+ * @group DSL
+ * @example Define an app with routes
+ */
+export interface HttpAppBuilder extends AppDescriptor {
+  readonly use: (...injectables: HttpInjectable[]) => HttpAppBuilder;
+  readonly serve: () => HttpRouter;
+}
+
+/** Anything `app.use` accepts: an AOP aspect or an injectable route builder. @group DSL */
+export type HttpInjectable = HttpAspect | HttpRouterBuilder;
+
+const isAspect = (value: HttpInjectable): value is HttpAspect =>
+  "kind" in value && typeof value.fn === "function";
+
+/**
+ * Creates an HTTP app junction. The returned reference is the app descriptor
+ * with the DSL attached, so `serve(app)` takes it directly. Inject standalone
+ * route builders and aspects with `use(...)`.
+ *
+ * @group DSL
+ * @example Compose a deployable HTTP app
+ */
+export function app(name?: string): HttpAppBuilder {
+  const descriptor = createApp(name);
+  const builder = withMethods(descriptor, {
+    use: (...injectables: HttpInjectable[]) => {
+      for (const injectable of injectables) {
+        if (isAspect(injectable)) {
+          addAspect(builder, injectable);
+        } else {
+          materializeRoute(builder, injectable);
+        }
+      }
+      return builder;
+    },
+    serve: () => serve(builder),
+  }) as HttpAppBuilder;
+  return builder;
+}
+
+/**
+ * The HTTP DSL surface: `app`, `router`, `methods`, `aspect`, `json`, `status`.
  *
  * @group DSL
  * @example Define an app with routes
  */
 export const http = {
   app,
-  route,
+  router,
+  methods,
+  aspect,
   json,
   status,
+  serve,
   serveNode,
+  requestLogger,
+  currentLogger,
   cookies,
   headers,
   params,
