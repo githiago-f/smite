@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/client",
-  "version": "1.2.1",
+  "version": "1.2.1-dev.21",
   "description": "Generates a typed, builder-style HTTP client from a Smite app definition.",
   "license": "MIT",
   "repository": {
@@ -22,7 +22,11 @@
       "default": "./dist/runtime.js"
     }
   },
-  "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/.tsbuildinfo"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -31,8 +35,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smitejs/cli": "^1.2.1",
-    "@smitejs/core": "^1.2.1",
+    "@smitejs/cli": "^1.2.1-dev.21",
+    "@smitejs/core": "^1.2.1-dev.21",
     "esbuild": "^0.24.2"
   },
   "devDependencies": {

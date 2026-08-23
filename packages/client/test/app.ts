@@ -3,8 +3,7 @@ import { z } from "zod";
 
 export const app = http.app("fixture-api");
 
-const routes = http.route(app);
-routes.req({
+const routes = http.router().input({
   query: z.object({ q: z.string().optional(), page: z.number().optional() }),
 });
 routes.accept("GET", "/users").handler(() => ({ status: 200, body: [] }));
@@ -18,3 +17,4 @@ routes
   .accept("GET", "/users/:id/posts/:postId")
   .handler((ctx) => ({ status: 200, body: ctx.params }));
 routes.accept("GET", "/health").handler(() => ({ status: 200, body: "ok" }));
+app.use(routes);
