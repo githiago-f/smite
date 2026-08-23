@@ -1,0 +1,58 @@
+@startuml handlers 
+title "handlers"
+
+component "Client side" as cs
+
+component "Handler" as handlerA
+component "Handler" as handlerB
+component "Handler" as handlerC
+
+component "Router" as router
+
+cs -> router
+router -> handlerA
+router -> handlerB
+router -> handlerC
+
+handlerA -down[hidden]- handlerB
+handlerB -down[hidden]- handlerC
+
+footer githiago-f @2026
+@enduml
+@startuml middlewares
+title "Middlewares"
+
+component "Client Side" as cs
+
+component "Handler" as handler
+
+component "Middleware" as mid
+
+cs -> mid 
+mid -> handler
+
+footer githiago-f @2026
+@enduml
+@startuml filters
+title "Exception filters"
+
+component "Client Side" as cs
+component "Handler" as handler
+
+package filters {
+  component "Filter" as filterA
+  component "Filter" as filterB
+}
+
+cs -right-> handler
+handler -> filterA
+handler -> filterB
+filterA -> cs
+filterB -> cs
+
+filterA -down[hidden]- filterB
+filters -right[hidden]- cs
+handler -left[hidden]- filters
+
+footer githiago-f @2026
+@enduml
