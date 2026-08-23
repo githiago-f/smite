@@ -7,5 +7,7 @@ describe("@smitejs/cli bin", () => {
 
     expect(source).toContain('.command("dev")');
     expect(source).toContain("await dev({");
+    expect(source).toContain('.command("run <command>")');
+    expect(source).toContain("collectCommands");
   });
 });

@@ -48,7 +48,7 @@ describe("@smitejs/cli dev", () => {
 
   it("bundles a runtime dev server and serves the app", async () => {
     const dir = await makeTempDir();
-    const outfile = join(dir, "dev-server.mjs");
+    const outfile = join(dir, "dev-server.cjs");
 
     // #section - Bundle a dev server entry
     await bundleDevServer({
@@ -66,7 +66,7 @@ describe("@smitejs/cli dev", () => {
 
   it("spawns a bundled dev server that answers HTTP requests", async () => {
     const dir = await makeTempDir();
-    const outfile = join(dir, "dev-server.mjs");
+    const outfile = join(dir, "dev-server.cjs");
     await bundleDevServer({
       cwd,
       entry,
