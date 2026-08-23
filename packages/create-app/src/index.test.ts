@@ -30,17 +30,20 @@ describe("create-smite-app", () => {
     expect(pkg).toContain('"dev": "smite dev"');
   });
 
-  it("scaffolds a minimal template application without a server", async () => {
-    const baseDir = await mkdtemp(join(tmpdir(), "create-smite-app-minimal-"));
+  it("scaffolds the serverless template without a node server", async () => {
+    const baseDir = await mkdtemp(
+      join(tmpdir(), "create-smite-app-serverless-"),
+    );
     baseDirs.push(baseDir);
     const dir = await createApp({
-      name: "minimal-app",
+      name: "serverless-app",
       baseDir,
-      template: "minimal",
+      template: "serverless",
     });
 
     const config = await readFile(join(dir, "smite.config.ts"), "utf8");
-    expect(config).toContain("client({ outfile");
+    expect(config).toContain('entry: "./src/handler.ts"');
+    expect(config).toContain("serverless({");
     expect(config).not.toContain("openapi");
     const pkg = await readFile(join(dir, "package.json"), "utf8");
     expect(pkg).not.toContain("@smitejs/openapi");

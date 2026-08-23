@@ -19,19 +19,19 @@ program
   .description("Scaffold a new Smite application.")
   .version("0.1.0")
   .argument("<name>", "app name; also the directory and package name")
-  .option("--template <template>", "starter template", "default")
+  .option("--template <template>", "starter template", "http")
   .option("--force", "overwrite an existing directory")
   .action(
-    async (name: string, options: { template: string; force?: boolean }) => {
+    async (name: string, options: { template?: string; force?: boolean }) => {
       const dir = await createApp({
         name,
-        ...(options.template === "default"
+        ...(options.template === undefined
           ? {}
           : { template: options.template as CreateTemplate }),
         ...(options.force === true ? { force: true } : {}),
       });
       console.log(`${green("Scaffolded")} ${cyan(dir)}`);
-      console.log(`Templates: ${listTemplates().map(cyan).join(", ")}`);
+      console.log("Templates:", (await listTemplates()).map(cyan).join(", "));
       console.log(yellow("Next steps:"));
       console.log(`  ${cyan(`cd ${name}`)}`);
       console.log(`  ${cyan("npm install")}`);

@@ -1,6 +1,6 @@
 {
   "name": "create-smite-app",
-  "version": "1.2.1",
+  "version": "1.2.1-dev.21",
   "description": "Scaffold a new Smite application from the command line.",
   "license": "MIT",
   "repository": {
@@ -21,7 +21,11 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/.tsbuildinfo"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -30,7 +34,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smitejs/cli": "^1.2.1",
+    "@smitejs/cli": "^1.2.1-dev.21",
     "commander": "^15.0.0"
   },
   "devDependencies": {
