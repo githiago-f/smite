@@ -2,7 +2,7 @@ import { http } from "@smitejs/http";
 import { z } from "zod";
 
 export const app = http.app("pets");
-const route = http.route(app).req({
+const route = http.router().input({
   query: z.object({ page: z.coerce.number().int().optional() }).partial(),
   params: z.object({ id: z.coerce.number() }).partial(),
 });
@@ -22,3 +22,5 @@ route
 route
   .accept("POST", "/pets")
   .handler((ctx) => ({ status: 201, body: { name: ctx.body?.name } }));
+
+app.use(route);

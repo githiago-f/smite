@@ -8,7 +8,7 @@ import { z } from "zod";
  */
 export const buildApp = () => {
   const app = http.app("store");
-  const route = http.route(app).req({
+  const route = http.router().input({
     query: z.object({ q: z.string().optional() }).partial(),
     params: z
       .object({ id: z.coerce.number(), postId: z.coerce.number() })
@@ -29,6 +29,8 @@ export const buildApp = () => {
     status: 200,
     body: { id: ctx.params.id, postId: ctx.params.postId },
   }));
+
+  app.use(route);
 
   return { app, router: app.serve() };
 };

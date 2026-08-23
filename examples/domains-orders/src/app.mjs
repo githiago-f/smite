@@ -60,7 +60,7 @@ export const buildApp = () => {
   });
 
   const app = http.app("orders");
-  const route = http.route(app).req({
+  const route = http.router().input({
     body: z
       .object({ sku: z.string().min(1), qty: z.number().int().positive() })
       .optional(),
@@ -71,6 +71,8 @@ export const buildApp = () => {
   route
     .accept("GET", "/orders/:id")
     .handler(domain.handler(getOrder, deps, { input: (ctx) => ctx.params }));
+
+  app.use(route);
 
   return { app, router: app.serve() };
 };

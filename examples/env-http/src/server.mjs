@@ -21,11 +21,12 @@ const bootstrap = async () => {
   const [port, greeting] = await Promise.all([config.port, config.greeting]);
 
   const app = http.app("greeter");
-  const route = http.route(app);
+  const route = http.router();
   route.accept("GET", "/").handler(() => ({
     status: 200,
     body: { greeting },
   }));
+  app.use(route);
 
   const server = serveNode(app);
   server.listen(port, () => {
