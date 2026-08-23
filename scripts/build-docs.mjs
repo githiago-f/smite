@@ -3,16 +3,20 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import process from "node:process";
 import catppuccinMocha from "@shikijs/themes/catppuccin-mocha";
+import MarkdownIt from "markdown-it";
 import { codeToHtml } from "shiki";
 import {
   collectFiles,
   collectTestSnippets,
+  expandMarkdown,
   normalizeExampleName,
   slugify,
 } from "./snippets.mjs";
 
 const require = createRequire(import.meta.url);
 const jsdocPackage = require("jsdoc/package.json");
+
+const markdown = new MarkdownIt({ html: false });
 
 const rootDir = process.cwd();
 const packagesDir = path.join(rootDir, "packages");
@@ -289,100 +293,50 @@ const renderConceptMarkdown = async (
   filePath,
   examples,
 ) => {
-  const blocks = [];
-  const lines = source.split("\n");
-  let paragraph = [];
-  let list = [];
-
-  const flushParagraph = () => {
-    if (paragraph.length === 0) {
-      return;
-    }
-
-    blocks.push(`<p>${renderInlineMarkdown(paragraph.join(" "))}</p>`);
-    paragraph = [];
-  };
-
-  const flushList = () => {
-    if (list.length === 0) {
-      return;
-    }
-
-    blocks.push(
-      `<ul>${list
-        .map((item) => `<li>${renderInlineMarkdown(item)}</li>`)
-        .join("")}</ul>`,
-    );
-    list = [];
-  };
-
-  for (const line of lines) {
+  for (const line of source.split("\n")) {
     if (/^\s*```\s*tsx?\s*$/u.test(line)) {
       throw new Error(
         `Raw TypeScript code fence in ${filePath} (${packageName}). Concept docs must use '@example <Title>' with a tested '#section' snippet.`,
       );
     }
-
-    const example = line.match(/^\s*@example\s+(.+?)\s*$/u);
-
-    if (example) {
-      flushParagraph();
-      flushList();
-
-      const title = example[1].trim();
-      const snippet = snippetIndex.get(normalizeExampleName(title));
-
-      if (!snippet) {
-        throw new Error(
-          `Missing tested snippet "${title}" referenced by ${filePath} (${packageName}).`,
-        );
-      }
-
-      examples.push(snippet);
-      blocks.push(await renderSnippet(snippet));
-      continue;
-    }
-
-    if (line.match(/^\s*@benchmark\s*$/u)) {
-      flushParagraph();
-      flushList();
-      blocks.push(renderBenchmarkResults(await loadBenchmarkReport()));
-      continue;
-    }
-
-    if (line.startsWith("### ")) {
-      flushParagraph();
-      flushList();
-      blocks.push(`<h3>${escapeHtml(line.slice(4))}</h3>`);
-      continue;
-    }
-
-    if (line.startsWith("## ")) {
-      flushParagraph();
-      flushList();
-      blocks.push(`<h2>${escapeHtml(line.slice(3))}</h2>`);
-      continue;
-    }
-
-    if (line.startsWith("- ")) {
-      flushParagraph();
-      list.push(line.slice(2));
-      continue;
-    }
-
-    if (line.trim().length === 0) {
-      flushParagraph();
-      flushList();
-      continue;
-    }
-
-    paragraph.push(line.trim());
   }
 
-  flushParagraph();
-  flushList();
+  const { body, examples: exampleInjectables } = expandMarkdown(
+    source,
+    snippetIndex,
+    packageName,
+    filePath,
+  );
+  examples.push(...exampleInjectables.map(({ snippet }) => snippet));
 
-  return blocks.join("\n");
+  const injectables = [];
+  const scrubbed = [];
+
+  for (const line of body.split("\n")) {
+    if (/^\s*@benchmark\s*$/u.test(line)) {
+      const placeholder = `SMITE_BENCHMARK_${injectables.length}`;
+      injectables.push({
+        placeholder,
+        render: async () => renderBenchmarkResults(await loadBenchmarkReport()),
+      });
+      scrubbed.push("", placeholder, "");
+      continue;
+    }
+
+    scrubbed.push(line);
+  }
+
+  let html = markdown.render(scrubbed.join("\n"));
+
+  for (const { placeholder, render } of injectables) {
+    html = html.replace(`<p>${placeholder}</p>`, await render());
+  }
+
+  for (const { placeholder, snippet } of exampleInjectables) {
+    html = html.replace(`<p>${placeholder}</p>`, await renderSnippet(snippet));
+  }
+
+  return html;
 };
 
 const writePackageDocs = async (docs) => {
@@ -460,7 +414,7 @@ const renderHome = (packageDocs) =>
         {
           eyebrow: "Declarative HTTP",
           title: "An API from a few lines of intent",
-          text: "<code>http.app()</code> builds an app reference; <code>http.route()</code> declares zod-validated inputs; handlers return plain response values. No classes, no boilerplate.",
+          text: "<code>http.app()</code> builds an app reference; <code>http.router()</code> declares zod-validated inputs; handlers return plain response values. No classes, no boilerplate.",
           href: "./smite-http/concepts/apps-and-routes.html",
         },
         {
@@ -658,7 +612,7 @@ const renderApiDoc = async (
   )}</div>
   <h3>${escapeHtml(doc.name)}</h3>
   ${doc.intent ? `<p class="intent">${renderInlineMarkdown(doc.intent)}</p>` : ""}
-  <p>${renderInlineMarkdown(doc.description)}</p>
+  ${markdown.render(doc.description)}
   ${renderTags(doc.tags)}
   ${doc.examples.length > 0 ? await renderExamples(doc.examples) : ""}
 </article>`;
@@ -1034,6 +988,38 @@ h3 {
   line-height: 1.7;
 }
 
+.content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-size: 14px;
+}
+
+.content th,
+.content td {
+  border: 1px solid var(--surface-1);
+  padding: 10px 14px;
+  color: var(--text);
+  text-align: left;
+}
+
+.content th {
+  background: var(--surface-0);
+  color: var(--subtext);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.content tbody tr:nth-child(even) {
+  background: rgba(49, 50, 68, 0.35);
+}
+
+.content tbody tr:hover {
+  background: rgba(203, 166, 247, 0.08);
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -1197,11 +1183,7 @@ const groupBy = (values, key) => {
 const firstTagText = (tags, name) =>
   tags.find((tag) => tag.tag === name)?.text.trim();
 
-const renderInlineMarkdown = (value) =>
-  escapeHtml(value)
-    .replace(/`([^`]+)`/gu, "<code>$1</code>")
-    .replaceAll("\n\n", "</p><p>")
-    .replaceAll("\n", "<br>");
+const renderInlineMarkdown = (value) => markdown.renderInline(value ?? "");
 
 const escapeHtml = (value) =>
   String(value)

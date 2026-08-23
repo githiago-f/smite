@@ -3,6 +3,7 @@ import semver from "semver";
 import {
   collectPublishableWorkspaces,
   getReleaseVersion,
+  syncVersions,
 } from "./release-workspaces.mjs";
 
 const run = (command, args) =>
@@ -32,10 +33,15 @@ const registry = process.argv.includes("--npm")
   ? "https://registry.npmjs.org"
   : "http://localhost:4873";
 
+if (semver.valid(version)) {
+  const synced = await syncVersions(version);
+  if (synced.length > 0) {
+    console.log(`Synced ${synced.length} workspace package(s) to ${version}`);
+  }
+}
+
 const versionArgs =
-  version === "" && !semver.valid(version)
-    ? []
-    : ["--new-version", version, "--no-git-tag-version"];
+  version === "" ? [] : ["--new-version", version, "--no-git-tag-version"];
 
 for (const workspace of workspaces) {
   const target = version === "" ? workspace.packageJson.version : version;
