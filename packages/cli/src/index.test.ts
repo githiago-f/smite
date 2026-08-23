@@ -1,22 +1,22 @@
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  readdir,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { client } from "@smitejs/client";
-import { childrenOf, clear } from "@smitejs/core";
+import { childrenOf, clear, lookupAll } from "@smitejs/core";
 import { http } from "@smitejs/http";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { build, bundleBuildEntries } from "./build.js";
-import { compileApp, compileApps } from "./compile.js";
+import { cli, collectCommands, runCommand } from "./commands.js";
+import {
+  appsOf,
+  compileApp,
+  compileAppEntries,
+  compileApps,
+} from "./compile.js";
 import {
   buildEntriesOf,
+  cliEntriesOf,
   defineSmiteConfig,
   entriesOf,
   loadConfig,
@@ -57,13 +57,14 @@ describe("@smitejs/cli", () => {
   it("defines a first HTTP app", () => {
     // #section - Define a first HTTP app
     const app = http.app("hello");
-    const route = http.route(app).req({
+    const route = http.router().input({
       query: z.object({ name: z.string().optional() }).partial(),
     });
     route.accept("GET", "/hello").handler((ctx) => ({
       status: 200,
       body: { message: `Hello, ${ctx.query.name ?? "world"}!` },
     }));
+    app.use(route);
     // #endsection
 
     expect(childrenOf(app, "http.route")).toHaveLength(1);
@@ -368,37 +369,150 @@ export default {
     await rm(dir, { recursive: true, force: true });
   });
 
-  it("lists the starter templates", () => {
+  it("lists the starter templates", async () => {
     // #section - List the starter templates
-    const templates = listTemplates();
+    const templates = await listTemplates();
     // #endsection
 
-    expect(templates).toEqual(["default", "minimal"]);
+    expect(templates).toEqual(["http", "serverless"]);
   });
 
-  it("scaffolds the minimal template without a server or openapi", async () => {
+  it("scaffolds the serverless template without a dev server", async () => {
     const dir = await mkdtemp(join(tmpdir(), "smite-cli-create-"));
     const appDir = await createApp({
-      name: "minimal-app",
+      name: "serverless-app",
       baseDir: dir,
-      template: "minimal",
+      template: "serverless",
     });
 
     const configSource = await readFile(
       join(appDir, "smite.config.ts"),
       "utf8",
     );
-    expect(configSource).toContain("client({ outfile");
+    expect(configSource).toContain('entry: "./src/handler.ts"');
+    expect(configSource).toContain("serverless({");
     expect(configSource).not.toContain("openapi");
-
-    const serverExists = (await readdir(join(appDir, "src"))).includes(
-      "server.ts",
-    );
-    expect(serverExists).toBe(false);
 
     await expect(
       createApp({ name: "nope", baseDir: dir, template: "bogus" }),
     ).rejects.toThrow(/Unknown template 'bogus'/);
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("registers local commands with cli.exe", () => {
+    // #section - Register a local command
+    cli.exe("publish:docs", async () => {});
+    // #endsection
+
+    const commands = lookupAll("cli.command");
+    expect(commands.map((command) => command.data.name)).toEqual([
+      "publish:docs",
+    ]);
+  });
+
+  it("rejects command names with unsupported characters", () => {
+    expect(() => cli.exe("bad name!", () => {})).toThrow(
+      /Command name 'bad name!' must start/,
+    );
+  });
+
+  it("resolves cliEntries with a fallback to app entries", () => {
+    expect(cliEntriesOf({ entry: "./src/app.ts", plugins: [] })).toEqual([
+      "./src/app.ts",
+    ]);
+    expect(
+      cliEntriesOf({
+        entry: "./src/app.ts",
+        cliEntries: ["./src/cli.ts"],
+        plugins: [],
+      }),
+    ).toEqual(["./src/cli.ts"]);
+  });
+
+  it("runs a registered command from compiled entries", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "smite-cli-run-"));
+    const entry = join(dir, "cli.ts");
+    const marker = join(dir, "ran.txt");
+    const commandAliases = {
+      "@smitejs/core": join(cwd, "packages/core/src/index.ts"),
+      "@smitejs/cli": join(cwd, "packages/cli/src/index.ts"),
+    };
+    await writeFile(
+      entry,
+      `import { cli } from "@smitejs/cli";
+import { writeFile } from "node:fs/promises";
+
+cli.exe("publish:docs", async () => {
+  await writeFile(${JSON.stringify(marker)}, "published", "utf8");
+});
+`,
+      "utf8",
+    );
+
+    const compiledEntries = await compileAppEntries({
+      entries: [entry],
+      alias: commandAliases,
+    });
+    const commands = collectCommands(compiledEntries);
+    expect(commands.map((command) => command.data.name)).toEqual([
+      "publish:docs",
+    ]);
+
+    // #section - Run a local command
+    await runCommand(commands, "publish:docs", {
+      apps: appsOf(compiledEntries),
+      entries: [entry],
+      compiledEntries,
+    });
+    // #endsection
+
+    expect(await readFile(marker, "utf8")).toBe("published");
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("rejects duplicate command names across entries", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "smite-cli-run-"));
+    const a = join(dir, "a.ts");
+    const b = join(dir, "b.ts");
+    const commandAliases = {
+      "@smitejs/core": join(cwd, "packages/core/src/index.ts"),
+      "@smitejs/cli": join(cwd, "packages/cli/src/index.ts"),
+    };
+    const source = `import { cli } from "@smitejs/cli";\ncli.exe("dup", () => {});\n`;
+    await writeFile(a, source, "utf8");
+    await writeFile(b, source, "utf8");
+
+    const compiledEntries = await compileAppEntries({
+      entries: [a, b],
+      alias: commandAliases,
+    });
+    expect(() => collectCommands(compiledEntries)).toThrow(
+      /Duplicate command name 'dup'/,
+    );
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("rejects an unknown command name", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "smite-cli-run-"));
+    const entry = join(dir, "cli.ts");
+    const commandAliases = {
+      "@smitejs/core": join(cwd, "packages/core/src/index.ts"),
+      "@smitejs/cli": join(cwd, "packages/cli/src/index.ts"),
+    };
+    await writeFile(
+      entry,
+      `import { cli } from "@smitejs/cli";\ncli.exe("hello", () => {});\n`,
+      "utf8",
+    );
+
+    const compiledEntries = await compileAppEntries({
+      entries: [entry],
+      alias: commandAliases,
+    });
+    const commands = collectCommands(compiledEntries);
+    await expect(runCommand(commands, "nope", { apps: [] })).rejects.toThrow(
+      /Unknown command 'nope'. Available: hello/,
+    );
     await rm(dir, { recursive: true, force: true });
   });
 });

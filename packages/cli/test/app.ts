@@ -2,7 +2,7 @@ import { http } from "@smitejs/http";
 
 export const app = http.app("cli-fixture");
 
-const routes = http.route(app);
+const routes = http.router();
 routes.accept("GET", "/users").handler(() => ({ status: 200, body: [] }));
 routes
   .accept("GET", "/users/:id")
@@ -11,3 +11,4 @@ routes
   .accept("POST", "/users")
   .handler((ctx) => ({ status: 201, body: ctx.body }));
 routes.accept("GET", "/health").handler(() => ({ status: 200, body: "ok" }));
+app.use(routes);
