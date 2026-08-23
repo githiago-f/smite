@@ -1,0 +1,39 @@
+{
+  "name": "@smitejs/messaging",
+  "version": "1.2.1-dev.21",
+  "description": "Messaging endpoints for Smite: channels with consumers, producers, and an in-memory broker executor.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/githiago-f/smite.git"
+  },
+  "homepage": "https://github.com/githiago-f/smite#readme",
+  "bugs": {
+    "url": "https://github.com/githiago-f/smite/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/.tsbuildinfo"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@smitejs/core": "^1.2.1-dev.21",
+    "@smitejs/handlers": "^1.2.1-dev.21",
+    "zod": "^4.0.0"
+  },
+  "sideEffects": false
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@smitejs/realtime",
+  "version": "1.2.1-dev.21",
+  "description": "Realtime event handlers for Smite: socket descriptors with connect/message/disconnect events, hub executor, and collector.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/githiago-f/smite.git"
+  },
+  "homepage": "https://github.com/githiago-f/smite#readme",
+  "bugs": {
+    "url": "https://github.com/githiago-f/smite/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/.tsbuildinfo"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@smitejs/core": "^1.2.1-dev.21",
+    "@smitejs/handlers": "^1.2.1-dev.21"
+  },
+  "sideEffects": false
+}
