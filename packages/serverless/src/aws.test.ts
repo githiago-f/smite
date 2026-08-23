@@ -9,7 +9,7 @@ afterEach(() => clear());
 describe("@smitejs/serverless/aws", () => {
   it("adapts API Gateway v2 events to a Smite app", async () => {
     const app = http.app("lambda-fixture");
-    const routes = http.route(app);
+    const routes = http.router();
     routes.accept("GET", "/users/:id").handler((ctx) =>
       http.json({
         id: ctx.params.id,
@@ -17,6 +17,7 @@ describe("@smitejs/serverless/aws", () => {
         session: ctx.request.cookies.session,
       }),
     );
+    app.use(routes);
 
     // #section - Lambdaify an app
     const handler = lambdaify(app);
@@ -43,11 +44,13 @@ describe("@smitejs/serverless/aws", () => {
 
   it("parses JSON request bodies", async () => {
     const app = http.app("lambda-body");
-    const routes = http.route(app);
+    const routes = http
+      .router()
+      .input({ body: z.object({ name: z.string() }) });
     routes
-      .req({ body: z.object({ name: z.string() }) })
       .accept("POST", "/users")
       .handler((ctx) => http.status(201).json({ name: ctx.body.name }));
+    app.use(routes);
 
     const response = await lambdaify(app)({
       rawPath: "/users",
@@ -62,11 +65,13 @@ describe("@smitejs/serverless/aws", () => {
 
   it("returns zod validation failures as 400 responses", async () => {
     const app = http.app("lambda-validation");
-    const routes = http.route(app);
+    const routes = http
+      .router()
+      .input({ body: z.object({ name: z.string() }) });
     routes
-      .req({ body: z.object({ name: z.string() }) })
       .accept("POST", "/users")
       .handler((ctx) => http.status(201).json(ctx.body));
+    app.use(routes);
 
     const response = await lambdaify(app)({
       rawPath: "/users",
@@ -82,12 +87,13 @@ describe("@smitejs/serverless/aws", () => {
 
   it("preserves explicit response headers and text bodies", async () => {
     const app = http.app("lambda-headers");
-    const routes = http.route(app);
+    const routes = http.router();
     routes.accept("GET", "/health").handler(() => ({
       status: 200,
       headers: { "content-type": "text/plain" },
       body: "ok",
     }));
+    app.use(routes);
 
     const response = await lambdaify(app)({
       rawPath: "/health",
@@ -97,5 +103,29 @@ describe("@smitejs/serverless/aws", () => {
     expect(response.statusCode).toBe(200);
     expect(response.headers["content-type"]).toBe("text/plain");
     expect(response.body).toBe("ok");
+  });
+
+  it("scopes a Lambda to a named router, 404 elsewhere", async () => {
+    const app = http.app("lambda-scope");
+    const items = http.router({ name: "items" });
+    items.accept("GET", "/items").handler(() => http.json({ scope: "items" }));
+    const carts = http.router({ name: "carts" });
+    carts.accept("GET", "/cart").handler(() => http.json({ scope: "carts" }));
+    app.use(items, carts);
+
+    const itemsHandler = lambdaify(app, { router: "items" });
+
+    const hit = await itemsHandler({
+      rawPath: "/items",
+      requestContext: { http: { method: "GET" } },
+    });
+    expect(hit.statusCode).toBe(200);
+    expect(JSON.parse(hit.body)).toEqual({ scope: "items" });
+
+    const miss = await itemsHandler({
+      rawPath: "/cart",
+      requestContext: { http: { method: "GET" } },
+    });
+    expect(miss.statusCode).toBe(404);
   });
 });

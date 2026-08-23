@@ -9,6 +9,7 @@ import {
   getExtractorMetadata,
   headers,
   json,
+  methods,
   params,
   query,
   routesOf,
@@ -37,7 +38,7 @@ const makeRequest = (
 const makeApp = () => {
   const app = http.app();
 
-  const route = http.route(app).req({
+  const route = http.router().input({
     query: z.object({ time: z.iso.date() }).partial(),
   });
 
@@ -59,6 +60,8 @@ const makeApp = () => {
     return status(HttpStatus.CREATED).json({ name: body.data.name });
   });
 
+  app.use(route);
+
   return { app, route, serve: app.serve() };
 };
 
@@ -69,38 +72,58 @@ describe("http DSL", () => {
 
   describe("IR wiring", () => {
     it("wires exactly one route to the app", () => {
-      const { app, route } = makeApp();
-      expect(childrenOf(app, "http.route")).toEqual([route]);
+      const { app } = makeApp();
+      expect(childrenOf(app, "http.route")).toHaveLength(1);
     });
 
     it("wires three endpoints to the route", () => {
-      const { route } = makeApp();
+      const { app } = makeApp();
+      const [route] = childrenOf(app, "http.route");
       expect(childrenOf(route, "http.endpoint")).toHaveLength(3);
     });
 
     it("wires many routes to an app, each scoped to its own key", () => {
       const app = http.app("shop");
-      const users = http.route(app, { name: "users" });
-      const orders = app.route();
-      expect(childrenOf(app, "http.route")).toEqual([users, orders]);
-      expect(users.__key).toContain("users");
-      expect(orders.__key).not.toEqual(users.__key);
+      const users = http.router({ name: "users" });
+      const orders = http.router();
+      app.use(users, orders);
+      const routes = childrenOf(app, "http.route");
+      expect(routes).toHaveLength(2);
+      expect(routes[0]?.__key).toContain("users");
+      expect(routes[1]?.__key).not.toContain("users");
     });
 
     it("keeps route keys unique within an app", () => {
       const app = http.app("catalog");
-      http.route(app, { name: "items" });
-      expect(() => http.route(app, { name: "items" })).toThrow(/Duplicate/);
+      app.use(http.router({ name: "items" }));
+      expect(() => app.use(http.router({ name: "items" }))).toThrow(
+        /Duplicate/,
+      );
+    });
+
+    it("rejects route names containing anything but letters", () => {
+      const app = http.app("validation");
+      expect(() => app.use(http.router({ name: "get orders" }))).toThrow(
+        /only letters/,
+      );
+      expect(() => app.use(http.router({ name: "get-orders" }))).toThrow(
+        /only letters/,
+      );
+      expect(() => app.use(http.router({ name: "getOrders2" }))).toThrow(
+        /only letters/,
+      );
     });
 
     it("stores route config on the route node for generators", () => {
       const app = http.app("docs");
-      const route = http.route(app, {
+      const route = http.router({
         name: "pages",
         summary: "Get pages",
         description: "Fetch and manage page resources.",
       });
-      expect(route.data).toMatchObject({
+      app.use(route);
+      const descriptor = childrenOf(app, "http.route")[0];
+      expect(descriptor?.data).toMatchObject({
         name: "pages",
         summary: "Get pages",
         description: "Fetch and manage page resources.",
@@ -108,7 +131,8 @@ describe("http DSL", () => {
     });
 
     it("gives each endpoint exactly one handler child", () => {
-      const { route } = makeApp();
+      const { app } = makeApp();
+      const [route] = childrenOf(app, "http.route");
       for (const endpoint of childrenOf(route, "http.endpoint")) {
         const handlers = childrenOf(endpoint, "http.handler");
         expect(handlers).toHaveLength(1);
@@ -119,13 +143,14 @@ describe("http DSL", () => {
     });
 
     it("hides the child index from Object.keys", () => {
-      const { app, route } = makeApp();
+      const { app } = makeApp();
+      const [route] = childrenOf(app, "http.route");
       const endpoint = childrenOf(route, "http.endpoint")[0];
       const handler = endpoint
         ? childrenOf(endpoint, "http.handler")[0]
         : undefined;
       expect(Object.keys(app)).toEqual(["__kind", "__key", "data"]);
-      expect(Object.keys(route)).toEqual(["__kind", "__key", "data"]);
+      expect(Object.keys(route ?? {})).toEqual(["__kind", "__key", "data"]);
       expect(Object.keys(endpoint ?? {})).toEqual(["__kind", "__key", "data"]);
       expect(Object.keys(handler ?? {})).toEqual(["__kind", "__key", "data"]);
     });
@@ -213,11 +238,10 @@ describe("http DSL", () => {
 
   describe("immutability", () => {
     it("freezes the IR after serve", () => {
-      const { route } = makeApp();
-      const frozenRoute = route as { data: unknown };
-      expect(Object.isFrozen(route)).toBe(true);
+      const { app } = makeApp();
+      expect(Object.isFrozen(app)).toBe(true);
       expect(() => {
-        frozenRoute.data = {};
+        (app as { data: unknown }).data = {};
       }).toThrow(TypeError);
     });
   });
@@ -273,35 +297,61 @@ describe("http DSL", () => {
     it("defines an app with routes", () => {
       // #section - Define an app with routes
       const app = http.app("store");
-      const route = http.route(app);
+      const routes = http.router();
+      app.use(routes);
       // #endsection
 
       expect(app.__kind).toBe("app");
-      expect(route.__kind).toBe("http.route");
     });
 
     it("declares validated inputs on a route", () => {
       // #section - Declare validated inputs
       const app = http.app("wiki");
-      const route = http.route(app).req({
+      const routes = http.router().input({
         query: z.object({ language: z.string() }).partial(),
         params: z.object({ slug: z.string() }),
       });
+      app.use(routes);
       // #endsection
 
-      expect(route.__kind).toBe("http.route");
+      expect(childrenOf(app, "http.route")).toHaveLength(1);
     });
 
     it("adds endpoints and handlers", () => {
       // #section - Add endpoints and handlers
       const app = http.app("wiki");
-      const route = http.route(app);
-      route
+      const routes = http.router();
+      routes
         .accept("GET", "/pages/:slug")
         .handler((ctx) => json({ slug: ctx.params.slug }));
+      app.use(routes);
       // #endsection
 
+      const [route] = childrenOf(app, "http.route");
       expect(childrenOf(route, "http.endpoint")).toHaveLength(1);
+    });
+
+    it("declares routes with methods", () => {
+      // #section - Declare routes with methods
+      const app = http.app("store");
+      const routes = http.router();
+      routes.get(
+        "/users/:id",
+        { params: z.object({ id: z.string() }) },
+        (ctx) => json({ id: ctx.params.id }),
+      );
+      routes.post("/users", { body: z.object({ name: z.string() }) }, (ctx) =>
+        status(201).json({ name: ctx.body.name }),
+      );
+      app.use(routes);
+
+      const health = methods.get("/health", {}, () => json({ ok: true }));
+      app.use(health);
+      // #endsection
+
+      const [route] = childrenOf(app, "http.route");
+      expect(childrenOf(route, "http.endpoint")).toHaveLength(2);
+      expect(childrenOf(app, "http.route")).toHaveLength(2);
     });
 
     it("builds response bodies", () => {
@@ -317,8 +367,9 @@ describe("http DSL", () => {
     it("serves a request", async () => {
       // #section - Serve a request
       const app = http.app("store");
-      const route = http.route(app);
-      route.accept("GET", "/health").handler(() => json({ ok: true }));
+      const routes = http.router();
+      routes.accept("GET", "/health").handler(() => json({ ok: true }));
+      app.use(routes);
 
       const router = serve(app);
       const response = await router({
@@ -335,15 +386,44 @@ describe("http DSL", () => {
       expect(response).toEqual({ status: 200, body: { ok: true } });
     });
 
+    it("scopes saved requests to named routers", async () => {
+      const app = http.app("store");
+      const items = http.router({ name: "items" });
+      items.accept("GET", "/items").handler(() => json({ scope: "items" }));
+      const carts = http.router({ name: "carts" });
+      carts.accept("GET", "/cart").handler(() => json({ scope: "carts" }));
+      app.use(items, carts);
+
+      const request = {
+        method: "GET",
+        query: {},
+        headers: {},
+        cookies: {},
+        params: {},
+        body: undefined,
+      };
+      const scoped = serve(app, { routers: ["carts"] });
+
+      expect(await scoped({ ...request, path: "/cart" })).toEqual({
+        status: 200,
+        body: { scope: "carts" },
+      });
+      expect(await scoped({ ...request, path: "/items" })).toEqual({
+        status: 404,
+        body: { error: "Not Found" },
+      });
+    });
+
     it("collects an app's routes", () => {
       // #section - Collect an app's routes
       const app = http.app("store");
-      const route = http.route(app).req({
+      const route = http.router().input({
         query: z.object({ q: z.string().optional() }).partial(),
       });
       route
         .accept("GET", "/users/:id")
         .handler((ctx) => json({ id: ctx.params.id }));
+      app.use(route);
       const collected = routesOf(app);
       // #endsection
 
@@ -385,5 +465,154 @@ describe("http DSL", () => {
         }),
       ).toBe("cookie-id");
     });
+
+    it("composes a deployable HTTP app", async () => {
+      const app = http.app("store");
+      // #section - Compose a deployable HTTP app
+      const routes = http.router();
+
+      routes.accept("GET", "/health").handler(() => json({ ok: true }));
+
+      routes
+        .accept("GET", "/items")
+        .input({ query: z.object({ q: z.string().optional() }) })
+        .handler((ctx) => json({ q: ctx.query.q ?? null }));
+
+      routes
+        .accept("GET", "/items/:id")
+        .input({ params: z.object({ id: z.coerce.number() }) })
+        .handler((ctx) => json({ id: ctx.params.id }));
+
+      routes
+        .accept("POST", "/items")
+        .input({ body: z.object({ title: z.string().min(1) }) })
+        .handler((ctx) => status(201).json({ title: ctx.body.title }));
+
+      app.use(routes);
+      // #endsection
+
+      const response = await serve(app)({
+        method: "GET",
+        path: "/items/42",
+        query: { q: "ada" },
+        headers: {},
+        cookies: {},
+        params: {},
+        body: undefined,
+      });
+      expect(response).toEqual({ status: 200, body: { id: 42 } });
+    });
+  });
+});
+
+describe("per-endpoint input", () => {
+  it("inherits the router's input as the base per bucket", async () => {
+    const app = http.app("inherit-base");
+    const routes = http.router().input({
+      headers: z.object({ "x-token": z.string() }),
+    });
+
+    routes
+      .accept("GET", "/ping")
+      .input({ query: z.object({ echo: z.string().optional() }) })
+      .handler((ctx) =>
+        json({ token: ctx.headers["x-token"], echo: ctx.query.echo ?? null }),
+      );
+    app.use(routes);
+
+    const ok = await serve(app)(
+      makeRequest({
+        path: "/ping",
+        query: { echo: "a" },
+        headers: { "x-token": "secret" },
+      }),
+    );
+    expect(ok).toEqual({
+      status: 200,
+      body: { token: "secret", echo: "a" },
+    });
+
+    const rejected = await serve(app)(
+      makeRequest({ path: "/ping", headers: {} }),
+    );
+    expect(rejected.status).toBe(400);
+  });
+
+  it("overrides a router bucket per endpoint while others inherit", async () => {
+    const app = http.app("override");
+    const routes = http.router().input({
+      params: z.object({ id: z.coerce.number() }),
+    });
+
+    routes
+      .accept("GET", "/orders/:code")
+      .input({ params: z.object({ code: z.string().min(1) }) })
+      .handler((ctx) => json({ code: ctx.params.code }));
+
+    routes
+      .accept("GET", "/numbers/:id")
+      .handler((ctx) => json({ id: ctx.params.id }));
+    app.use(routes);
+
+    const overridden = await serve(app)(makeRequest({ path: "/orders/AB-1" }));
+    expect(overridden).toEqual({ status: 200, body: { code: "AB-1" } });
+
+    const base = await serve(app)(makeRequest({ path: "/numbers/42" }));
+    expect(base).toEqual({ status: 200, body: { id: 42 } });
+
+    const rejected = await serve(app)(
+      makeRequest({ path: "/numbers/not-a-number" }),
+    );
+    expect(rejected.status).toBe(400);
+  });
+
+  it("validates each endpoint against its own input", async () => {
+    const app = http.app("per-endpoint-validation");
+    const routes = http.router();
+
+    routes
+      .accept("POST", "/items")
+      .input({ body: z.object({ title: z.string().min(1) }) })
+      .handler((ctx) => status(201).json({ title: ctx.body.title }));
+
+    routes
+      .accept("POST", "/notes")
+      .input({ body: z.object({ text: z.string() }) })
+      .handler((ctx) => status(201).json({ text: ctx.body.text }));
+
+    app.use(routes);
+
+    const valid = await serve(app)(
+      makeRequest({ method: "POST", path: "/items", body: { title: "Hello" } }),
+    );
+    expect(valid.status).toBe(201);
+    expect(valid.body).toEqual({ title: "Hello" });
+
+    const invalid = await serve(app)(
+      makeRequest({ method: "POST", path: "/items", body: { title: "" } }),
+    );
+    expect(invalid.status).toBe(400);
+
+    const ownRoute = await serve(app)(
+      makeRequest({ method: "POST", path: "/notes", body: { text: "Hi" } }),
+    );
+    expect(ownRoute.status).toBe(201);
+  });
+
+  it("collects endpoint input alongside the router base", () => {
+    const app = http.app("routes-collect");
+    const routes = http.router().input({
+      headers: z.object({ authorization: z.string() }),
+    });
+    routes
+      .accept("GET", "/authors/:id")
+      .input({ params: z.object({ id: z.coerce.number() }) })
+      .handler(() => json({}));
+    app.use(routes);
+
+    const collected = routesOf(app);
+    expect(collected[0]?.req).toBeDefined();
+    expect(collected[0]?.endpoints[0]?.req).toBeDefined();
+    expect(collected[0]?.endpoints[0]?.pathParams).toEqual(["id"]);
   });
 });
