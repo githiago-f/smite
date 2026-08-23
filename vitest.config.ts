@@ -9,6 +9,22 @@ export default defineConfig({
         import.meta.dirname,
         "packages/core/src/index.ts",
       ),
+      "@smitejs/handlers": resolve(
+        import.meta.dirname,
+        "packages/handlers/src/index.ts",
+      ),
+      "@smitejs/jobs": resolve(
+        import.meta.dirname,
+        "packages/jobs/src/index.ts",
+      ),
+      "@smitejs/messaging": resolve(
+        import.meta.dirname,
+        "packages/messaging/src/index.ts",
+      ),
+      "@smitejs/realtime": resolve(
+        import.meta.dirname,
+        "packages/realtime/src/index.ts",
+      ),
       "@smitejs/domain": resolve(
         import.meta.dirname,
         "packages/domain/src/index.ts",
@@ -36,12 +52,22 @@ export default defineConfig({
         import.meta.dirname,
         "packages/openapi/src/index.ts",
       ),
+      "@smitejs/snippets": resolve(
+        import.meta.dirname,
+        "packages/snippets/src/index.ts",
+      ),
     },
   },
   define: {
     ALLOW_GLOBAL_REGISTRY: "true",
   },
   test: {
-    exclude: ["**/dist/**", "**/node_modules/**"],
+    exclude: [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/templates/**",
+      "**/templates-built/**",
+    ],
+    globalSetup: resolve(import.meta.dirname, "vitest.global-setup.ts"),
   },
 });

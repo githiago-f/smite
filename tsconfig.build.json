@@ -3,15 +3,20 @@
   "references": [
     { "path": "./packages/fp" },
     { "path": "./packages/core" },
+    { "path": "./packages/handlers" },
     { "path": "./packages/domain" },
     { "path": "./packages/aws" },
     { "path": "./packages/http" },
     { "path": "./packages/env" },
+    { "path": "./packages/jobs" },
+    { "path": "./packages/messaging" },
+    { "path": "./packages/realtime" },
     { "path": "./packages/cli" },
     { "path": "./packages/smite-cli" },
     { "path": "./packages/serverless" },
     { "path": "./packages/client" },
     { "path": "./packages/openapi" },
+    { "path": "./packages/snippets" },
     { "path": "./packages/create-app" }
   ]
 }
