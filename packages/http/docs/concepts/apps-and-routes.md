@@ -10,19 +10,23 @@ serving application.
 
 ## The app
 
-`http.app(name?)` creates an app and returns a reference carrying `route()` and
-`serve()`. Everything hangs off that one reference: pass it to `http.route(app)`
-to add routes, and to `app.serve()` (or `serve(app)`) when you are ready to
-handle requests.
+`http.app(name?)` creates an app and returns a reference carrying `use()` and
+`serve()`. Everything hangs off that one reference: inject routers (and aspects)
+with `app.use(...)`, and call `app.serve()` (or `serve(app)`) when you are ready
+to handle requests.
 
 @example Define an app with routes
 
 ## The route
 
-`http.route(app)` attaches a route to the app and returns its reference,
-carrying `req` and `accept`. Routes are where shared shape lives: a route can
+`http.router()` creates a standalone route reference, carrying `input`, `accept`,
+and per-method shortcuts. Routes are where shared shape lives: a route can
 declare per-bucket input validation that all of its endpoints inherit, then fan
-out into multiple method + path endpoints.
+out into multiple method + path endpoints. Routes are inert until injected:
+`app.use(routes)` writes their endpoints into the app's IR, so a router can be
+declared anywhere and attached to an app later.
+
+@example Declare routes with methods
 
 ## One value, many consumers
 

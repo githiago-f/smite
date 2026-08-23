@@ -4,14 +4,14 @@ summary: Declaring and validating route inputs with zod.
 order: 20
 ---
 
-Handlers should receive values they can trust. `http.route(app).req(config)`
+Handlers should receive values they can trust. `http.router().input(config)`
 declares schemas for each input bucket — `query`, `params`, `headers`, `body` —
 and those schemas flow into two places at once: runtime validation and the
 handler's TypeScript types.
 
 ## Declaring schemas
 
-Pass zod schemas in the `req` call. Any bucket you omit is treated as an
+Pass zod schemas in the `input` call. Any bucket you omit is treated as an
 unvalidated, loosely-typed bucket.
 
 @example Declare validated inputs

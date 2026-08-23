@@ -18,13 +18,14 @@ import { http } from "@smitejs/http";
 import { z } from "zod";
 
 const app = http.app("my-api");
-http.route(app)
-  .req({
-    params: { id: z.string() },
-    query: z.object({ q: z.string().optional() }).partial(),
-  })
+const routes = http.router().input({
+  params: z.object({ id: z.string() }),
+  query: z.object({ q: z.string().optional() }).partial(),
+});
+routes
   .accept("GET", "/users/:id")
   .handler((ctx) => ({ status: 200, body: { id: ctx.params.id } }));
+app.use(routes);
 
 export const router = app.serve();
 // router({ method: "GET", path: "/users/42", query: {}, headers: {}, body: undefined })
@@ -32,12 +33,18 @@ export const router = app.serve();
 
 ## API
 
-- `http.app(name?)` — an app reference (`route`, `serve`). Pass it to
-  `http.route(app)` and `serve(app)` directly.
-- `http.route(app)` — a route reference (`req(config)`, `accept(method, path)`).
-- `req(RouteInputConfig)` — zod schemas per bucket (`query`, `params`,
+- `http.app(name?)` — an app reference (`use`, `serve`). Inject routers and
+  aspects with `app.use(...)`; serve with `serve(app)` directly.
+- `http.router(config?)` — a standalone route builder (`input(config)`,
+  `accept(method, path)`, and per-method shortcuts). Inject it into an app
+  with `app.use(router)`.
+- `input(RouteInputConfig)` — zod schemas per bucket (`query`, `params`,
   `headers`, `body`); types are inferred into the handler context.
-- `accept(method, path)` — an `HttpEndpointBuilder` (`.handler(fn)`).
+- `app.use(...injectables)` — injects routers and aspects
+  (`aspect.middleware`, `aspect.guard`, `aspect.interceptor`,
+  `aspect.filter`) into the request pipeline.
+- `accept(method, path)` — an `HttpEndpointBuilder` (`.input(config)`,
+  `.handler(fn)`).
 - `handler(ctx)` — returns `HttpResponse` or a raw body (wrapped as
   `{ status: 200, body }`).
 - `serve(app)` — an `HttpRouter`: `(request) => Promise<HttpResponse>`. It

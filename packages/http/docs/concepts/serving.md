@@ -20,7 +20,7 @@ async handler.
 
 ## Dispatch rules
 
-- The route's `req` schemas are validated per request; failure yields `400`.
+- The route's `input` schemas are validated per request; failure yields `400`.
 - An unmatched path or method yields `404` with `{ error: "Not Found" }`.
 - An endpoint with no handler also yields `404`.
 - `ANY` endpoints match every method; otherwise the method must match exactly.

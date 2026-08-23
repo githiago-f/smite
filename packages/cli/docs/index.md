@@ -102,6 +102,44 @@ Use `build.entries` for several runtime bundles. If `build.entry` /
 `build.entries` is omitted, `smite build` bundles the app `entry` / `entries`
 directly.
 
+## Run local commands
+
+`cli.exe("name", handler)` registers a local command from a source entry. Run
+it with `smite run <name>`: the entry is compiled in collect mode, the
+registration is collected, and the handler runs with the compiled app and
+provider nodes available by closure. This is the hook for local pipelines that
+generate artifacts (`@smitejs/client`, `@smitejs/openapi`) and upload them to a
+bucket declared with `@smitejs/aws`:
+
+```ts
+// src/cli.ts
+import { cli } from "@smitejs/cli";
+import { generate } from "@smitejs/client";
+import { provider } from "@smitejs/aws";
+
+cli.exe("publish:client", async () => {
+  const code = await generate({ entry: "./src/app.ts", outfile: "dist/client.ts" });
+  console.log(code.length);
+});
+```
+
+```ts
+// smite.config.ts
+export default defineSmiteConfig({
+  entry: "./src/app.ts",
+  cliEntries: ["./src/cli.ts"], // commands never become runtime entries
+  plugins: [],
+});
+```
+
+```bash
+npx smite run publish:client
+```
+
+`cliEntries` defaults to the app `entries`; set it to a dedicated command entry
+so serverless functions are not derived from it. Commands are plain functions,
+so the same handler can be imported and called from any script.
+
 ## Develop locally
 
 `smite dev` runs the local-development loop for a single app:
@@ -162,6 +200,7 @@ available as `yarn create smite-app` via the `create-smite-app` package.
   the deduplicated union of apps.
 - `entriesOf(config)` — resolve `entries` (or the `entry` shorthand) from a
   config.
+- `cliEntriesOf(config)` — resolve `cliEntries`, falling back to app entries.
 - `buildEntriesOf(config)` — resolve `build.entries` / `build.entry`, falling
   back to app entries.
 - `build(options)` — run generators, then bundle runtime entries for
@@ -178,6 +217,12 @@ available as `yarn create smite-app` via the `create-smite-app` package.
   unknown or duplicate names.
 - `runAll(plugins, { apps })` — run every plugin in declaration order (used by
   `smite dev`).
+- `cli.exe(name, handler)` — register a local command callable with
+  `smite run <name>`.
+- `collectCommands(compiledEntries)` — collect registered `cli.command`
+  descriptors, erroring on duplicates.
+- `runCommand(commands, name, ctx)` — run the named command, erroring on
+  unknown or duplicate names.
 - `dev(options)` — run the local-development loop (generators → server →
   auto-reload).
 - `bundleDevServer({ cwd, entry, alias?, docs?, title?, outfile })` — bundle

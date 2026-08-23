@@ -19,11 +19,13 @@ scaffold with `yarn create smite-app`, install with `npm install`, start with
 
 Pass `--template <name>` to choose the starter. Available templates:
 
-- `default` — app + server with Swagger UI, client and OpenAPI codegen.
-- `minimal` — app + typed client only, no server or OpenAPI.
+- `http` — an app + server with Swagger UI, client and OpenAPI codegen, a
+  Vitest suite, a Biome config, and a Docker compose service (the default).
+- `serverless` — the same tested app served through the API Gateway v2 Lambda
+  adapter and deployable with the Serverless Framework.
 
 ```bash
-yarn create smite-app my-app --template minimal
+yarn create smite-app my-app --template serverless
 ```
 
 `--force` overwrites an existing directory.
@@ -32,7 +34,8 @@ yarn create smite-app my-app --template minimal
 
 The scaffolded project has a `package.json`, a `tsconfig.json`, a
 `smite.config.ts` declaring the generator plugins, TypeScript sources
-(`src/app.ts` + `src/server.ts` on the `default` template), a README, and a
+(`src/app.ts` + `src/server.ts` on the `http` template), a README, and a
 `.gitignore`. `npm run dev` runs `smite dev` (generators + local server +
 auto-reload), `npm run generate` runs the generators once, `npm start` serves
-the app with Swagger UI at `/docs`, and `npm run typecheck` runs `tsc --noEmit`.
+the app with Swagger UI at `/docs`, `npm test` runs the app's own Vitest
+suite, and `npm run typecheck` runs `tsc --noEmit`.

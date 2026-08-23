@@ -25,6 +25,6 @@ hidden behavior: the handler is just the function you wrote.
 
 ## One handler per endpoint
 
-Each endpoint carries exactly one handler. Calling `.handler` twice would
-attach a second handler; `serve` uses the first one it finds. Keep endpoints
-atomic — one method + path, one handler.
+Each endpoint carries exactly one handler; calling `.handler` again replaces the
+endpoint's handler (last one wins). Keep endpoints atomic — one method + path,
+one handler.
