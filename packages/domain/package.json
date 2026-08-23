@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/domain",
-  "version": "1.2.1",
+  "version": "1.2.1-dev.21",
   "description": "Functional DDD toolkit for Smite: value objects, entities, ports, specifications and usecases.",
   "license": "MIT",
   "repository": {
@@ -18,7 +18,11 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/.tsbuildinfo"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -27,8 +31,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smitejs/core": "^1.2.1",
-    "@smitejs/fp": "^1.2.1",
+    "@smitejs/core": "^1.2.1-dev.21",
+    "@smitejs/fp": "^1.2.1-dev.21",
     "zod": "^4.0.0"
   },
   "sideEffects": false

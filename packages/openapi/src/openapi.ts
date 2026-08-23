@@ -4,6 +4,7 @@ import type { SmitePlugin } from "@smitejs/cli";
 import type { AppDescriptor } from "@smitejs/core";
 import { routesOf } from "@smitejs/http";
 import type { CollectedEndpoint, CollectedRoute } from "@smitejs/http";
+import { mergeRequestConfig } from "@smitejs/http";
 
 /**
  * A single {@link https://swagger.io/specification/#server-object | Server}
@@ -104,10 +105,11 @@ const buildParameters = (
   route: CollectedRoute,
   endpoint: CollectedEndpoint,
 ): readonly Parameter[] => {
+  const req = mergeRequestConfig(route.req, endpoint.req);
   const parameters = [
-    ...bucketParameters(route.req?.query, "query", false),
-    ...bucketParameters(route.req?.params, "path", true),
-    ...bucketParameters(route.req?.headers, "header", false),
+    ...bucketParameters(req?.query, "query", false),
+    ...bucketParameters(req?.params, "path", true),
+    ...bucketParameters(req?.headers, "header", false),
   ];
   return ensurePathParams(parameters, endpoint);
 };
@@ -132,10 +134,11 @@ const buildOperation = (
   if (parameters.length > 0) {
     operation.parameters = parameters;
   }
-  if (route.req?.body !== undefined) {
+  const req = mergeRequestConfig(route.req, endpoint.req);
+  if (req?.body !== undefined) {
     operation.requestBody = {
       content: {
-        "application/json": { schema: toJsonSchema(route.req.body) },
+        "application/json": { schema: toJsonSchema(req.body) },
       },
     };
   }

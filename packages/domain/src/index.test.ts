@@ -516,12 +516,13 @@ describe("handlers", () => {
   it("relates an http.handler to its domain.usecase in collect mode", () => {
     // #section - Relate a handler to a usecase
     const app = http.app();
-    const route = http.route(app);
+    const route = http.router();
     const place = usecase({
       name: "place",
       handle: () => Result.ok(undefined),
     });
     route.accept("POST", "/orders").handler(handler(place, {}));
+    app.use(route);
     // #endsection
 
     const edges = relationships().filter(

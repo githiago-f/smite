@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/aws",
-  "version": "1.2.1",
+  "version": "1.2.1-dev.21",
   "description": "AWS resource declarations, injected clients, and permission metadata for Smite.",
   "license": "MIT",
   "repository": {
@@ -18,7 +18,11 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "!dist/**/*.test.*", "!dist/.tsbuildinfo"],
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/.tsbuildinfo"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -28,7 +32,7 @@
     "test:floci": "SMITE_FLOCI=1 vitest run src/floci.integration.test.ts"
   },
   "dependencies": {
-    "@smitejs/core": "^1.2.1"
+    "@smitejs/core": "^1.2.1-dev.21"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.1102.0",

@@ -1,5 +1,10 @@
 import { defineDescriptor } from "@smitejs/core";
 import type { Descriptor } from "@smitejs/core";
+import { getProviderConfig } from "./context.js";
+import type { ProviderConfig } from "./context.js";
+
+export { getProviderConfig, runWithProviderConfig } from "./context.js";
+export type { ProviderConfig } from "./context.js";
 
 /** AWS services supported by the first resource provider layer. */
 export type AwsProviderName = "s3" | "ssm" | "dynamodb" | "sqs" | "eventbridge";
@@ -58,6 +63,8 @@ export interface AwsResource<Client> {
   readonly provider: AwsProviderName;
   readonly name: string;
   readonly resource: AwsResourceReference;
+  /** The compile-time descriptor backing this handle, for ARN/CloudFormation tooling. */
+  readonly descriptor: AwsResourceDescriptor;
   readonly client: Client;
   readonly requirePermissions: (
     actions: readonly string[],
@@ -145,7 +152,8 @@ export function requirePermissions(
 /**
  * Declares an AWS resource and returns a lazy, cached client handle. The
  * client factory belongs to the application, so no AWS SDK is required by
- * this package.
+ * this package. The factory receives the shared provider config (region,
+ * service name) registered by a configuration manager or environment.
  *
  * @group Providers
  * @example Declare an S3 provider
@@ -153,7 +161,7 @@ export function requirePermissions(
 export function provider<Client>(
   providerName: AwsProviderName,
   config: AwsProviderConfig,
-  createClient: () => Client,
+  createClient: (ctx: ProviderConfig) => Client,
 ): AwsResource<Client> {
   if (config.mode === "imported" && config.import === undefined) {
     throw new Error(
@@ -172,8 +180,9 @@ export function provider<Client>(
     provider: providerName,
     name: config.name,
     resource: reference,
+    descriptor,
     get client(): Client {
-      cached ??= createClient();
+      cached ??= createClient(getProviderConfig());
       return cached;
     },
     requirePermissions: (actions: readonly string[]) =>
