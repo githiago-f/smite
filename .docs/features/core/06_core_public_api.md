@@ -14,7 +14,7 @@ Close out the `@smitejs/core` public surface:
 
 ## Context
 
-Builders (e.g. `http.route(app).req(config)`) need to add data to an already
+Builders (e.g. `http.router(app).req(config)`) need to add data to an already
 registered node without breaking the child references established at creation.
 Two prior designs were rejected for complexity:
 

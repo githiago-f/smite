@@ -39,7 +39,7 @@ afterEach(() => clear());
 const makeApp = () => {
   const app = http.app();
 
-  const route = http.route(app).req({
+  const route = http.router(app).req({
     query: z.object({ time: z.iso.date() }),
   });
 

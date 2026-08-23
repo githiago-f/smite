@@ -47,7 +47,7 @@ const source = `
   import { http } from "@smitejs/http";
 
   const app = http.app();
-  const route = http.route(app).req({ query: { parse: (v) => v } });
+  const route = http.router(app).req({ query: { parse: (v) => v } });
   route.accept("GET", "/ping").handler((ctx) => ({ status: 200, body: "pong" }));
   export const router = app.serve();
 `;

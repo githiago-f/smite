@@ -153,7 +153,7 @@ Assertions (promoted to slice `12_http_tests`):
 Definition of done:
 
 - The full declaration chain (app → route → endpoint → handler) is recorded as
-  nodes + edges, and `http.route(app).accept(...).handler(...)` compiles with
+  nodes + edges, and `http.router(app).accept(...).handler(...)` compiles with
   a correctly-typed `ctx` (from slice 09).
 
 ## Dependencies / prerequisites

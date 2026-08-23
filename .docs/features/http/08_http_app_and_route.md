@@ -7,10 +7,10 @@ Implement the first slice of the `@smitejs/http` DSL, matching the sketch
 
 ```ts
 const app = http.app();
-const route = http.route(app);
+const route = http.router(app);
 ```
 
-`http.app()` wraps the core junction (slice 05). `http.route(app)` creates a
+`http.app()` wraps the core junction (slice 05). `http.router(app)` creates a
 `"http.route"` node and **registers itself as a route of `app`** — the exact
 wiring behavior the requirements call out.
 
@@ -19,7 +19,7 @@ wiring behavior the requirements call out.
 The sketch shows a registry-driven DSL where calling `route(app)` both creates
 the route IR *and* records the relationship to the app. Our `relate` primitive
 (slice 04) makes this a one-liner. The DSL deliberately avoids a `routeBuilder`
-class: `http.route(app)` is a function returning a small builder object.
+class: `http.router(app)` is a function returning a small builder object.
 
 ## Harness alignment
 
@@ -175,14 +175,14 @@ Manual sanity (temporary, replaced by slice 12 tests):
 ```ts
 import { http } from "@smitejs/http";
 const app = http.app();
-const route = http.route(app);
+const route = http.router(app);
 // childrenOf(app.descriptor, "http.route") has 1 entry
 ```
 
 Definition of done:
 
 - `http.app()` returns an `HttpAppBuilder` with a core `AppDescriptor`.
-- `http.route(app)` creates a `"http.route"` node and wires it into `app`
+- `http.router(app)` creates a `"http.route"` node and wires it into `app`
   (`childrenOf(app, "http.route")` sees it; the edge is in `relationships()`).
 
 ## Dependencies / prerequisites
@@ -197,7 +197,7 @@ Definition of done:
   Options: composite `"<METHOD> <path>"` derived from the first `accept`
   (matches the old project's `defineRoute`), or an explicit `name` parameter.
   Recommendation: composite from `accept`, falling back to `"route"`.
-- `http.route(app)` is the sketch's spelling; `app.route()` also exists on the
+- `http.router(app)` is the sketch's spelling; `app.route()` also exists on the
   builder for ergonomics. Keep both? Lean yes — the sketch uses the free
   function; the builder method is a convenience alias (DRY: both delegate to
   one implementation).

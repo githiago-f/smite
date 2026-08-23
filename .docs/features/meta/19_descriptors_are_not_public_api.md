@@ -95,7 +95,7 @@ Stripped internal jargon ("IR", "descriptor", "registry", "globalRegistry",
 "ALLOW_GLOBAL_REGISTRY", "the IR node") from:
 
 - `packages/http/docs/concepts/apps-and-routes.md` — describe
-  `http.app()` → `http.route()` → `serve()`; drop "compiles down to the core
+  `http.app()` → `http.router()` → `serve()`; drop "compiles down to the core
   IR" and the `childrenOf`-centric "graph looks like" section.
 - `packages/http/docs/concepts/serving.md` — "walks the IR via child refs,
   never the registry" → "freezes the app into a stable, read-only structure";

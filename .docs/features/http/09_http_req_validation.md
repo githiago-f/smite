@@ -168,7 +168,7 @@ export function route<Config extends RouteInputConfig = RouteInputConfig>(
    tests in slice `12`):
 
    ```ts
-   const route = http.route(app).req({ query: z.object({ time: z.iso.date() }) });
+   const route = http.router(app).req({ query: z.object({ time: z.iso.date() }) });
    route.accept(HttpMethod.GET, "/").handler((ctx) => {
      ctx.query.time; // typed as the iso-date output
      return {};
