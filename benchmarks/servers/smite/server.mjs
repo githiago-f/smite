@@ -3,7 +3,7 @@ import { http } from "@smitejs/http";
 import { z } from "zod";
 
 const app = http.app("bench");
-const route = http.route(app).req({
+const route = http.router().input({
   query: z.object({ q: z.string().optional() }).partial(),
   params: z
     .object({ id: z.coerce.number().optional(), postId: z.string().optional() })
@@ -25,6 +25,8 @@ route.accept("GET", "/users/:id/posts/:postId").handler((ctx) => ({
   status: 200,
   body: { id: ctx.params.id, postId: ctx.params.postId },
 }));
+
+app.use(route);
 
 const router = app.serve();
 
