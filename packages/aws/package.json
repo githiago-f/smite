@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/aws",
-  "version": "1.2.1-dev.21",
+  "version": "2.0.0-SNAPSHOT",
   "description": "AWS resource declarations, injected clients, and permission metadata for Smite.",
   "license": "MIT",
   "repository": {
@@ -32,7 +32,7 @@
     "test:floci": "SMITE_FLOCI=1 vitest run src/floci.integration.test.ts"
   },
   "dependencies": {
-    "@smitejs/core": "^1.2.1-dev.21"
+    "@smitejs/core": "^2.0.0-SNAPSHOT"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.1102.0",

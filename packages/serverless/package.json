@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/serverless",
-  "version": "1.2.1-dev.21",
+  "version": "2.0.0-SNAPSHOT",
   "description": "Serverless runtime adapters for Smite apps.",
   "license": "MIT",
   "repository": {
@@ -35,10 +35,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smitejs/aws": "^1.2.1-dev.21",
-    "@smitejs/cli": "^1.2.1-dev.21",
-    "@smitejs/core": "^1.2.1-dev.21",
-    "@smitejs/http": "^1.2.1-dev.21",
+    "@smitejs/aws": "^2.0.0-SNAPSHOT",
+    "@smitejs/cli": "^2.0.0-SNAPSHOT",
+    "@smitejs/core": "^2.0.0-SNAPSHOT",
+    "@smitejs/http": "^2.0.0-SNAPSHOT",
     "yaml": "^2.9.0"
   },
   "devDependencies": {

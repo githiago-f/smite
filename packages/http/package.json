@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/http",
-  "version": "1.2.1-dev.21",
+  "version": "2.0.0-SNAPSHOT",
   "description": "HTTP semantics for Smite: apps, routes, endpoints and the serve executor.",
   "license": "MIT",
   "repository": {
@@ -32,8 +32,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smitejs/core": "^1.2.1-dev.21",
-    "@smitejs/fp": "^1.2.1-dev.21",
+    "@smitejs/core": "^2.0.0-SNAPSHOT",
+    "@smitejs/fp": "^2.0.0-SNAPSHOT",
     "path-to-regexp": "^8.2.0",
     "pino": "^10.3.1",
     "zod": "^4.0.0"

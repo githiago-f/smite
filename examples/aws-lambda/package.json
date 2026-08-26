@@ -1,14 +1,14 @@
 {
   "name": "@smitejs/example-aws-lambda",
-  "version": "1.2.1-dev.21",
+  "version": "2.0.0-SNAPSHOT",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node src/invoke.mjs"
   },
   "dependencies": {
-    "@smitejs/http": "1.2.1-dev.21",
-    "@smitejs/serverless": "1.2.1-dev.21",
+    "@smitejs/http": "2.0.0-SNAPSHOT",
+    "@smitejs/serverless": "2.0.0-SNAPSHOT",
     "zod": "^4.0.0"
   }
 }

@@ -1,12 +1,12 @@
 {
   "name": "@smitejs/example-fp-utils",
-  "version": "1.2.1-dev.21",
+  "version": "2.0.0-SNAPSHOT",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node src/main.mjs"
   },
   "dependencies": {
-    "@smitejs/fp": "1.2.1-dev.21"
+    "@smitejs/fp": "2.0.0-SNAPSHOT"
   }
 }

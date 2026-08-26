@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/snippets",
-  "version": "1.2.1-dev.21",
+  "version": "2.0.0-SNAPSHOT",
   "description": "Generate docs, JSDoc examples, and code from tried-and-tested #section snippets.",
   "license": "MIT",
   "repository": {

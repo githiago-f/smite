@@ -1,6 +1,6 @@
 {
   "name": "@smitejs/realtime",
-  "version": "1.2.1-dev.21",
+  "version": "2.0.0-SNAPSHOT",
   "description": "Realtime event handlers for Smite: socket descriptors with connect/message/disconnect events, hub executor, and collector.",
   "license": "MIT",
   "repository": {
@@ -31,8 +31,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@smitejs/core": "^1.2.1-dev.21",
-    "@smitejs/handlers": "^1.2.1-dev.21"
+    "@smitejs/core": "^2.0.0-SNAPSHOT",
+    "@smitejs/handlers": "^2.0.0-SNAPSHOT"
   },
   "sideEffects": false
 }
