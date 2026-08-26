@@ -22,7 +22,7 @@ const logs = {
   aroundLogger,
 };
 
-/** #section - Create a scope-anchored logger */
+// #section - Create a scope-anchored logger
 describe("Logger interface", () => {
   it("createLogger returns an object with info/warn/error/debug/trace methods", () => {
     const logger = logs.createLogger({ level: "info" });
@@ -47,7 +47,9 @@ describe("Logger interface", () => {
     const logger = logs.currentLogger();
     expect(logger).toBeUndefined();
   });
+  // #endsection
 
+  // #section - Register and retrieve a logger in a scope
   it("registerScopeLogger makes logger available within an active scope", () => {
     const logger = logs.createLogger({ level: "debug" });
     runWithScope({}, () => {
@@ -56,41 +58,72 @@ describe("Logger interface", () => {
       expect(retrieved).toBe(logger);
     });
   });
+  // #endsection
 
+  // #section - Retrieve a logger from the current scope
+  it("currentLogger retrieves logger registered in the active scope", () => {
+    const logger = logs.createLogger({ level: "info" });
+    runWithScope({}, () => {
+      logs.registerScopeLogger(logger);
+      const retrieved = logs.currentLogger();
+      expect(retrieved).toBe(logger);
+    });
+  });
+  // #endsection
+
+  // #section - Run with a scoped logger
   it("runWithLogger makes logger available during the callback", () => {
     const logger = logs.runWithLogger({ level: "info" }, () => {
       return logs.currentLogger();
     });
-    // Logger is available within runWithLogger's scope
     expect(logger).toBeDefined();
   });
+  // #endsection
 });
 
-/** #section - jobLogger creates a middleware aspect */
+// #section - Create a logger for a job execution
+it("createScopedLogger registers logger in the current scope", () => {
+  const logger = logs.createLogger({ level: "info" });
+  runWithScope({}, () => {
+    logs.registerScopeLogger(logger);
+    const retrieved = logs.currentLogger();
+    expect(retrieved).toBeDefined();
+  });
+});
+// #endsection
+
+// #section - Apply a logger aspect
 describe("AOP aspects", () => {
   it("jobLogger creates a middleware aspect", () => {
     const aspect = logs.jobLogger({ level: "info" });
     expect(aspect.kind).toBe("middleware");
     expect(typeof aspect.fn).toBe("function");
   });
+  // #endsection
 
+  // #section - Apply logger aspect to a job
   it("jobExecutionLogger creates a middleware aspect with label", () => {
     const aspect = logs.jobExecutionLogger({ label: "test-job" });
     expect(aspect.kind).toBe("middleware");
     expect(typeof aspect.fn).toBe("function");
   });
+  // #endsection
 
+  // #section - Error-handling guard aspect
   it("errorLoggingGuard creates a guard aspect", () => {
     const aspect = logs.errorLoggingGuard();
     expect(aspect.kind).toBe("guard");
     expect(typeof aspect.fn).toBe("function");
   });
+  // #endsection
 
+  // #section - Log around a function call
   it("aroundLogger creates a middleware aspect", () => {
     const aspect = logs.aroundLogger({ level: "trace" });
     expect(aspect.kind).toBe("middleware");
     expect(typeof aspect.fn).toBe("function");
   });
+  // #endsection
 });
 
 describe("runWithScope", () => {
