@@ -1,6 +1,5 @@
-import { registerLogger, runWithScope, ScopeContext } from "@smitejs/core";
+import { type ScopeContext, registerLogger, runWithScope } from "@smitejs/core";
 import { pino } from "pino";
-import type { Logger as PinoLogger } from "pino";
 
 /**
  * Generic structured logger interface.
@@ -8,16 +7,16 @@ import type { Logger as PinoLogger } from "pino";
  * transport-agnostic so callers are not coupled to pino internally.
  */
 export interface Logger {
-  /** Log at `info` level. */
-  info(msg: string, ...meta: unknown[]): void;
-  /** Log at `warn` level. */
-  warn(msg: string, ...meta: unknown[]): void;
-  /** Log at `error` level. */
-  error(msg: string, ...meta: unknown[]): void;
-  /** Log at `debug` level. */
-  debug(msg: string, ...meta: unknown[]): void;
-  /** Log at `trace` level. */
-  trace(msg: string, ...meta: unknown[]): void;
+  info(obj: Record<string, unknown>, msg?: string, ...args: unknown[]): void;
+  info(msg: string, ...args: unknown[]): void;
+  warn(obj: Record<string, unknown>, msg?: string, ...args: unknown[]): void;
+  warn(msg: string, ...args: unknown[]): void;
+  error(obj: Record<string, unknown>, msg?: string, ...args: unknown[]): void;
+  error(msg: string, ...args: unknown[]): void;
+  debug(obj: Record<string, unknown>, msg?: string, ...args: unknown[]): void;
+  debug(msg: string, ...args: unknown[]): void;
+  trace(obj: Record<string, unknown>, msg?: string, ...args: unknown[]): void;
+  trace(msg: string, ...args: unknown[]): void;
 }
 
 /**
@@ -30,25 +29,28 @@ export interface Logger {
  * @group Logger
  * @example Create a scope-anchored logger
  */
-export function createLogger(
-  options?: {
-    /** pino level filter. @default "info" */
-    readonly level?: string;
-    /** Extra `base` fields merged into every log line of the scope. */
-    readonly base?: Readonly<Record<string, unknown>>;
-  },
-): Logger {
+export function createLogger(options?: {
+  /** pino level filter. @default "info" */
+  readonly level?: string;
+  /** Extra `base` fields merged into every log line of the scope. */
+  readonly base?: Readonly<Record<string, unknown>>;
+}): Logger {
   const level = options?.level ?? "info";
   const base = options?.base ?? {};
 
   const pinoLogger = pino({ level, base });
 
   return {
-    info: (msg, ...meta) => pinoLogger.info(msg, ...meta),
-    warn: (msg, ...meta) => pinoLogger.warn(msg, ...meta),
-    error: (msg, ...meta) => pinoLogger.error(msg, ...meta),
-    debug: (msg, ...meta) => pinoLogger.debug(msg, ...meta),
-    trace: (msg, ...meta) => pinoLogger.trace(msg, ...meta),
+    info: (...args: unknown[]) =>
+      (pinoLogger.info as (...args: unknown[]) => void)(...args),
+    warn: (...args: unknown[]) =>
+      (pinoLogger.warn as (...args: unknown[]) => void)(...args),
+    error: (...args: unknown[]) =>
+      (pinoLogger.error as (...args: unknown[]) => void)(...args),
+    debug: (...args: unknown[]) =>
+      (pinoLogger.debug as (...args: unknown[]) => void)(...args),
+    trace: (...args: unknown[]) =>
+      (pinoLogger.trace as (...args: unknown[]) => void)(...args),
   };
 }
 
@@ -61,7 +63,9 @@ export function createLogger(
  */
 export function registerScopeLogger(logger: Logger): void {
   registerLogger((context) => {
-    context!.logger = logger;
+    if (context) {
+      context.logger = logger;
+    }
   });
 }
 
@@ -73,9 +77,7 @@ export function registerScopeLogger(logger: Logger): void {
  * @example Retrieve a logger from the current scope
  */
 export function currentLogger(): Logger | undefined {
-  return registerLogger(
-    (context) => context?.logger as Logger | undefined,
-  );
+  return registerLogger((context) => context?.logger as Logger | undefined);
 }
 
 /**
@@ -94,8 +96,10 @@ export function runWithLogger<T>(
   run: () => T,
 ): T {
   const logger = createLogger(options);
-  registerScopeLogger(logger);
-  return run();
+  return runWithScope({}, (): T => {
+    registerScopeLogger(logger);
+    return run();
+  });
 }
 
 /**
@@ -107,7 +111,7 @@ export function runWithLogger<T>(
  * @example Create a logger for a job execution
  */
 export function createScopedLogger(
-  context: ScopeContext,
+  _context: ScopeContext,
   options?: {
     readonly level?: string;
     readonly base?: Readonly<Record<string, unknown>>;
@@ -115,7 +119,9 @@ export function createScopedLogger(
 ): Logger {
   const logger = createLogger(options);
   registerLogger((ctx) => {
-    ctx.logger = logger;
+    if (ctx) {
+      ctx.logger = logger;
+    }
   });
   return logger;
 }

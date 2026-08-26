@@ -2,11 +2,13 @@
   "name": "@smitejs/logs",
   "version": "2.0.0-SNAPSHOT",
   "description": "Structured logging cross-cutting concern for Smite applications",
+  "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "sideEffects": false,
   "private": true,
   "dependencies": {
-    "@smitejs/core": "^2.0.0-SNAPSHOT"
+    "@smitejs/core": "^2.0.0-SNAPSHOT",
+    "pino": "^9.0.0"
   }
 }

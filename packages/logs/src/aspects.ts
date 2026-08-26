@@ -1,5 +1,5 @@
-import { registerLogger, ScopeContext } from "@smitejs/core";
-import { createLogger } from "./logger.js";
+import { type ScopeContext, registerLogger } from "@smitejs/core";
+import { type Logger, createLogger, currentLogger } from "./logger.js";
 
 /**
  * The kind of an aspect: which stage of the pipeline it runs at.
@@ -14,11 +14,20 @@ export const HttpAspectKind = {
 export type HttpAspectKind = keyof typeof HttpAspectKind;
 
 /**
+ * Options shared by all logging aspects.
+ */
+export interface HttpAspectOptions {
+  readonly level?: string;
+  readonly base?: Readonly<Record<string, unknown>>;
+  readonly label?: string;
+}
+
+/**
  * A pipeline stage that wraps the remainder of the chain.
  */
 export type HttpMiddleware = (
   ctx: { scope: ScopeContext },
-  next: () => Promise unknown,
+  next: () => Promise<unknown>,
 ) => unknown | Promise<unknown>;
 
 /**
@@ -26,6 +35,7 @@ export type HttpMiddleware = (
  */
 export type HttpGuard = (
   ctx: { scope: ScopeContext },
+  next: () => Promise<unknown>,
 ) => unknown | undefined | Promise<unknown | undefined>;
 
 /**
@@ -33,7 +43,7 @@ export type HttpGuard = (
  */
 export type HttpInterceptor = (
   ctx: { scope: ScopeContext },
-  next: () => Promise unknown,
+  next: () => Promise<unknown>,
 ) => unknown | Promise<unknown>;
 
 /**
@@ -50,13 +60,16 @@ export type HttpFilter = (
  */
 export interface HttpAspect {
   /** @internal */
-  kind: HttpAspectKind;
+  kind: (typeof HttpAspectKind)[keyof typeof HttpAspectKind];
   /** @internal */
   fn: HttpMiddleware | HttpGuard | HttpInterceptor | HttpFilter;
 }
 
 /** @internal */
-export function aspect(kind, fn) {
+export function aspect(
+  kind: (typeof HttpAspectKind)[keyof typeof HttpAspectKind],
+  fn: HttpAspect["fn"],
+): HttpAspect {
   return { kind, fn };
 }
 
@@ -67,25 +80,30 @@ export function aspect(kind, fn) {
  * @group Aspects
  * @example Apply a logger aspect
  */
-export function jobLogger(options) {
-  const level = options?.level ?? "info";
-  const base = options?.base ?? {};
+export function jobLogger(options: HttpAspectOptions): HttpAspect {
+  const level = options.level ?? "info";
+  const base = options.base ?? {};
 
-  const fn = aspect(HttpAspectKind.MIDDLEWARE, async (ctx, next) => {
-    let logger = ctx.scope.logger;
+  const fn = aspect(
+    HttpAspectKind.MIDDLEWARE,
+    async (ctx: { scope: ScopeContext }, next: () => Promise<unknown>) => {
+      let logger = ctx.scope.logger as Logger | undefined;
 
-    if (!logger) {
-      logger = createLogger({ level, base });
-      registerLogger((context) => {
-        context.logger = logger;
-      });
-    }
+      if (!logger) {
+        logger = createLogger({ level, base });
+        registerLogger((context) => {
+          if (context) {
+            context.logger = logger;
+          }
+        });
+      }
 
-    ctx.scope.logger = logger;
-    const response = await next();
-    logger.info("job/middleware step complete");
-    return response;
-  });
+      ctx.scope.logger = logger;
+      const response = await next();
+      logger.info("job/middleware step complete");
+      return response;
+    },
+  );
 
   return fn;
 }
@@ -98,25 +116,30 @@ export function jobLogger(options) {
  * @group Aspects
  * @example Apply logger aspect to a job
  */
-export function jobExecutionLogger(options) {
-  const level = options?.level ?? "info";
-  const base = options?.base ?? {};
-  const label = options?.label ?? "job";
+export function jobExecutionLogger(options: HttpAspectOptions): HttpAspect {
+  const level = options.level ?? "info";
+  const base = options.base ?? {};
+  const label = options.label ?? "job";
 
-  const fn = aspect(HttpAspectKind.MIDDLEWARE, async (ctx, next) => {
-    const logger = createLogger({ level, base });
-    registerLogger((context) => {
-      context.logger = logger;
-      context.label = label;
-    });
+  const fn = aspect(
+    HttpAspectKind.MIDDLEWARE,
+    async (ctx: { scope: ScopeContext }, next: () => Promise<unknown>) => {
+      const logger = createLogger({ level, base });
+      registerLogger((context) => {
+        if (context) {
+          context.logger = logger;
+          context.label = label;
+        }
+      });
 
-    ctx.scope.logger = logger;
-    ctx.scope.label = label;
+      ctx.scope.logger = logger;
+      ctx.scope.label = label;
 
-    const response = await next();
-    logger.info({ label, status: "complete" }, "job execution complete");
-    return response;
-  });
+      const response = await next();
+      logger.info({ label, status: "complete" }, "job execution complete");
+      return response;
+    },
+  );
 
   return fn;
 }
@@ -128,25 +151,26 @@ export function jobExecutionLogger(options) {
  * @group Aspects
  * @example Error-handling guard aspect
  */
-export function errorLoggingGuard(options) {
-  const level = options?.level ?? "error";
-
-  const fn = aspect(HttpAspectKind.GUARD, async (ctx, next) => {
-    const logger = currentLogger();
-    if (logger) {
-      try {
-        const response = await next();
-        return response;
-      } catch (err) {
-        logger.error({ err }, "handler error, short-circuiting");
-        return {
-          status: 500,
-          body: { error: "internal error" },
-        };
+export function errorLoggingGuard(_options?: HttpAspectOptions): HttpAspect {
+  const fn = aspect(
+    HttpAspectKind.GUARD,
+    async (_ctx: { scope: ScopeContext }, next: () => Promise<unknown>) => {
+      const logger = currentLogger();
+      if (logger) {
+        try {
+          const response = await next();
+          return response;
+        } catch (err) {
+          logger.error({ err: String(err) }, "handler error, short-circuiting");
+          return {
+            status: 500,
+            body: { error: "internal error" },
+          };
+        }
       }
-    }
-    return next();
-  });
+      return next();
+    },
+  );
 
   return fn;
 }
@@ -158,24 +182,26 @@ export function errorLoggingGuard(options) {
  * @group Aspects
  * @example Log around a function call
  */
-export function aroundLogger(options) {
-  const level = options?.level ?? "info";
-  const base = options?.base ?? {};
+export function aroundLogger(options: HttpAspectOptions): HttpAspect {
+  const level = options.level ?? "info";
+  const base = options.base ?? {};
 
-  const fn = aspect(HttpAspectKind.MIDDLEWARE, async (ctx, next) => {
-    const logger = createLogger({ level, base });
-    registerLogger((context) => {
-      context.logger = logger;
-    });
+  const fn = aspect(
+    HttpAspectKind.MIDDLEWARE,
+    async (_ctx: { scope: ScopeContext }, next: () => Promise<unknown>) => {
+      const logger = createLogger({ level, base });
+      registerLogger((context) => {
+        if (context) {
+          context.logger = logger;
+        }
+      });
 
-    const start = Date.now();
-    const result = await next();
-    logger.info(
-      { durationMs: Date.now() - start },
-      "around logger complete",
-    );
-    return result;
-  });
+      const start = Date.now();
+      const result = await next();
+      logger.info({ durationMs: Date.now() - start }, "around logger complete");
+      return result;
+    },
+  );
 
   return fn;
 }

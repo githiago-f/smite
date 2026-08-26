@@ -1,14 +1,14 @@
-import { describe, it, expect } from "vitest";
 import { runWithScope } from "@smitejs/core";
+import { describe, expect, it } from "vitest";
 import {
+  aroundLogger,
   createLogger,
   currentLogger,
+  errorLoggingGuard,
+  jobExecutionLogger,
+  jobLogger,
   registerScopeLogger,
   runWithLogger,
-  jobLogger,
-  jobExecutionLogger,
-  errorLoggingGuard,
-  aroundLogger,
 } from "./index.js";
 
 const logs = {
