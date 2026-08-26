@@ -1,0 +1,12 @@
+{
+  "name": "@smitejs/logs",
+  "version": "0.1.0",
+  "description": "Structured logging cross-cutting concern for Smite applications",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "sideEffects": false,
+  "private": true,
+  "dependencies": {
+    "@smitejs/core": "^0.1.0"
+  }
+}
