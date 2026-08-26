@@ -52,6 +52,10 @@ export default defineConfig({
         import.meta.dirname,
         "packages/openapi/src/index.ts",
       ),
+      "@smitejs/logs": resolve(
+        import.meta.dirname,
+        "packages/logs/src/index.ts",
+      ),
       "@smitejs/snippets": resolve(
         import.meta.dirname,
         "packages/snippets/src/index.ts",

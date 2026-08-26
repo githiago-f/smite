@@ -17,6 +17,7 @@
     { "path": "./packages/client" },
     { "path": "./packages/openapi" },
     { "path": "./packages/snippets" },
+    { "path": "./packages/logs" },
     { "path": "./packages/create-app" }
   ]
 }
