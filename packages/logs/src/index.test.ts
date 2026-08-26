@@ -22,6 +22,7 @@ const logs = {
   aroundLogger,
 };
 
+/** #section - Create a scope-anchored logger */
 describe("Logger interface", () => {
   it("createLogger returns an object with info/warn/error/debug/trace methods", () => {
     const logger = logs.createLogger({ level: "info" });
@@ -65,6 +66,7 @@ describe("Logger interface", () => {
   });
 });
 
+/** #section - jobLogger creates a middleware aspect */
 describe("AOP aspects", () => {
   it("jobLogger creates a middleware aspect", () => {
     const aspect = logs.jobLogger({ level: "info" });
