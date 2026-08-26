@@ -27,6 +27,26 @@ jobs:
           node-version-file: .nvmrc
           cache: yarn
           registry-url: https://registry.npmjs.org
+      
+      - name: Registry connectivity
+        run: |
+          echo "Yarn registry:"
+          yarn config get registry
+      
+          echo "NPM registry:"
+          npm config get registry
+      
+          echo "DNS:"
+          getent hosts registry.yarnpkg.com
+          getent hosts registry.npmjs.org
+      
+          echo "Yarn registry:"
+          curl -v --connect-timeout 10 --max-time 20 \
+            https://registry.yarnpkg.com/
+      
+          echo "NPM registry:"
+          curl -v --connect-timeout 10 --max-time 20 \
+            https://registry.npmjs.org/
 
       - name: Install dependencies
         run: |
